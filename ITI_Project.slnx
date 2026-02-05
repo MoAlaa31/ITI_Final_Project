@@ -1,0 +1,6 @@
+<Solution>
+  <Project Path="ITI_Project.Api/ITI_Project.Api.csproj" />
+  <Project Path="ITI_Project.Core/ITI_Project.Core.csproj" />
+  <Project Path="ITI_Project.Repository/ITI_Project.Repository.csproj" Id="df258d03-ee7c-4862-8776-1af956dcbc50" />
+  <Project Path="ITI_Project.Service/ITI_Project.Service.csproj" Id="b59c73cf-2438-47a3-bf9d-3227dcd279dc" />
+</Solution>
