@@ -1,0 +1,20 @@
+# Ignore build directories
+*csproj.user
+
+ITI_Project.Api/bin/
+ITI_Project.Api/obj/
+
+ITI_Project.Api/Properties/PublishProfiles
+
+ITI_Project.Core/bin/
+ITI_Project.Core/obj/
+
+ITI_Project.Repository/bin/
+ITI_Project.Repository/obj/
+
+ITI_Project.Service/bin/
+ITI_Project.Service/obj/
+
+# Ignore Visual Studio files
+.vs/
+
