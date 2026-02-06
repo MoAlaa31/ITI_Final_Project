@@ -2,9 +2,11 @@
 using System.Collections.Generic;
 using System.Text;
 
-namespace ITI_Project.Core.Models
+namespace ITI_Project.Core.Enums
 {
-    public class BaseEntity
+    public enum Gender
     {
+        Male,
+        Female
     }
 }
