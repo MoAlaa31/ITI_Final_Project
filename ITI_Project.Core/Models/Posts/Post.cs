@@ -34,5 +34,6 @@ namespace ITI_Project.Core.Models.Posts
 
         public ICollection<Comment>? Comments { get; set; }
         public ICollection<PostImage>? PostImages { get; set; }
+        public ICollection<PostReaction>? Reactions { get; set; }
     }
 }

@@ -22,5 +22,8 @@ namespace ITI_Project.Core.Models.Posts
         [ForeignKey("Post")]
         public required int PostId { get; set; }
         public required Post Post { get; set; }
+
+        public ICollection<CommentReaction>? Reactions { get; set; }
+
     }
 }

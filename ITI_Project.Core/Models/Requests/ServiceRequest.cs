@@ -32,12 +32,8 @@ namespace ITI_Project.Core.Models.Requests
         public required int UserId { get; set; }
         public required User User { get; set; }
 
-        [ForeignKey(nameof(Review))]
-        public int? ReviewId { get; set; }
         public Review? Review { get; set; }
 
-        [ForeignKey(nameof(ServiceRequestLocation))]
-        public int? ServiceRequestLocationId { get; set; }
         public ServiceRequestLocation? ServiceRequestLocation { get; set; }
 
         public ICollection<RequestOffer>? RequestOffers { get; set; }   

@@ -10,6 +10,7 @@ namespace ITI_Project.Core.Models.Location
 {
     public class Region: BaseEntity
     {
+        public int Id { get; set; }
         [Required(ErrorMessage = "Region name is required. Please provide a name.")]
         public string Name_ar { get; set; }
 
