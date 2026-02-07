@@ -13,6 +13,7 @@ namespace ITI_Project.Core.Models.Persons
 {
     public class Provider : BaseEntity
     {
+        public int Id { get; set; }
         [StringLength(100, ErrorMessage = "Bio cannot be longer than 100 characters.")]
         public string? Bio { get; set; }
         public bool Isverified { get; set; }
@@ -29,12 +30,7 @@ namespace ITI_Project.Core.Models.Persons
         public required int UserId { get; set; }
         public required User User { get; set; }                  //to be reviewed
 
-        [ForeignKey(nameof(BaseLocation))]
-        public int? BaseLocationId { get; set; }
         public BaseLocation? BaseLocation { get; set; }
-
-        [ForeignKey(nameof(LiveLocation))]
-        public int? LiveLocationId { get; set; }
         public LiveLocation? LiveLocation { get; set; }
 
         [ForeignKey(nameof(Governorate))]
@@ -44,15 +40,12 @@ namespace ITI_Project.Core.Models.Persons
         [ForeignKey(nameof(Region))]
         public required int RegionId { get; set; }
         public required Region Region { get; set; }
-        
-        [ForeignKey(nameof(ProviderContract))]
-        public int? ProviderContractId { get; set; }
-        public ProviderContract? ProviderContract{ get; set; }
 
         public ICollection<ProviderService>? ProviderServices { get; set; }
         public ICollection<ProviderDocument>? ProviderDocuments { get; set; }
         public ICollection<Review>? Reviews { get; set; }
         public ICollection<RequestOffer>? RequestOffers { get; set; }
+        public ICollection<ServiceRequest>? ServiceRequests { get; set; }
 
     }
 }
