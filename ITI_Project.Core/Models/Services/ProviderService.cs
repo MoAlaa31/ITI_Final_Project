@@ -8,12 +8,12 @@ namespace ITI_Project.Core.Models.Services
 {
     public class ProviderService: BaseEntity
     {
-        [ForeignKey("Provider")]
-        public int ProviderId { get; set; }
-        public Provider Provider { get; set; }
+        [ForeignKey(nameof(Provider))]
+        public required int ProviderId { get; set; }
+        public required Provider Provider { get; set; }
 
-        [ForeignKey("Service")]
-        public int ServiceId { get; set; }
-        public Service Service { get; set; }
+        [ForeignKey(nameof(Service))]
+        public required int ServiceId { get; set; }
+        public required Service Service { get; set; }
     }
 }

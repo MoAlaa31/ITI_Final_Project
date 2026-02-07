@@ -13,8 +13,9 @@ namespace ITI_Project.Core.Models.Location
         public double Longitude { get; set; }
         public DateTime UpdatedAt { get; set; }
 
-        [ForeignKey("Provider")]
+        // Relationships
+        [ForeignKey(nameof(Provider))]
         public required int ProviderId { get; set; }
-        public Provider Provider { get; set; }
+        public required Provider Provider { get; set; }
     }
 }

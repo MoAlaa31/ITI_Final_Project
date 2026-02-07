@@ -17,26 +17,26 @@ namespace ITI_Project.Core.Models.Requests
         [StringLength(200, ErrorMessage = "Description cannot be longer than 200 characters.")]
         [Required(ErrorMessage = "Description is required.")]
         public required string Description { get; set; }
-        [Range(0.0, 10000.0, ErrorMessage = "Final Price must be a positive number.")]
+        [Range(0.0, 1000000.0, ErrorMessage = "Final Price must be a positive number.")]
         public decimal? FinalPrice { get; set; }
         public DateTime CreatedAt { get; set; }
         public DateTime? PreferredTime { get; set; }
 
         // Relationships
-        [ForeignKey("Provider")]
+        [ForeignKey(nameof(Provider))]
         public int? ProviderId { get; set; }
         public Provider? Provider{ get; set; }
 
         [Required(ErrorMessage = "User Id is required.")]
-        [ForeignKey("User")]
+        [ForeignKey(nameof(User))]
         public required int UserId { get; set; }
-        public User User { get; set; }
+        public required User User { get; set; }
 
-        [ForeignKey("Review")]
+        [ForeignKey(nameof(Review))]
         public int? ReviewId { get; set; }
         public Review? Review { get; set; }
 
-        [ForeignKey("ServiceRequestLocation")]
+        [ForeignKey(nameof(ServiceRequestLocation))]
         public int? ServiceRequestLocationId { get; set; }
         public ServiceRequestLocation? ServiceRequestLocation { get; set; }
 

@@ -25,34 +25,34 @@ namespace ITI_Project.Core.Models.Persons
 
         // Relationships
         [Required(ErrorMessage = "User Id is required.")]
-        [ForeignKey("User")]
-        public int UserId { get; set; }
-        public User User { get; set; }                  //to be reviewed
+        [ForeignKey(nameof(User))]
+        public required int UserId { get; set; }
+        public required User User { get; set; }                  //to be reviewed
 
-        [ForeignKey("BaseLocation")]
-        public int BaseLocationId { get; set; }
-        public BaseLocation BaseLocation { get; set; }
+        [ForeignKey(nameof(BaseLocation))]
+        public int? BaseLocationId { get; set; }
+        public BaseLocation? BaseLocation { get; set; }
 
-        [ForeignKey("LiveLocation")]
-        public int LiveLocationId { get; set; }
-        public LiveLocation LiveLocation { get; set; }
+        [ForeignKey(nameof(LiveLocation))]
+        public int? LiveLocationId { get; set; }
+        public LiveLocation? LiveLocation { get; set; }
 
-        [ForeignKey("Governorate")]
-        public int GovernorateId { get; set; }
-        public Governorate Governorate { get; set; }
+        [ForeignKey(nameof(Governorate))]
+        public required int GovernorateId { get; set; }
+        public required Governorate Governorate { get; set; }
 
-        [ForeignKey("Region")]
-        public int RegionId { get; set; }
-        public Region Region { get; set; }
+        [ForeignKey(nameof(Region))]
+        public required int RegionId { get; set; }
+        public required Region Region { get; set; }
         
-        [ForeignKey("ProviderContract")]
-        public int ProviderContractId { get; set; }
-        public ProviderContract ProviderContract{ get; set; }
+        [ForeignKey(nameof(ProviderContract))]
+        public int? ProviderContractId { get; set; }
+        public ProviderContract? ProviderContract{ get; set; }
 
-        public ICollection<ProviderService> ProviderServices { get; set; }
-        public ICollection<ProviderDocument> ProviderDocuments { get; set; }
-        public ICollection<Review> Reviews { get; set; }
-        public ICollection<RequestOffer> RequestOffers { get; set; }
+        public ICollection<ProviderService>? ProviderServices { get; set; }
+        public ICollection<ProviderDocument>? ProviderDocuments { get; set; }
+        public ICollection<Review>? Reviews { get; set; }
+        public ICollection<RequestOffer>? RequestOffers { get; set; }
 
     }
 }

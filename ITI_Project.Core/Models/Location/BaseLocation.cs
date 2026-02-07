@@ -14,7 +14,7 @@ namespace ITI_Project.Core.Models.Location
         public string? AddressText { get; set; }
 
 
-        [ForeignKey("Provider")]
+        [ForeignKey(nameof(Provider))]
         public int ProviderId { get; set; }
         public Provider Provider { get; set; }
     }

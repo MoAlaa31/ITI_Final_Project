@@ -6,15 +6,15 @@ using System.Text;
 
 namespace ITI_Project.Core.Models.Persons
 {
-    public class UserPhoneNumber
+    public class UserPhoneNumber: BaseEntity
     {
         public int Id { get; set; }
         [Phone(ErrorMessage = "Invalid phone number format.")]
-        public string PhoneNumber { get; set; }
+        public required string PhoneNumber { get; set; }
 
         // Relationships
         [ForeignKey("User")]
-        public int UserId { get; set; }
-        public User User { get; set; }
+        public required int UserId { get; set; }
+        public required User User { get; set; }
     }
 }
