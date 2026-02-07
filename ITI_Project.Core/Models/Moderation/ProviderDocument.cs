@@ -7,16 +7,15 @@ using System.Text;
 
 namespace ITI_Project.Core.Models.Moderation
 {
-    public class ProviderDocument: BaseEntity
+    public class ProviderDocument : BaseEntity
     {
         public int Id { get; set; }
-        public string DocumentUrl { get; set; }
+        public required string DocumentUrl { get; set; }
         public DocumentType DocumentType { get; set; }
-        public string FileUrl { get; set; }
         public bool IsApproved { get; set; }
 
         [ForeignKey("Provider")]
-        public int ProviderId { get; set; }
-        public Provider Provider { get; set; }
+        public required int ProviderId { get; set; }
+        public required Provider Provider { get; set; }
     }
 }

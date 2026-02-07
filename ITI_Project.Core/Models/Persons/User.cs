@@ -1,4 +1,5 @@
 ﻿using ITI_Project.Core.Enums;
+using ITI_Project.Core.Models.Moderation;
 using ITI_Project.Core.Models.Posts;
 using ITI_Project.Core.Models.Requests;
 using Microsoft.Extensions.DependencyInjection;
@@ -16,22 +17,21 @@ namespace ITI_Project.Core.Models.Persons
         [Required(ErrorMessage = "First Name is required.")]
         public required string FirstName { get; set; }
         [StringLength(25, ErrorMessage = "Last name cannot be longer than 25 characters.")]
-        [Required(ErrorMessage = "First Name is required.")]
+        [Required(ErrorMessage = "Last Name is required.")]
         public required string LastName { get; set; }
-        public string? Email { get; set; }
-        [Required(ErrorMessage = "Gender is required.")]                    // to be moved to identity
+        [Required(ErrorMessage = "Gender is required.")]
         public Gender Gender { get; set; }
         [Required(ErrorMessage = "Date of birth is required.")]
         public DateOnly DateOfBirth { get; set; }
         public DateOnly CreatedAt { get; set; }
-        public UserRole Role { get; set; }                                  // to be moved to identity
         public string? PictureUrl { get; set; }
 
         // Relationships
-        public ICollection<ServiceRequest> ServiceRequests { get; set; }
-        public ICollection<Post> ServicePosts { get; set; }
-        public ICollection<Comment> Comments { get; set; }
-        public ICollection<UserPhoneNumber> phoneNumbers { get; set; }
+        public ICollection<ServiceRequest>? ServiceRequests { get; set; }
+        public ICollection<Post>? ServicePosts { get; set; }
+        public ICollection<Comment>? Comments { get; set; }
+        public ICollection<UserPhoneNumber>? phoneNumbers { get; set; }
+        public ICollection<AdminActionLog>? AdminActionLogs { get; set; }
 
     }
 }

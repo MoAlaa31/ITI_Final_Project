@@ -11,7 +11,7 @@ namespace ITI_Project.Core.Models.Requests
     public class RequestOffer: BaseEntity
     {
         public int Id { get; set; }
-        [Range(0.0, 10000.0, ErrorMessage = "Price must be a positive number.")]
+        [Range(0.0, 1000000.0, ErrorMessage = "Price must be a positive number.")]
         decimal Price { get; set; }
         public DateTime CreatedAt { get; set; }
         [StringLength(200, ErrorMessage = "Message cannot be longer than 200 characters.")]
@@ -21,11 +21,11 @@ namespace ITI_Project.Core.Models.Requests
 
         // Relationships
         [ForeignKey("ServiceRequest")]
-        public int ServiceRequestId { get; set; }
-        public ServiceRequest ServiceRequest { get; set; }
+        public required int ServiceRequestId { get; set; }
+        public required ServiceRequest ServiceRequest { get; set; }
 
         [ForeignKey("Provider")]
-        public int ProviderId { get; set; }
-        public Provider Provider { get; set; }
+        public required int ProviderId { get; set; }
+        public required Provider Provider { get; set; }
     }
 }
