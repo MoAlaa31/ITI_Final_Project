@@ -1,7 +1,9 @@
 using ITI_Project.Api.Extensions;
 using ITI_Project.Api.Middlewares;
+using ITI_Project.Core.Models.Identity;
 using ITI_Project.Repository.Data;
 using ITI_Project.Repository.Identity;
+using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 using Serilog;
@@ -55,6 +57,13 @@ namespace ITI_Project.Api
             #endregion
             /****************************** Add Application Services ********************************/
             builder.Services.AddApplicationServices();
+
+            builder.Services.AddIdentityServices(builder.Configuration);
+
+            //builder.Services.AddIdentity<AppUser, IdentityRole>()
+            //    .AddEntityFrameworkStores<AppIdentityDBContext>()
+            //    .AddDefaultTokenProviders();
+
             #endregion
             var app = builder.Build();
 
@@ -62,14 +71,19 @@ namespace ITI_Project.Api
             await using var scope = app.Services.CreateAsyncScope();
             var services = scope.ServiceProvider;
 
+            // Create objects of the required services
             var applicationDbContext = services.GetRequiredService<AppDbContext>();
             var _identityContext = services.GetRequiredService<AppIdentityDBContext>();
+            //var _userManager = services.GetRequiredService<UserManager<AppUser>>();
+            var _roleManager = services.GetRequiredService<RoleManager<IdentityRole>>();
 
             var factoryLogger = services.GetRequiredService<ILoggerFactory>();
             try
             {
                 await applicationDbContext.Database.MigrateAsync();
                 await _identityContext.Database.MigrateAsync();
+
+                await RoleSeed.RoleSeedAsync(_roleManager);         //seed the roles (Admin, Provider)
             }
             catch (Exception ex)
             {

@@ -9,5 +9,8 @@ namespace ITI_Project.Core
     public interface IUnitOfWork
     {
         IGenericRepository<TEntity> Repository<TEntity>() where TEntity : BaseEntity;
+
+        bool HasChanges();
+        Task<int> CompleteAsync();
     }
 }
