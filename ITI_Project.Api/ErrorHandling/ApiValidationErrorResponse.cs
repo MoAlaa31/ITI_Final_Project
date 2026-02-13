@@ -8,5 +8,9 @@
         {
             Errors = new List<string?>();
         }
+        public ApiValidationErrorResponse(int statusCode, string? message = null) : base(statusCode, message)
+        {
+            Errors = new List<string?>();
+        }
     }
 }

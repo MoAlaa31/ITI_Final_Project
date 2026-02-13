@@ -13,7 +13,14 @@ namespace ITI_Project.Repository
         public UnitOfWork(AppDbContext dbContext)
         {
             this.dbContext = dbContext;
+            repositories = new Hashtable();
         }
+
+        public async Task<int> CompleteAsync()
+            => await dbContext.SaveChangesAsync();
+
+        public bool HasChanges()
+            => dbContext.ChangeTracker.HasChanges();
 
         public IGenericRepository<TEntity> Repository<TEntity>() where TEntity : BaseEntity
         {
