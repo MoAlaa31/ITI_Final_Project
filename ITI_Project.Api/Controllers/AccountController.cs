@@ -5,7 +5,7 @@ using ITI_Project.Core;
 using ITI_Project.Core.IServices;
 using ITI_Project.Core.Models.Identity;
 using ITI_Project.Core.Models.Persons;
-using ITI_Project.Service.Token;
+using ITI_Project.Services.Token;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Identity;

@@ -39,14 +39,19 @@ namespace ITI_Project.Repository
             return await dbContext.Set<T>().AnyAsync(predicate);
         }
 
+        public async Task<T?> GetAsync(int id)
+        {
+            return await dbContext.Set<T>().FindAsync(id);
+        }
+
         public void Delete(T entity)
         {
             dbContext.Set<T>().Remove(entity);
         }
 
-        public Task<IReadOnlyList<T>> GetAllAsync()
+        public async Task<IReadOnlyList<T>> GetAllAsync()
         {
-            throw new NotImplementedException();
+            return await dbContext.Set<T>().ToListAsync();
         }
 
         public async Task<IReadOnlyList<T>?> GetAllWithSpecAsync(ISpecifications<T> specs)

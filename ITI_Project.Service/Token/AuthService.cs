@@ -14,7 +14,7 @@ using System.Numerics;
 using System.Security.Claims;
 using System.Text;
 
-namespace ITI_Project.Service.Token
+namespace ITI_Project.Services.Token
 {
     public class AuthService : IAuthService
     {

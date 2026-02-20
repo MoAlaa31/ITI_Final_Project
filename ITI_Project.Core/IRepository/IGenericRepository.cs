@@ -20,6 +20,7 @@ namespace ITI_Project.Core.IRepository
         public Task<T?> GetWithSpecsAsync(ISpecifications<T> specs);
         public Task<IReadOnlyList<TResult>> GetAllWithSpecAsync<TResult>(ISpecifications<T> spec, Expression<Func<T, TResult>> selector);
         public Task<T?> GetByIdAsync(int id);
+        public Task<T?> GetAsync(int id);
         public Task<User> GetByAppUserIdAsync(string id);
         public Task<T?> GetWithNameAsync(string name);
         public Task<IReadOnlyList<T>> GetAllAsync();

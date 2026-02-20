@@ -1,7 +1,7 @@
 ﻿using ITI_Project.Core.IServices;
 using ITI_Project.Core.Models.Identity;
 using ITI_Project.Repository.Identity;
-using ITI_Project.Service.Token;
+using ITI_Project.Services.Token;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.IdentityModel.Tokens;
