@@ -9,8 +9,8 @@ namespace ITI_Project.Core.IServices
 {
     public interface IAuthService
     {
-        Task<string> CreateTokenAsync(AppUser user, UserManager<AppUser> userManager);
-        Task<UserDto> RefreshTokenAsync(string token);
+        Task<string> CreateTokenAsync(AppUser user, UserManager<AppUser> userManager);      // Access Token
+        Task<RefreshTokenResultDto> RefreshTokenAsync(string token);                        // Refresh Token
         Task<bool> RevokeTokenAsync(string token);
     }
 }

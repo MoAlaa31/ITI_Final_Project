@@ -1,4 +1,5 @@
 ﻿using ITI_Project.Api.ErrorHandling;
+using ITI_Project.Api.Helpers;
 using ITI_Project.Core;
 using ITI_Project.Core.IRepository;
 using ITI_Project.Repository;
@@ -19,7 +20,7 @@ namespace ITI_Project.Api.Extensions
             services.AddScoped<IUnitOfWork, UnitOfWork>();
             services.AddScoped(typeof(IGenericRepository<>), typeof(GenericRepository<>));
 
-            //services.AddAutoMapper(typeof(MappingProfiles));
+            services.AddAutoMapper(cfg => cfg.AddProfile<MappingProfiles>());
 
             services.Configure<ApiBehaviorOptions>(options =>
             {

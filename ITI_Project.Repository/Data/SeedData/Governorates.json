@@ -1,0 +1,110 @@
+[
+  {
+    "Name_ar": "القاهرة",
+    "Name_en": "Cairo"
+  },
+  {
+    "Name_ar": "الجيزة",
+    "Name_en": "Giza"
+  },
+  {
+    "Name_ar": "الأسكندرية",
+    "Name_en": "Alexandria"
+  },
+  {
+    "Name_ar": "الدقهلية",
+    "Name_en": "Dakahlia"
+  },
+  {
+    "Name_ar": "البحر الأحمر",
+    "Name_en": "Red Sea"
+  },
+  {
+    "Name_ar": "البحيرة",
+    "Name_en": "Beheira"
+  },
+  {
+    "Name_ar": "الفيوم",
+    "Name_en": "Fayoum"
+  },
+  {
+    "Name_ar": "الغربية",
+    "Name_en": "Gharbiya"
+  },
+  {
+    "Name_ar": "الإسماعلية",
+    "Name_en": "Ismailia"
+  },
+  {
+    "Name_ar": "المنوفية",
+    "Name_en": "Menofia"
+  },
+  {
+    "Name_ar": "المنيا",
+    "Name_en": "Minya"
+  },
+  {
+    "Name_ar": "القليوبية",
+    "Name_en": "Qaliubiya"
+  },
+  {
+    "Name_ar": "الوادي الجديد",
+    "Name_en": "New Valley"
+  },
+  {
+    "Name_ar": "السويس",
+    "Name_en": "Suez"
+  },
+  {
+    "Name_ar": "اسوان",
+    "Name_en": "Aswan"
+  },
+  {
+    "Name_ar": "اسيوط",
+    "Name_en": "Assiut"
+  },
+  {
+    "Name_ar": "بني سويف",
+    "Name_en": "Beni Suef"
+  },
+  {
+    "Name_ar": "بورسعيد",
+    "Name_en": "Port Said"
+  },
+  {
+    "Name_ar": "دمياط",
+    "Name_en": "Damietta"
+  },
+  {
+    "Name_ar": "الشرقية",
+    "Name_en": "Sharkia"
+  },
+  {
+    "Name_ar": "جنوب سيناء",
+    "Name_en": "South Sinai"
+  },
+  {
+    "Name_ar": "كفر الشيخ",
+    "Name_en": "Kafr Al sheikh"
+  },
+  {
+    "Name_ar": "مطروح",
+    "Name_en": "Matrouh"
+  },
+  {
+    "Name_ar": "الأقصر",
+    "Name_en": "Luxor"
+  },
+  {
+    "Name_ar": "قنا",
+    "Name_en": "Qena"
+  },
+  {
+    "Name_ar": "شمال سيناء",
+    "Name_en": "North Sinai"
+  },
+  {
+    "Name_ar": "سوهاج",
+    "Name_en": "Sohag"
+  }
+]

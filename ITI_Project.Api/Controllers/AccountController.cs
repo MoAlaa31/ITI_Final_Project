@@ -1,15 +1,18 @@
-﻿using ITI_Project.Api.DTO.Account;
+﻿using ITI_Project.Api.DTO;
+using ITI_Project.Api.DTO.Account;
 using ITI_Project.Api.ErrorHandling;
 using ITI_Project.Core;
-using ITI_Project.Core.DTOs;
 using ITI_Project.Core.IServices;
 using ITI_Project.Core.Models.Identity;
 using ITI_Project.Core.Models.Persons;
 using ITI_Project.Service.Token;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.RateLimiting;
 using Microsoft.EntityFrameworkCore;
+using System.Security.Claims;
 
 namespace ITI_Project.Api.Controllers
 {
@@ -38,52 +41,8 @@ namespace ITI_Project.Api.Controllers
             this.configuration = configuration;
         }
 
-        [HttpPost("login")]
-        public async Task<ActionResult> Login(LoginDTO model)
-        {
-            var appUser = await userManager.FindByEmailAsync(model.Email);
-
-            if (appUser == null)
-                return Unauthorized(new ApiResponse(StatusCodes.Status401Unauthorized, "Invalid Email"));
-
-            var result = await signInManager.CheckPasswordSignInAsync(appUser, model.Password, true);
-
-            if (!result.Succeeded)
-                return Unauthorized(new ApiResponse(StatusCodes.Status401Unauthorized, "Invalid Password"));
-
-            var roles = await userManager.GetRolesAsync(appUser);
-            
-            var user = await unitOfWork.Repository<User>().GetByAppUserIdAsync(appUser.Id);
-            // Generate JWT Token
-            var token = await authService.CreateTokenAsync(appUser, userManager);
-
-            // Generate or Retrieve Active Refresh Token
-            var refreshToken = appUser.RefreshTokens.FirstOrDefault(rt => rt.IsActive);
-            if (refreshToken == null)
-            {
-                refreshToken = TokenHelper.GenerateRefreshToken();
-                appUser.RefreshTokens.Add(refreshToken);
-                await userManager.UpdateAsync(appUser);
-            }
-
-            SetRefreshTokenInCookie(refreshToken.Token, refreshToken.ExpiresOn);
-
-            return Ok(
-                new UserDto()
-                {
-                    FullName = appUser.FullName,
-                    Email = appUser.Email,
-                    Token = token,
-                    Role = roles,
-                    //PictureUrl = !(string.IsNullOrEmpty(user.PictureUrl)) ? $"{configuration["AzureStorageUrl"]}/{user.PictureUrl}" : string.Empty,
-                    RefreshToken = refreshToken.Token,
-                    RefreshTokenExpiration = refreshToken.ExpiresOn,
-                    IsAuthenticated = true
-                }
-            );
-        }
-
-        [HttpPost("register")]
+        #region Register
+        [HttpPost("register")] // POST: api/Account/register
         public async Task<ActionResult> Register(RegisterDTO model)
         {
             if (await userManager.FindByEmailAsync(model.Email) is not null)
@@ -135,7 +94,7 @@ namespace ITI_Project.Api.Controllers
                 await unitOfWork.Repository<User>().AddWithSaveAsync(newUser);
                 await unitOfWork.CompleteAsync();
             }
-            catch(DbUpdateException  ex)
+            catch (DbUpdateException ex)
             {
                 logger.LogError(ex, "Database update error while creating patient for user: {Email}", model.Email);
                 await userManager.DeleteAsync(registeredUser); // Rollback user creation
@@ -147,6 +106,148 @@ namespace ITI_Project.Api.Controllers
 
             return Ok("User registered successfully");
         }
+
+        #endregion
+
+
+        #region Login
+        [HttpPost("login")] // POST: api/Account/login
+        public async Task<ActionResult> Login(LoginDTO model)
+        {
+            var appUser = await userManager.FindByEmailAsync(model.Email);
+
+            if (appUser == null)
+                return Unauthorized(new ApiResponse(StatusCodes.Status401Unauthorized, "Invalid Email"));
+
+            var result = await signInManager.CheckPasswordSignInAsync(appUser, model.Password, true);
+
+            if (!result.Succeeded)
+                return Unauthorized(new ApiResponse(StatusCodes.Status401Unauthorized, "Invalid Password"));
+
+            var roles = await userManager.GetRolesAsync(appUser);
+
+            var user = await unitOfWork.Repository<User>().GetByAppUserIdAsync(appUser.Id);
+            // Generate Access Token
+            var accessToken = await authService.CreateTokenAsync(appUser, userManager);
+
+            // Generate or Retrieve Active Refresh Token
+            var refreshToken = appUser.RefreshTokens.FirstOrDefault(rt => rt.IsActive);
+            if (refreshToken == null)
+            {
+                refreshToken = TokenHelper.GenerateRefreshToken();
+                appUser.RefreshTokens.Add(refreshToken);
+                await userManager.UpdateAsync(appUser);
+            }
+
+            SetRefreshTokenInCookie(refreshToken.Token, refreshToken.ExpiresOn);
+
+            return Ok(
+                new UserDto()
+                {
+                    FullName = appUser.FullName,
+                    Email = appUser.Email,
+                    AccessToken = accessToken,
+                    Role = roles,
+                    //PictureUrl = !(string.IsNullOrEmpty(user.PictureUrl)) ? $"{configuration["AzureStorageUrl"]}/{user.PictureUrl}" : string.Empty,
+                    AccessTokenExpiration = DateTime.UtcNow.AddMinutes(double.Parse(configuration["JWT:AccessTokenExpirationInMinutes"])),
+                    IsAuthenticated = true
+                }
+            );
+        }
+
+        #endregion
+
+
+        #region Logout
+        [HttpPost("logout")] // POST: api/Account/logout
+        public async Task<ActionResult> Logout()
+        {
+            var refreshToken = Request.Cookies["refreshToken"];
+            if (string.IsNullOrEmpty(refreshToken))
+                return BadRequest(new { message = "No refresh token found" });
+
+            var result = await authService.RevokeTokenAsync(refreshToken);
+            if (!result)
+                return BadRequest(new { message = "Failed to revoke token" });
+
+            Response.Cookies.Delete("refreshToken");
+            await signInManager.SignOutAsync();
+
+            return Ok(new { message = "Logged out successfully" });
+        } 
+
+        #endregion
+
+
+        #region Refresh token
+        [HttpPost("refresh-token")] // POST: api/Account/refreshToken
+        public async Task<ActionResult> RefreshTokenAsync()
+        {
+            var refreshToken = Request.Cookies["refreshToken"];
+
+            if (string.IsNullOrEmpty(refreshToken))
+                return BadRequest(new ApiResponse(StatusCodes.Status400BadRequest, "Refresh token is missing"));
+
+            var result = await authService.RefreshTokenAsync(refreshToken);
+
+            if (!result.IsAuthenticated)
+                return BadRequest(new ApiResponse(StatusCodes.Status400BadRequest, result.Message));
+
+            SetRefreshTokenInCookie(result.RefreshToken, result.RefreshTokenExpiration);
+
+            return Ok(result);
+        }
+
+        #endregion
+
+
+        #region Revoke Token
+        [HttpPost("revoke-token")]
+        public async Task<IActionResult> RevokeToken([FromBody] string? Token)
+        {
+            var token = Token ?? Request.Cookies["refreshToken"];
+
+            if (string.IsNullOrEmpty(token))
+                return BadRequest(new ApiResponse(StatusCodes.Status400BadRequest, "Token is required"));
+
+            var result = await authService.RevokeTokenAsync(token);
+
+            if (!result)
+                return BadRequest(new ApiResponse(StatusCodes.Status400BadRequest, "Token is invalid"));
+
+            await signInManager.SignOutAsync();
+
+            return Ok(new ApiResponse(StatusCodes.Status200OK, "Token revoked"));
+        }
+
+        #endregion
+
+
+        #region Change Password
+        [Authorize]
+        //[EnableRateLimiting("PasswordLimiter")]
+        [HttpPost("change-password")]
+        public async Task<ActionResult> ChangePassword([FromBody] ChangePasswordDto request)
+        {
+            var email = User.FindFirstValue(ClaimTypes.Email);
+            var user = await userManager.FindByEmailAsync(email);
+            if (user is null)
+                return Unauthorized(new ApiResponse(StatusCodes.Status401Unauthorized, "User is unauthorized"));
+
+
+            var isPasswordValid = await signInManager.CheckPasswordSignInAsync(user, request.OldPassword, true);
+            if (!isPasswordValid.Succeeded)
+                return BadRequest(new ApiResponse(StatusCodes.Status400BadRequest, "Invalid Password"));
+
+            var result = await userManager.ChangePasswordAsync(user, request.OldPassword, request.NewPassword);
+
+            if (!result.Succeeded)
+                return BadRequest(new ApiResponse(StatusCodes.Status400BadRequest, "Failed to change password"));
+
+            return Ok(new ApiResponse(StatusCodes.Status200OK, "Password changed successfully"));
+        }
+
+        #endregion
 
 
         #region Private Methods

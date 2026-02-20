@@ -27,8 +27,8 @@ namespace ITI_Project.Api.Extensions
                 //options.Password.RequireLowercase = true;
                 //options.SignIn.RequireConfirmedEmail = true;
                 //options.Tokens.EmailConfirmationTokenProvider = TokenOptions.DefaultEmailProvider;
-                options.Lockout.MaxFailedAccessAttempts = 5;
-                options.Lockout.DefaultLockoutTimeSpan = TimeSpan.FromMinutes(5);
+                //options.Lockout.MaxFailedAccessAttempts = 5;
+                //options.Lockout.DefaultLockoutTimeSpan = TimeSpan.FromMinutes(5);
 
             }).AddEntityFrameworkStores<AppIdentityDBContext>()
             .AddDefaultTokenProviders()
@@ -54,6 +54,7 @@ namespace ITI_Project.Api.Extensions
                     //ClockSkew = TimeSpan.FromDays(double.Parse(configuration["JWT:DurationInDays"])),
                     ClockSkew = TimeSpan.Zero
                 };
+
                 //options.Events = new JwtBearerEvents
                 //{
                 //    OnMessageReceived = context =>
@@ -67,6 +68,22 @@ namespace ITI_Project.Api.Extensions
                 //            context.Token = accessToken;
                 //        }
 
+                //        return Task.CompletedTask;
+                //    }
+                //OnAuthenticationFailed = context =>
+                //{
+                //    var logger = context.HttpContext.RequestServices
+                //        .GetRequiredService<ILoggerFactory>()
+                //        .CreateLogger("JwtBearer");
+                //    logger.LogError(context.Exception, "JWT authentication failed.");
+                //    return Task.CompletedTask;
+                //},
+                //    OnChallenge = context =>
+                //    {
+                //        var logger = context.HttpContext.RequestServices
+                //            .GetRequiredService<ILoggerFactory>()
+                //            .CreateLogger("JwtBearer");
+                //        logger.LogWarning("JWT challenge triggered. Error: {Error}, Description: {Description}", context.Error, context.ErrorDescription);
                 //        return Task.CompletedTask;
                 //    }
                 //};

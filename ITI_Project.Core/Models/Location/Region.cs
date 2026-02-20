@@ -19,7 +19,7 @@ namespace ITI_Project.Core.Models.Location
 
         [ForeignKey(nameof(Governorate))]
         public required int GovernorateId { get; set; }
-        public required Governorate Governorate { get; set; }
+        public Governorate? Governorate { get; set; }
         public ICollection<Provider>? Providers { get; set; }
         public ICollection<Post>? Posts { get; set; }
     }
