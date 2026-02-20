@@ -54,6 +54,17 @@ namespace ITI_Project.Api
             {
                 options.UseSqlServer(builder.Configuration.GetConnectionString("IdentityConnection"));
             });
+
+            /****************************** Global Connection String ********************************/
+            //builder.Services.AddDbContext<AppDbContext>(options =>
+            //{
+            //    options.UseSqlServer(builder.Configuration.GetConnectionString("DeploymentDbGlobal"));
+            //});
+
+            //builder.Services.AddDbContext<AppIdentityDBContext>(options =>
+            //{
+            //    options.UseSqlServer(builder.Configuration.GetConnectionString("DeploymentIdentityDbGlobal"));
+            //});
             #endregion
             /****************************** Add Application Services ********************************/
             builder.Services.AddApplicationServices();
@@ -83,6 +94,7 @@ namespace ITI_Project.Api
                 await applicationDbContext.Database.MigrateAsync();
                 await _identityContext.Database.MigrateAsync();
 
+                await AppDbContextSeed.SeedAsync(applicationDbContext, factoryLogger.CreateLogger(nameof(AppDbContextSeed))); //seed the data of the application (Categories, Products, etc.)
                 await RoleSeed.RoleSeedAsync(_roleManager);         //seed the roles (Admin, Provider)
             }
             catch (Exception ex)
@@ -103,6 +115,9 @@ namespace ITI_Project.Api
             app.UseSwaggerUI();
             app.UseHttpsRedirection();
 
+            app.UseCors("CorsPolicy");
+            //app.UseRateLimiter();
+            app.UseAuthentication();
             app.UseAuthorization();
 
             app.MapControllers();

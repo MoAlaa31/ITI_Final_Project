@@ -1,0 +1,14 @@
+[
+  { "Name_ar": "سباكة", "Name_en": "Plumbing" },
+  { "Name_ar": "كهرباء", "Name_en": "Electrical" },
+  { "Name_ar": "نجارة", "Name_en": "Carpentry" },
+  { "Name_ar": "دهانات", "Name_en": "Painting" },
+  { "Name_ar": "تكييف وتبريد", "Name_en": "Air Conditioning" },
+  { "Name_ar": "صيانة أجهزة منزلية", "Name_en": "Appliance Repair" },
+  { "Name_ar": "تنظيف منازل", "Name_en": "Home Cleaning" },
+  { "Name_ar": "مكافحة حشرات", "Name_en": "Pest Control" },
+  { "Name_ar": "نقل أثاث", "Name_en": "Moving" },
+  { "Name_ar": "صيانة سيارات", "Name_en": "Auto Repair" },
+  { "Name_ar": "حدائق وزراعة", "Name_en": "Gardening" },
+  { "Name_ar": "تركيب كاميرات مراقبة", "Name_en": "CCTV Installation" }
+]

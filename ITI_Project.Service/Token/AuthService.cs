@@ -51,7 +51,7 @@ namespace ITI_Project.Service.Token
                 // 1. Registered claims
                 audience: configuration["JWT:ValidAudience"],
                 issuer: configuration["JWT:ValidIssuer"],
-                expires: DateTime.UtcNow.AddMinutes(double.Parse(configuration["JWT:DurationInDays"])),
+                expires: DateTime.UtcNow.AddMinutes(double.Parse(configuration["JWT:AccessTokenExpirationInMinutes"])),
                 // 2. Private claims
                 claims: authClaims,
                 // 3. secret key
@@ -61,38 +61,36 @@ namespace ITI_Project.Service.Token
             return new JwtSecurityTokenHandler().WriteToken(token);
         }
 
-        public async Task<UserDto> RefreshTokenAsync(string token)
+        public async Task<RefreshTokenResultDto> RefreshTokenAsync(string refreshToken)
         {
             var user = await userManager.Users
                 .Include(u => u.RefreshTokens)
-                .SingleOrDefaultAsync(u => u.RefreshTokens.Any(rt => rt.Token == token));
+                .SingleOrDefaultAsync(u => u.RefreshTokens.Any(rt => rt.Token == refreshToken));
             // (Any ==> will return true if user has any refresh token that matches the token passed)
 
             if (user == null)
-                return new UserDto { IsAuthenticated = false, Message = "Invalid refresh token" };
+                return new RefreshTokenResultDto { IsAuthenticated = false, Message = "Invalid refresh token" };
 
-            var refreshToken = user.RefreshTokens.Single(rt => rt.Token == token);
+            var DBrefreshToken = user.RefreshTokens.Single(rt => rt.Token == refreshToken);
 
-            if (!refreshToken.IsActive)
-                return new UserDto { IsAuthenticated = false, Message = "Inactive refresh token" };
+            if (!DBrefreshToken.IsActive)
+                return new RefreshTokenResultDto { IsAuthenticated = false, Message = "Inactive refresh token" };
 
-            refreshToken.RevokedOn = DateTime.UtcNow;
+            DBrefreshToken.RevokedOn = DateTime.UtcNow;
             var newRefreshToken = TokenHelper.GenerateRefreshToken();
             user.RefreshTokens.Add(newRefreshToken);
             await userManager.UpdateAsync(user);
 
-            var jwtToken = await CreateTokenAsync(user, userManager);
+            var accessToken = await CreateTokenAsync(user, userManager);
 
             var roles = await userManager.GetRolesAsync(user);
-            return new UserDto
+
+            return new RefreshTokenResultDto
             {
                 IsAuthenticated = true,
-                Token = jwtToken,
+                AccessToken = accessToken,
                 RefreshToken = newRefreshToken.Token,
                 RefreshTokenExpiration = newRefreshToken.ExpiresOn,
-                Role = roles,
-                FullName = user.FullName,
-                Email = user.Email,
             };
         }
 
