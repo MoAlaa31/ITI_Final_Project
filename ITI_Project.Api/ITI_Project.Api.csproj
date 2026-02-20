@@ -28,7 +28,11 @@
   <ItemGroup>
     <ProjectReference Include="..\ITI_Project.Core\ITI_Project.Core.csproj" />
     <ProjectReference Include="..\ITI_Project.Repository\ITI_Project.Repository.csproj" />
-    <ProjectReference Include="..\ITI_Project.Service\ITI_Project.Service.csproj" />
+    <ProjectReference Include="..\ITI_Project.Service\ITI_Project.Services.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Folder Include="Controllers\PersonControllers\" />
   </ItemGroup>
 
 </Project>

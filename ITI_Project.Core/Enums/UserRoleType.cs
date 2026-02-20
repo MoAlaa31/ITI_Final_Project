@@ -4,10 +4,9 @@ using System.Text;
 
 namespace ITI_Project.Core.Enums
 {
-    public enum UserRole
+    public enum UserRoleType
     {
         Admin,
-        Provider,
-        User
+        Provider
     }
 }

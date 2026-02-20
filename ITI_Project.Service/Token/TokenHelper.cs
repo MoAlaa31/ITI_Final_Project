@@ -4,7 +4,7 @@ using System.Collections.Generic;
 using System.Security.Cryptography;
 using System.Text;
 
-namespace ITI_Project.Service.Token
+namespace ITI_Project.Services.Token
 {
     public static class TokenHelper
     {
