@@ -6,7 +6,7 @@ namespace ITI_Project.Core.Enums
 {
     public enum TargetType
     {
-        User,
+        Client,
         Provider,
         ServicePost,
         ServiceRequest,

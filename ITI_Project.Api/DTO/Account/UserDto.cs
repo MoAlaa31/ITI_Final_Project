@@ -2,7 +2,7 @@
 
 namespace ITI_Project.Api.DTO.Account
 {
-    public class UserDto
+    public class ClientDto
     {
         public string FullName { get; set; }
 

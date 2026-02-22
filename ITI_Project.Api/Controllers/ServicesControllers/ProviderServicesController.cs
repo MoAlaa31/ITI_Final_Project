@@ -3,14 +3,16 @@ using ITI_Project.Api.DTO.Services;
 using ITI_Project.Api.ErrorHandling;
 using ITI_Project.Api.Filters;
 using ITI_Project.Core;
+using ITI_Project.Core.Constants;
 using ITI_Project.Core.Enums;
-using ITI_Project.Core.Models.Persons;
 using ITI_Project.Core.Models.Services;
+using ITI_Project.Core.Models.Users;
 using ITI_Project.Core.Specifications.ServiceSpecs;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using System.Numerics;
+using System.Security.Claims;
 
 namespace ITI_Project.Api.Controllers.ServicesControllers
 {
@@ -27,6 +29,7 @@ namespace ITI_Project.Api.Controllers.ServicesControllers
             this.mapper = mapper;
         }
 
+        [Authorize]
         [HttpGet("provider/{providerId:int}")]
         [ServiceFilter(typeof(ExistingIdFilter<Provider>))]
         public async Task<ActionResult<IReadOnlyList<ServiceDTO>>> GetProviderServices(int providerId, [FromQuery] string? lang = "ar")
@@ -50,10 +53,13 @@ namespace ITI_Project.Api.Controllers.ServicesControllers
         }
 
         [Authorize(Roles = nameof(UserRoleType.Provider))]
-        [HttpPut("provider/{providerId:int}")]
-        [ServiceFilter(typeof(ExistingIdFilter<Provider>))]
-        public async Task<ActionResult> UpdateProviderServices(int providerId, [FromBody] UpdateProviderServicesDto dto)
+        [HttpPut("provider")]
+        public async Task<ActionResult> UpdateProviderServices([FromBody] UpdateProviderServicesDto dto)
         {
+            var providerIdClaim = User.FindFirstValue(Identifiers.ProviderId);
+            if (!int.TryParse(providerIdClaim, out var providerId))
+                return Unauthorized(new ApiResponse(StatusCodes.Status401Unauthorized, "ProviderId claim is missing or invalid"));
+
             if (dto?.ServiceIds == null)
                 return BadRequest(new ApiResponse(StatusCodes.Status400BadRequest, "ServiceIds are required"));
 

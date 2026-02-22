@@ -4,7 +4,7 @@ using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
 using System.Text;
 
-namespace ITI_Project.Core.Models.Persons
+namespace ITI_Project.Core.Models.Users
 {
     public class UserPhoneNumber: BaseEntity
     {
@@ -15,6 +15,6 @@ namespace ITI_Project.Core.Models.Persons
         // Relationships
         [ForeignKey("User")]
         public required int UserId { get; set; }
-        public required User User { get; set; }
+        public required Client User { get; set; }
     }
 }

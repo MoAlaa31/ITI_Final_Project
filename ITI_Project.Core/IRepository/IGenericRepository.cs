@@ -1,5 +1,5 @@
 ﻿using ITI_Project.Core.Models;
-using ITI_Project.Core.Models.Persons;
+using ITI_Project.Core.Models.Users;
 using ITI_Project.Core.Specifications;
 using System;
 using System.Collections.Generic;
@@ -21,7 +21,7 @@ namespace ITI_Project.Core.IRepository
         public Task<IReadOnlyList<TResult>> GetAllWithSpecAsync<TResult>(ISpecifications<T> spec, Expression<Func<T, TResult>> selector);
         public Task<T?> GetByIdAsync(int id);
         public Task<T?> GetAsync(int id);
-        public Task<User> GetByAppUserIdAsync(string id);
+        public Task<Client> GetByAppUserIdAsync(string id);
         public Task<T?> GetWithNameAsync(string name);
         public Task<IReadOnlyList<T>> GetAllAsync();
         public Task<int> GetCountAsync(ISpecifications<T> spec);

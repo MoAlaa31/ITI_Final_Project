@@ -1,4 +1,4 @@
-﻿using ITI_Project.Core.Models.Persons;
+﻿using ITI_Project.Core.Models.Users;
 using System;
 using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
@@ -15,9 +15,9 @@ namespace ITI_Project.Core.Models.Posts
         public DateTime CreatedAt { get; set; }
 
         //Relationships
-        [ForeignKey("User")]
-        public required int UserId { get; set; }
-        public required User User { get; set; }
+        [ForeignKey("Client")]
+        public required int ClientId { get; set; }
+        public required Client Client { get; set; }
 
         [ForeignKey("Post")]
         public required int PostId { get; set; }

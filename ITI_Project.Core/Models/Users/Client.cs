@@ -8,9 +8,9 @@ using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
 using System.Text;
 
-namespace ITI_Project.Core.Models.Persons
+namespace ITI_Project.Core.Models.Users
 {
-    public class User : BaseEntity
+    public class Client : BaseEntity
     {
         public int Id { get; set; }
         public required string AppUserId { get; set; }

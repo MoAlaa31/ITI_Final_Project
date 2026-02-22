@@ -1,5 +1,5 @@
-﻿using ITI_Project.Core.Models.Persons;
-using ITI_Project.Core.Models.Posts;
+﻿using ITI_Project.Core.Models.Posts;
+using ITI_Project.Core.Models.Users;
 using System;
 using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;

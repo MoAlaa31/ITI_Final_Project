@@ -9,7 +9,7 @@ namespace ITI_Project.Repository.Identity
     {
         public static async Task RoleSeedAsync(RoleManager<IdentityRole> roleManager)
         {
-            string[] roles = { "Admin", "Provider" };
+            string[] roles = { "Admin", "Provider", "Client"};
             foreach (var role in roles)
             {
                 if (! await roleManager.RoleExistsAsync(role))

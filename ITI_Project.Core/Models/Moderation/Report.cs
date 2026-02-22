@@ -1,6 +1,6 @@
 ﻿using ITI_Project.Core.Enums;
-using ITI_Project.Core.Models.Persons;
 using ITI_Project.Core.Models.Requests;
+using ITI_Project.Core.Models.Users;
 using System;
 using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
@@ -21,15 +21,15 @@ namespace ITI_Project.Core.Models.Moderation
         // Relationships
         [ForeignKey(nameof(Reporter))]
         public required int ReporterId { get; set; }
-        public required User Reporter { get; set; }
+        public required Client Reporter { get; set; }
 
         [ForeignKey(nameof(TargetUser))]
         public required int TargetUserId { get; set; }
-        public required User TargetUser { get; set; }
+        public required Client TargetUser { get; set; }
 
         [ForeignKey(nameof(Resolver))]
         public int? ResolverId { get; set; }
-        public User? Resolver { get; set; }
+        public Client? Resolver { get; set; }
 
         [ForeignKey(nameof(ServiceRequest))]
         public required int ServiceRequestId { get; set; }
