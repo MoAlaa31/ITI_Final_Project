@@ -4,7 +4,7 @@ using ITI_Project.Api.ErrorHandling;
 using ITI_Project.Core;
 using ITI_Project.Core.IServices;
 using ITI_Project.Core.Models.Identity;
-using ITI_Project.Core.Models.Persons;
+using ITI_Project.Core.Models.Users;
 using ITI_Project.Services.Token;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
@@ -82,7 +82,7 @@ namespace ITI_Project.Api.Controllers
 
             var nameParts = model.FullName?.Trim().Split(' ', StringSplitOptions.RemoveEmptyEntries) ?? Array.Empty<string>();
 
-            var newUser = new User()
+            var newClient = new Client()
             {
                 AppUserId = registeredUser.Id,
                 FirstName = nameParts.Length > 0 ? nameParts[0] : string.Empty,
@@ -91,12 +91,12 @@ namespace ITI_Project.Api.Controllers
             };
             try
             {
-                await unitOfWork.Repository<User>().AddWithSaveAsync(newUser);
+                await unitOfWork.Repository<Client>().AddWithSaveAsync(newClient);
                 await unitOfWork.CompleteAsync();
             }
             catch (DbUpdateException ex)
             {
-                logger.LogError(ex, "Database update error while creating patient for user: {Email}", model.Email);
+                logger.LogError(ex, "Database update error while creating account for client: {Email}", model.Email);
                 await userManager.DeleteAsync(registeredUser); // Rollback user creation
 
                 return BadRequest(new ApiResponse(500, "An unexpected error occurred."));
@@ -126,7 +126,7 @@ namespace ITI_Project.Api.Controllers
 
             var roles = await userManager.GetRolesAsync(appUser);
 
-            var user = await unitOfWork.Repository<User>().GetByAppUserIdAsync(appUser.Id);
+            var client = await unitOfWork.Repository<Client>().GetByAppUserIdAsync(appUser.Id);
             // Generate Access Token
             var accessToken = await authService.CreateTokenAsync(appUser, userManager);
 
@@ -142,7 +142,7 @@ namespace ITI_Project.Api.Controllers
             SetRefreshTokenInCookie(refreshToken.Token, refreshToken.ExpiresOn);
 
             return Ok(
-                new UserDto()
+                new ClientDto()
                 {
                     FullName = appUser.FullName,
                     Email = appUser.Email,

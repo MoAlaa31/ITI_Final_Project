@@ -1,7 +1,7 @@
 ﻿using ITI_Project.Core.Enums;
 using ITI_Project.Core.Models.Location;
 using ITI_Project.Core.Models.Moderation;
-using ITI_Project.Core.Models.Persons;
+using ITI_Project.Core.Models.Users;
 using System;
 using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
@@ -30,7 +30,7 @@ namespace ITI_Project.Core.Models.Requests
         [Required(ErrorMessage = "User Id is required.")]
         [ForeignKey(nameof(User))]
         public required int UserId { get; set; }
-        public required User User { get; set; }
+        public required Client User { get; set; }
 
         public Review? Review { get; set; }
 

@@ -9,7 +9,7 @@ using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
 using System.Text;
 
-namespace ITI_Project.Core.Models.Persons
+namespace ITI_Project.Core.Models.Users
 {
     public class Provider : BaseEntity
     {
@@ -17,8 +17,8 @@ namespace ITI_Project.Core.Models.Persons
         [StringLength(100, ErrorMessage = "Bio cannot be longer than 100 characters.")]
         public string? Bio { get; set; }
         public bool Isverified { get; set; }
-        public double Rating { get; set; } = 0;
-        public int JobsCount { get; set; } = 0;
+        public double? Rating { get; set; }
+        public int JobsCount { get; set; }
         [StringLength(25, ErrorMessage = "Nickname cannot be longer than 25 characters.")]
         public string? Nickname { get; set; }
         public DateOnly StartedAt { get; set; }
@@ -26,20 +26,20 @@ namespace ITI_Project.Core.Models.Persons
 
         // Relationships
         [Required(ErrorMessage = "User Id is required.")]
-        [ForeignKey(nameof(User))]
-        public required int UserId { get; set; }
-        public required User User { get; set; }                  //to be reviewed
+        [ForeignKey(nameof(Client))]
+        public int ClientId { get; set; }
+        public Client Client { get; set; } = null!;
 
         public BaseLocation? BaseLocation { get; set; }
         public LiveLocation? LiveLocation { get; set; }
 
         [ForeignKey(nameof(Governorate))]
-        public required int GovernorateId { get; set; }
-        public required Governorate Governorate { get; set; }
+        public int GovernorateId { get; set; }
+        public Governorate Governorate { get; set; } = null!;
 
         [ForeignKey(nameof(Region))]
-        public required int RegionId { get; set; }
-        public required Region Region { get; set; }
+        public int RegionId { get; set; }
+        public Region Region { get; set; } = null!;
 
         public ICollection<ProviderService>? ProviderServices { get; set; }
         public ICollection<ProviderDocument>? ProviderDocuments { get; set; }

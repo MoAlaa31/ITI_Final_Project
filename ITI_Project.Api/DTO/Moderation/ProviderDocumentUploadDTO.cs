@@ -1,6 +1,5 @@
 ﻿using ITI_Project.Api.Attributes;
 using ITI_Project.Core.Enums;
-using ITI_Project.Core.Models.Persons;
 using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
 

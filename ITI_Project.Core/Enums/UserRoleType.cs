@@ -7,6 +7,7 @@ namespace ITI_Project.Core.Enums
     public enum UserRoleType
     {
         Admin,
-        Provider
+        Provider,
+        Client
     }
 }

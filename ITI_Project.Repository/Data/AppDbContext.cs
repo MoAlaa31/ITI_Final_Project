@@ -1,9 +1,9 @@
 ﻿using ITI_Project.Core.Models.Location;
 using ITI_Project.Core.Models.Moderation;
-using ITI_Project.Core.Models.Persons;
 using ITI_Project.Core.Models.Posts;
 using ITI_Project.Core.Models.Requests;
 using ITI_Project.Core.Models.Services;
+using ITI_Project.Core.Models.Users;
 using Microsoft.EntityFrameworkCore;
 using System;
 using System.Collections.Generic;
@@ -20,7 +20,7 @@ namespace ITI_Project.Repository.Data
         }
 
         // Persons
-        public DbSet<User> Users { get; set; }
+        public DbSet<Client> Clients { get; set; }
         public DbSet<Provider> Providers { get; set; }
 
         // Provider verification
@@ -77,27 +77,27 @@ namespace ITI_Project.Repository.Data
             /* --------------------- Posts & Media Models -----------------  */
 
             modelBuilder.Entity<PostReaction>()
-                .HasKey(r => new { r.ServicePostId, r.UserId });
+                .HasKey(r => new { r.ServicePostId, r.ClientId });
 
             modelBuilder.Entity<CommentReaction>()
-                .HasKey(r => new { r.CommentId, r.UserId });
+                .HasKey(r => new { r.CommentId, r.ClientId });
 
             modelBuilder.Entity<Comment>()
-                .HasOne(c => c.User)
+                .HasOne(c => c.Client)
                 .WithMany(u => u.Comments)
-                .HasForeignKey(c => c.UserId)
+                .HasForeignKey(c => c.ClientId)
                 .OnDelete(DeleteBehavior.Restrict);
 
             modelBuilder.Entity<PostReaction>()
-                .HasOne(r => r.User)
+                .HasOne(r => r.Client)
                 .WithMany(u => u.PostReactions)
-                .HasForeignKey(r => r.UserId)
+                .HasForeignKey(r => r.ClientId)
                 .OnDelete(DeleteBehavior.Restrict);
 
             modelBuilder.Entity<CommentReaction>()
-                .HasOne(cr => cr.User)
+                .HasOne(cr => cr.Client)
                 .WithMany(u => u.CommentReactions)
-                .HasForeignKey(cr => cr.UserId)
+                .HasForeignKey(cr => cr.ClientId)
                 .OnDelete(DeleteBehavior.Restrict);
 
 

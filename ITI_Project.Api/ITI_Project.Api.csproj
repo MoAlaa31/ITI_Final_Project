@@ -31,8 +31,4 @@
     <ProjectReference Include="..\ITI_Project.Service\ITI_Project.Services.csproj" />
   </ItemGroup>
 
-  <ItemGroup>
-    <Folder Include="Controllers\PersonControllers\" />
-  </ItemGroup>
-
 </Project>

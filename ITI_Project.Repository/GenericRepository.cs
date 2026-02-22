@@ -1,6 +1,6 @@
 ﻿using ITI_Project.Core.IRepository;
 using ITI_Project.Core.Models;
-using ITI_Project.Core.Models.Persons;
+using ITI_Project.Core.Models.Users;
 using ITI_Project.Core.Specifications;
 using ITI_Project.Repository.Data;
 using Microsoft.EntityFrameworkCore;
@@ -125,9 +125,9 @@ namespace ITI_Project.Repository
 
         }
 
-        public async Task<User?> GetByAppUserIdAsync(string appUserId)
+        public async Task<Client?> GetByAppUserIdAsync(string appUserId)
         {
-            return await dbContext.Set<User>().FirstOrDefaultAsync(u => u.AppUserId == appUserId);
+            return await dbContext.Set<Client>().FirstOrDefaultAsync(u => u.AppUserId == appUserId);
         }
     }
 }
