@@ -2,7 +2,9 @@
 using ITI_Project.Api.Helpers;
 using ITI_Project.Core;
 using ITI_Project.Core.IRepository;
+using ITI_Project.Core.IServices;
 using ITI_Project.Repository;
+using ITI_Project.Services.Files;
 using Microsoft.AspNetCore.Mvc;
 
 namespace ITI_Project.Api.Extensions
@@ -19,6 +21,7 @@ namespace ITI_Project.Api.Extensions
 
             services.AddScoped<IUnitOfWork, UnitOfWork>();
             services.AddScoped(typeof(IGenericRepository<>), typeof(GenericRepository<>));
+            services.AddScoped<IFileStorageService, LocalFileStorageService>();
 
             services.AddAutoMapper(cfg => cfg.AddProfile<MappingProfiles>());
 
