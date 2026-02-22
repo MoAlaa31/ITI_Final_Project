@@ -114,6 +114,7 @@ namespace ITI_Project.Api
             app.UseSwagger();
             app.UseSwaggerUI();
             app.UseHttpsRedirection();
+            app.UseStaticFiles();
 
             app.UseCors("CorsPolicy");
             //app.UseRateLimiter();
