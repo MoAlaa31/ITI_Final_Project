@@ -28,9 +28,9 @@ namespace ITI_Project.Core.Models.Requests
         public Provider? Provider{ get; set; }
 
         [Required(ErrorMessage = "User Id is required.")]
-        [ForeignKey(nameof(User))]
-        public required int UserId { get; set; }
-        public required Client User { get; set; }
+        [ForeignKey(nameof(Client))]
+        public required int ClientId { get; set; }
+        public required Client Client { get; set; }
 
         public Review? Review { get; set; }
 

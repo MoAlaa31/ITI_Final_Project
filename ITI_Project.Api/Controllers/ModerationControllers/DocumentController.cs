@@ -28,20 +28,36 @@ namespace ITI_Project.Api.Controllers.ModerationControllers
             this.fileStorageService = fileStorageService;
         }
 
-        [Authorize(Roles = nameof(UserRoleType.Provider))]
+        [Authorize(Roles = $"{nameof(UserRoleType.Provider)},{nameof(UserRoleType.Admin)}")]
         [HttpGet("get-documents")]
-        public async Task<ActionResult<ProviderDocumentDto>> GetAllProviderDocuments()
+        public async Task<ActionResult<ProviderDocumentDto>> GetAllProviderDocuments([FromQuery] int? providerId = null)
         {
-            var providerIdClaim = User.FindFirstValue(Identifiers.ProviderId);
-            if (!int.TryParse(providerIdClaim, out var providerId))
-                return Unauthorized(new ApiResponse(StatusCodes.Status401Unauthorized, "ProviderId claim is missing or invalid"));
+            int actualProviderId;
 
-            var provider = await unitOfWork.Repository<Provider>().GetByIdAsync(providerId);
+            if (User.IsInRole(nameof(UserRoleType.Provider)))
+            {
+                var providerIdClaim = User.FindFirstValue(Identifiers.ProviderId);
+                if (!int.TryParse(providerIdClaim, out actualProviderId))
+                    return Unauthorized(new ApiResponse(StatusCodes.Status401Unauthorized, "ProviderId claim is missing or invalid"));
+            }
+            else if (User.IsInRole(nameof(UserRoleType.Admin)))
+            {
+                if (!providerId.HasValue)
+                    return BadRequest(new ApiResponse(StatusCodes.Status400BadRequest, "ProviderId is required for admin users"));
+
+                actualProviderId = providerId.Value;
+            }
+            else
+            {
+                return Forbid();
+            }
+
+            var provider = await unitOfWork.Repository<Provider>().GetByIdAsync(actualProviderId);
             if (provider is null)
                 return NotFound(new ApiResponse(StatusCodes.Status404NotFound, "Provider not found"));
 
             var documents = await unitOfWork.Repository<ProviderDocument>()
-                .GetManyByConditionAsync(spec => spec.ProviderId == providerId);
+                .GetManyByConditionAsync(spec => spec.ProviderId == actualProviderId);
             if (documents is null || documents.Count == 0)
                 return NotFound (new ApiResponse(StatusCodes.Status404NotFound, "No documents found for this provider"));
 
@@ -90,6 +106,30 @@ namespace ITI_Project.Api.Controllers.ModerationControllers
                 // If there's an error saving to the database, we should delete the uploaded file to avoid orphaned files
                 fileStorageService.DeleteFile(uploadResult.FilePath!);
                 return StatusCode(StatusCodes.Status500InternalServerError, new ApiResponse(StatusCodes.Status500InternalServerError, "An error occurred while saving the document. Please try again."));
+            }
+
+            var dto = mapper.Map<ProviderDocumentDto>(document);
+            return Ok(dto);
+        }
+
+        [Authorize(Roles = nameof(UserRoleType.Admin))]
+        [HttpPut("validate-document/{documentId}")]
+        public async Task<ActionResult<ProviderDocumentDto>> ValidateProviderDocument(int documentId, [FromQuery] bool isValid)
+        {
+            var document = await unitOfWork.Repository<ProviderDocument>().GetByIdAsync(documentId);
+            if (document is null)
+                return NotFound(new ApiResponse(StatusCodes.Status404NotFound, "Document not found"));
+
+            document.IsApproved = isValid;
+
+            try
+            {
+                unitOfWork.Repository<ProviderDocument>().Update(document);
+                await unitOfWork.CompleteAsync();
+            }
+            catch(Exception ex)
+            {
+                return StatusCode(StatusCodes.Status500InternalServerError, new ApiResponse(StatusCodes.Status500InternalServerError, "An error occurred while validating the document. Please try again."));
             }
 
             var dto = mapper.Map<ProviderDocumentDto>(document);

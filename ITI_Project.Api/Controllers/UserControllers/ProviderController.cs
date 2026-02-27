@@ -74,7 +74,7 @@ namespace ITI_Project.Api.Controllers.UserControllers
             }
             catch (Exception ex)
             {
-                return BadRequest(new ApiResponse(StatusCodes.Status400BadRequest, $"An error occurred while processing the request: {ex.Message}"));
+                return StatusCode(StatusCodes.Status500InternalServerError, new ApiResponse(StatusCodes.Status500InternalServerError, $"An error occurred while processing the request: {ex.Message}"));
             }
         }
 
