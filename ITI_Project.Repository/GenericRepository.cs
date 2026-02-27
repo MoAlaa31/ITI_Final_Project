@@ -64,11 +64,6 @@ namespace ITI_Project.Repository
             throw new NotImplementedException();
         }
 
-        public async Task<T?> GetByIdAsync(int id)
-        {
-            return await dbContext.Set<T>().FindAsync(id);
-        }
-
         public async Task<int> GetCountAsync(ISpecifications<T> spec)
         {
             return await ApplyQuery(spec).CountAsync();
@@ -119,15 +114,41 @@ namespace ITI_Project.Repository
             await dbContext.SaveChangesAsync();
         }
 
+        public async Task<Client?> GetByAppUserIdAsync(string appUserId)
+        {
+            return await dbContext.Set<Client>().FirstOrDefaultAsync(u => u.AppUserId == appUserId);
+        }
+
         public async Task<IReadOnlyList<T>?> GetManyByConditionAsync(Expression<Func<T, bool>> expression)
         {
             return await dbContext.Set<T>().Where(expression).ToListAsync();
 
         }
 
-        public async Task<Client?> GetByAppUserIdAsync(string appUserId)
+        public async Task<IReadOnlyList<T>?> GetManyByConditionAsync(
+            Expression<Func<T, bool>> predicate,
+            params Expression<Func<T, object>>[] includes)
         {
-            return await dbContext.Set<Client>().FirstOrDefaultAsync(u => u.AppUserId == appUserId);
+            IQueryable<T> query = dbContext.Set<T>();
+            foreach (var include in includes)
+                query = query.Include(include);
+
+            return await query.Where(predicate).ToListAsync();
         }
+
+        public async Task<T?> GetByIdAsync(int id)
+        {
+            return await dbContext.Set<T>().FindAsync(id);
+        }
+
+        public async Task<T?> GetByIdWithIncludesAsync(int id, params Expression<Func<T, object>>[] includes)
+        {
+            IQueryable<T> query = dbContext.Set<T>();
+            foreach (var include in includes)
+                query = query.Include(include);
+
+            return await query.FirstOrDefaultAsync(x => EF.Property<int>(x, "Id") == id);
+        }
+
     }
 }

@@ -2,6 +2,7 @@
 using ITI_Project.Api.DTO.Account;
 using ITI_Project.Api.ErrorHandling;
 using ITI_Project.Core;
+using ITI_Project.Core.Enums;
 using ITI_Project.Core.IServices;
 using ITI_Project.Core.Models.Identity;
 using ITI_Project.Core.Models.Users;
@@ -66,6 +67,16 @@ namespace ITI_Project.Api.Controllers
             var registeredUser = await userManager.FindByEmailAsync(model.Email);
             if (registeredUser == null)
                 return BadRequest(new ApiResponse(400, "User registration failed."));
+
+            var roleResult = await userManager.AddToRoleAsync(registeredUser, nameof(UserRoleType.Client));
+            if (!roleResult.Succeeded)
+            {
+                await userManager.DeleteAsync(registeredUser); // rollback user creation
+                return BadRequest(new ApiValidationErrorResponse(StatusCodes.Status400BadRequest, "Failed to assign Client role.")
+                {
+                    Errors = roleResult.Errors.Select(e => e.Description).ToArray()
+                });
+            }
 
             // OTP Configuration
             //var OTP = await GenerateAndSaveOtp(registeredUser, OtpType.EmailVerification);

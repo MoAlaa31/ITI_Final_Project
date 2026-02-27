@@ -21,14 +21,18 @@ namespace ITI_Project.Core.IRepository
         public Task<IReadOnlyList<TResult>> GetAllWithSpecAsync<TResult>(ISpecifications<T> spec, Expression<Func<T, TResult>> selector);
         public Task<T?> GetByIdAsync(int id);
         public Task<T?> GetAsync(int id);
-        public Task<Client> GetByAppUserIdAsync(string id);
+        public Task<Client?> GetByAppUserIdAsync(string id);
         public Task<T?> GetWithNameAsync(string name);
         public Task<IReadOnlyList<T>> GetAllAsync();
         public Task<int> GetCountAsync(ISpecifications<T> spec);
         public Task SaveAsync();
         public void DeleteRange(IEnumerable<T> entities);
         public Task AddRangeAsync(IEnumerable<T> entities);
-        public Task<T?> GetByConditionAsync(Expression<Func<T, bool>> expression);
-        public Task<IReadOnlyList<T>?> GetManyByConditionAsync(Expression<Func<T, bool>> expression);
+        public Task<T?> GetByConditionAsync(Expression<Func<T, bool>> predicate);
+        public Task<IReadOnlyList<T>?> GetManyByConditionAsync(Expression<Func<T, bool>> predicate);
+        public Task<IReadOnlyList<T>?> GetManyByConditionAsync(
+            Expression<Func<T, bool>> predicate,
+            params Expression<Func<T, object>>[] includes);
+        public Task<T?> GetByIdWithIncludesAsync(int id, params Expression<Func<T, object>>[] includes);
     }
 }
