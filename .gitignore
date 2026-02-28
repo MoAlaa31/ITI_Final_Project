@@ -18,3 +18,5 @@ ITI_Project.Service/obj/
 # Ignore Visual Studio files
 .vs/
 
+# Ignore environment files
+.env
