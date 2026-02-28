@@ -1,3 +1,4 @@
+using ITI_Project.Api.DTO.Location;
 using ITI_Project.Core.Enums;
 using ITI_Project.Core.Models.Location;
 
@@ -13,6 +14,6 @@ namespace ITI_Project.Api.DTO.Requests
         public DateTime? PreferredTime { get; set; }
         public int ClientId { get; set; }
         public int? ProviderId { get; set; }
-        public ServiceRequestLocation? ServiceRequestLocation { get; set; }
+        public ServiceRequestLocationDTO? ServiceRequestLocation { get; set; }
     }
 }

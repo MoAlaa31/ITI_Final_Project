@@ -7,6 +7,8 @@ using ITI_Project.Core.Constants;
 using ITI_Project.Core.Enums;
 using ITI_Project.Core.Models.Requests;
 using ITI_Project.Core.Models.Users;
+using ITI_Project.Core.Specifications.RequestSpecs;
+using ITI_Project.Core.Specifications.ServiceRequestSpecs;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
@@ -54,83 +56,113 @@ namespace ITI_Project.Api.Controllers.RequestControllers
             }
 
             var dto = mapper.Map<ServiceRequestDTO>(serviceRequest);
-            return CreatedAtAction(nameof(CreateServiceRequest), new { id = serviceRequest.Id }, dto);   // to be reviewed later, should it be GetServiceRequestById instead of CreateServiceRequest?
+            return CreatedAtAction(nameof(GetServiceRequestById), new { id = serviceRequest.Id }, dto);   // to be reviewed later, should it be GetServiceRequestById instead of CreateServiceRequest?
         }
 
-        //[Authorize]
-        //[HttpGet("{id}")]
-        //public async Task<ActionResult<ServiceRequestDTO>> GetServiceRequestById(int id)
-        //{
-        //    var serviceRequest = await unitOfWork.Repository<ServiceRequest>().GetByIdAsync(id);
-        //    if (serviceRequest is null)
-        //        return NotFound(new ApiResponse(StatusCodes.Status404NotFound, "Service request not found"));
+        [Authorize]
+        [HttpGet("{id}")]
+        public async Task<ActionResult<ServiceRequestDTO>> GetServiceRequestById(int id)
+        {
+            var serviceRequest = await unitOfWork.Repository<ServiceRequest>().GetByIdAsync(id);
+            if (serviceRequest is null)
+                return NotFound(new ApiResponse(StatusCodes.Status404NotFound, "Service request not found"));
 
-        //    if (User.IsInRole(nameof(UserRoleType.Client)))
-        //    {
-        //        var clientIdClaim = User.FindFirstValue(Identifiers.ClientId);
-        //        if (int.TryParse(clientIdClaim, out var clientId) && serviceRequest.ClientId != clientId)
-        //            return Forbid();
-        //    }
-        //    else if (User.IsInRole(nameof(UserRoleType.Provider)))
-        //    {
-        //        var providerIdClaim = User.FindFirstValue(Identifiers.ProviderId);
-        //        if (int.TryParse(providerIdClaim, out var providerId) && serviceRequest.ProviderId != providerId)
-        //            return Forbid();
-        //    }
+            if (User.IsInRole(nameof(UserRoleType.Client)))
+            {
+                var clientIdClaim = User.FindFirstValue(Identifiers.ClientId);
+                if (int.TryParse(clientIdClaim, out var clientId) && serviceRequest.ClientId != clientId)
+                    return Forbid();
+            }
+            else if (User.IsInRole(nameof(UserRoleType.Provider)))
+            {
+                var providerIdClaim = User.FindFirstValue(Identifiers.ProviderId);
+                if (int.TryParse(providerIdClaim, out var providerId) && serviceRequest.ProviderId != providerId)
+                    return Forbid();
+            }
 
-        //    var dto = mapper.Map<ServiceRequestDTO>(serviceRequest);
-        //    return Ok(dto);
-        //}
+            var dto = mapper.Map<ServiceRequestDTO>(serviceRequest);
+            return Ok(dto);
+        }
 
-        //[Authorize(Roles = nameof(UserRoleType.Client))]
-        //[HttpGet("my-requests")]
-        //public async Task<ActionResult<IReadOnlyList<ServiceRequestDTO>>> GetMyServiceRequests()
-        //{
-        //    var clientIdClaim = User.FindFirstValue(Identifiers.ClientId);
-        //    if (!int.TryParse(clientIdClaim, out var clientId))
-        //        return Unauthorized(new ApiResponse(StatusCodes.Status401Unauthorized, "ClientId claim is missing or invalid"));
+        [Authorize(Roles = nameof(UserRoleType.Client))]
+        [HttpGet("my-requests")]
+        public async Task<ActionResult<IReadOnlyList<ServiceRequestDTO>>> GetMyServiceRequests()
+        {
+            var clientIdClaim = User.FindFirstValue(Identifiers.ClientId);
+            if (!int.TryParse(clientIdClaim, out var clientId))
+                return Unauthorized(new ApiResponse(StatusCodes.Status401Unauthorized, "ClientId claim is missing or invalid"));
 
-        //    var serviceRequests = await unitOfWork.Repository<ServiceRequest>()
-        //        .GetManyByConditionAsync(sr => sr.ClientId == clientId);
+            var serviceRequests = await unitOfWork.Repository<ServiceRequest>()
+                .GetManyByConditionAsync(sr => sr.ClientId == clientId);
 
-        //    if (serviceRequests is null || serviceRequests.Count == 0)
-        //        return Ok(new List<ServiceRequestDTO>());
+            if (serviceRequests is null || serviceRequests.Count == 0)
+                return Ok(new List<ServiceRequestDTO>());
 
-        //    var dto = mapper.Map<IReadOnlyList<ServiceRequestDTO>>(serviceRequests);
-        //    return Ok(dto);
-        //}
+            var dto = mapper.Map<IReadOnlyList<ServiceRequestDTO>>(serviceRequests);
+            return Ok(dto);
+        }
 
-        //[Authorize(Roles = nameof(UserRoleType.Provider))]
-        //[HttpGet("available-requests")]
-        //public async Task<ActionResult<IReadOnlyList<ServiceRequestDTO>>> GetAvailableServiceRequests()
-        //{
-        //    var serviceRequests = await unitOfWork.Repository<ServiceRequest>()
-        //        .GetManyByConditionAsync(sr => sr.RequestStatus == RequestStatus.Open && sr.ProviderId == null);
+        [Authorize(Roles = nameof(UserRoleType.Provider))]
+        [HttpGet("available-requests")]
+        public async Task<ActionResult<IReadOnlyList<ServiceRequestDTO>>> GetAvailableServiceRequests([FromQuery] RequestSpecParams specParams)
+        {
+            var providerIdClaim = User.FindFirstValue(Identifiers.ProviderId);
+            if (!int.TryParse(providerIdClaim, out var providerId))
+                return Unauthorized(new ApiResponse(StatusCodes.Status401Unauthorized, "ProviderId claim is missing or invalid"));
 
-        //    if (serviceRequests is null || serviceRequests.Count == 0)
-        //        return Ok(new List<ServiceRequestDTO>());
+            var provider = await unitOfWork.Repository<Provider>()
+                .GetByIdWithIncludesAsync(providerId, p => p.BaseLocation!);
 
-        //    var dto = mapper.Map<IReadOnlyList<ServiceRequestDTO>>(serviceRequests);
-        //    return Ok(dto);
-        //}
+            if (provider?.BaseLocation is null)
+                return BadRequest(new ApiResponse(StatusCodes.Status400BadRequest, "Provider base location is required"));
 
-        //[Authorize(Roles = nameof(UserRoleType.Provider))]
-        //[HttpGet("my-assigned-requests")]
-        //public async Task<ActionResult<IReadOnlyList<ServiceRequestDTO>>> GetMyAssignedRequests()
-        //{
-        //    var providerIdClaim = User.FindFirstValue(Identifiers.ProviderId);
-        //    if (!int.TryParse(providerIdClaim, out var providerId))
-        //        return Unauthorized(new ApiResponse(StatusCodes.Status401Unauthorized, "ProviderId claim is missing or invalid"));
+            var radiusKm = Math.Max(1, specParams.RadiusKm ?? 10);
+            var lat = provider.BaseLocation.Latitude;
+            var lng = provider.BaseLocation.Longitude;
 
-        //    var serviceRequests = await unitOfWork.Repository<ServiceRequest>()
-        //        .GetManyByConditionAsync(sr => sr.ProviderId == providerId);
+            var deltaLat = radiusKm / 111.32;
+            var deltaLng = radiusKm / (111.32 * Math.Cos(lat * Math.PI / 180));
 
-        //    if (serviceRequests is null || serviceRequests.Count == 0)
-        //        return Ok(new List<ServiceRequestDTO>());
+            specParams.MinLatitude = lat - deltaLat;
+            specParams.MaxLatitude = lat + deltaLat;
+            specParams.MinLongitude = lng - deltaLng;
+            specParams.MaxLongitude = lng + deltaLng;
 
-        //    var dto = mapper.Map<IReadOnlyList<ServiceRequestDTO>>(serviceRequests);
-        //    return Ok(dto);
-        //}
+            var specs = new ProviderServiceRequestWithPaginationSpecifications(specParams);
+            var serviceRequests = await unitOfWork.Repository<ServiceRequest>().GetAllWithSpecAsync(specs);
+
+            if (serviceRequests is null || serviceRequests.Count == 0)
+                return Ok(new List<ServiceRequestDTO>());
+
+            // exact distance filter (Haversine)
+            var filtered = serviceRequests
+                .Where(sr => sr.ServiceRequestLocation != null &&
+                    GetDistanceKm(lat, lng,
+                        sr.ServiceRequestLocation.Latitude,
+                        sr.ServiceRequestLocation.Longitude) <= radiusKm)
+                .ToList();
+
+            var dto = mapper.Map<IReadOnlyList<ServiceRequestDTO>>(filtered);
+            return Ok(dto);
+        }
+
+        [Authorize(Roles = nameof(UserRoleType.Provider))]
+        [HttpGet("my-assigned-requests")]
+        public async Task<ActionResult<IReadOnlyList<ServiceRequestDTO>>> GetMyAssignedRequests()
+        {
+            var providerIdClaim = User.FindFirstValue(Identifiers.ProviderId);
+            if (!int.TryParse(providerIdClaim, out var providerId))
+                return Unauthorized(new ApiResponse(StatusCodes.Status401Unauthorized, "ProviderId claim is missing or invalid"));
+
+            var serviceRequests = await unitOfWork.Repository<ServiceRequest>()
+                .GetManyByConditionAsync(sr => sr.ProviderId == providerId, sr => sr.ServiceRequestLocation!);
+
+            if (serviceRequests is null || serviceRequests.Count == 0)
+                return Ok(new List<ServiceRequestDTO>());
+
+            var dto = mapper.Map<IReadOnlyList<ServiceRequestDTO>>(serviceRequests);
+            return Ok(dto);
+        }
 
         //[Authorize(Roles = nameof(UserRoleType.Client))]
         //[HttpPut("cancel/{id}")]
@@ -201,5 +233,21 @@ namespace ITI_Project.Api.Controllers.RequestControllers
         //    var dto = mapper.Map<ServiceRequestDTO>(serviceRequest);
         //    return CreatedAtAction(nameof(CreateServiceRequest), new { id = serviceRequest.Id }, dto);
         //}
+
+        private static double GetDistanceKm(double lat1, double lon1, double lat2, double lon2)
+        {
+            const double R = 6371; // Earth radius km
+            var dLat = DegreesToRadians(lat2 - lat1);
+            var dLon = DegreesToRadians(lon2 - lon1);
+
+            var a = Math.Sin(dLat / 2) * Math.Sin(dLat / 2) +
+                    Math.Cos(DegreesToRadians(lat1)) * Math.Cos(DegreesToRadians(lat2)) *
+                    Math.Sin(dLon / 2) * Math.Sin(dLon / 2);
+
+            var c = 2 * Math.Atan2(Math.Sqrt(a), Math.Sqrt(1 - a));
+            return R * c;
+        }
+
+        private static double DegreesToRadians(double degrees) => degrees * (Math.PI / 180);
     }
 }

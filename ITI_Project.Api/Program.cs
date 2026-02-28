@@ -7,6 +7,7 @@ using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 using Serilog;
+using DotNetEnv;
 
 namespace ITI_Project.Api
 {
@@ -18,11 +19,16 @@ namespace ITI_Project.Api
             Log.Logger = new LoggerConfiguration()
                     .WriteTo.Console()
                     .WriteTo.File(Path.Combine(AppContext.BaseDirectory, "Logs", "app.log"), rollingInterval: RollingInterval.Day)
-                    .CreateLogger(); 
+                    .CreateLogger();
             #endregion
+
+            // Load environment variables from .env file
+            var root = Directory.GetCurrentDirectory();
+            Env.Load(Path.Combine(root, ".env"));
 
             var builder = WebApplication.CreateBuilder(args);
 
+            builder.Configuration.AddEnvironmentVariables();
             builder.Host.UseSerilog();
 
             #region Configure Service
@@ -45,7 +51,6 @@ namespace ITI_Project.Api
 
             #region Connection String (local | global)
             /****************************** Connection String ********************************/
-
             builder.Services.AddDbContext<AppDbContext>(options =>
             {
                 options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection"));
