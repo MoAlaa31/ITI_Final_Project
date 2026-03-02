@@ -27,7 +27,7 @@ namespace ITI_Project.Api.Controllers.RequestControllers
 
         [Authorize(Roles = nameof(UserRoleType.Provider))]
         [HttpPost("create-offer/{serviceRequestId:int}")]
-        public async Task<ActionResult> CreateRequestOffer(
+        public async Task<ActionResult<RequestOfferDTO>> CreateRequestOffer(
             int serviceRequestId,
             [FromBody] RequestOfferFromUserDTO requestOfferFromUser)
         {
@@ -72,7 +72,7 @@ namespace ITI_Project.Api.Controllers.RequestControllers
 
         [Authorize(Roles = $"{nameof(UserRoleType.Provider)},{nameof(UserRoleType.Client)}")]
         [HttpGet("{serviceRequestId:int}")]
-        public async Task<ActionResult> GetRequestOffersByServiceRequestId(int serviceRequestId)
+        public async Task<ActionResult<RequestOfferDTO>> GetRequestOffersByServiceRequestId(int serviceRequestId)
         {
             var serviceRequest = await unitOfWork.Repository<ServiceRequest>()
                 .GetByIdWithIncludesAsync(serviceRequestId, sr => sr.RequestOffers!);
@@ -115,7 +115,7 @@ namespace ITI_Project.Api.Controllers.RequestControllers
 
         [Authorize(Roles = nameof(UserRoleType.Provider))]
         [HttpPut("update-offer/{serviceRequestId:int}")]
-        public async Task<ActionResult> UpdateRequestOffer(
+        public async Task<ActionResult<RequestOfferDTO>> UpdateRequestOffer(
             int serviceRequestId,
             [FromBody] RequestOfferFromUserDTO requestOfferFromUser)
         {
