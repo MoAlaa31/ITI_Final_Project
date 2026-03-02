@@ -54,16 +54,6 @@ namespace ITI_Project.Repository
             return await dbContext.Set<T>().ToListAsync();
         }
 
-        public async Task<IReadOnlyList<T>?> GetAllWithSpecAsync(ISpecifications<T> specs)
-        {
-            return (IReadOnlyList<T>?)await ApplyQuery(specs).ToListAsync();
-        }
-
-        public Task<IReadOnlyList<TResult>> GetAllWithSpecAsync<TResult>(ISpecifications<T> spec, Expression<Func<T, TResult>> selector)
-        {
-            throw new NotImplementedException();
-        }
-
         public async Task<int> GetCountAsync(ISpecifications<T> spec)
         {
             return await ApplyQuery(spec).CountAsync();
@@ -150,5 +140,18 @@ namespace ITI_Project.Repository
             return await query.FirstOrDefaultAsync(x => EF.Property<int>(x, "Id") == id);
         }
 
+        public async Task<IReadOnlyList<TResult>> GetAllWithSpecAsync<TResult>(
+            ISpecifications<T> spec,
+            Expression<Func<T, TResult>> selector)
+        {
+            return await ApplyQuery(spec)
+                .Select(selector)
+                .ToListAsync();
+        }
+
+        public async Task<IReadOnlyList<T>?> GetAllWithSpecAsync(ISpecifications<T> specs)
+        {
+            return (IReadOnlyList<T>?)await ApplyQuery(specs).ToListAsync();
+        }
     }
 }

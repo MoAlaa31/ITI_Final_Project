@@ -17,7 +17,7 @@ namespace ITI_Project.Api.Controllers.ServicesControllers
             this.unitOfWork = unitOfWork;
         }
 
-        [HttpGet("services")]
+        [HttpGet("get-services")]
         public async Task<ActionResult<IReadOnlyList<ServiceDTO>>> GetServices([FromQuery] string? lang = "ar")
         {
             if (lang?.ToLower() != "ar" && lang?.ToLower() != "en")

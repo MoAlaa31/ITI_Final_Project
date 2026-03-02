@@ -27,6 +27,9 @@ namespace ITI_Project.Api.Helpers
 
             /****************************************** Mapping for Service Request ******************************************/
             CreateMap<ServiceRequestLocation, ServiceRequestLocationDTO>();
+
+            /****************************************** Mapping for Request Offer ******************************************/
+            CreateMap<RequestOffer, RequestOfferDTO>();
         }
     }
 }

@@ -12,12 +12,11 @@ namespace ITI_Project.Core.Models.Requests
     {
         public int Id { get; set; }
         [Range(0.0, 1000000.0, ErrorMessage = "Price must be a positive number.")]
-        decimal Price { get; set; }
+        public decimal Price { get; set; }
         public DateTime CreatedAt { get; set; }
         [StringLength(200, ErrorMessage = "Message cannot be longer than 200 characters.")]
         [Required(ErrorMessage = "Message is required.")]
         public required string Message { get; set; }
-        public RequestStatus Status { get; set; }
 
         // Relationships
         [ForeignKey("ServiceRequest")]

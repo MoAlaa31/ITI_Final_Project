@@ -13,8 +13,8 @@ namespace ITI_Project.Core.Models.Users
         public required string PhoneNumber { get; set; }
 
         // Relationships
-        [ForeignKey("User")]
-        public required int UserId { get; set; }
-        public required Client User { get; set; }
+        [ForeignKey(nameof(Client))]
+        public required int ClientId { get; set; }
+        public required Client Client { get; set; }
     }
 }

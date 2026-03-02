@@ -2,51 +2,51 @@
 using System;
 using System.Collections.Generic;
 using System.Linq.Expressions;
-using System.Text;
 
 namespace ITI_Project.Core.Specifications
 {
     public class BaseSpecifications<T> : ISpecifications<T> where T : BaseEntity
     {
         public Expression<Func<T, bool>> Criteria { get; set; }
-        public List<Expression<Func<T, object>>> Includes { get; set; } = new List<Expression<Func<T, object>>>();
+        public List<Expression<Func<T, object>>> Includes { get; set; } = new();
         public Expression<Func<T, object>> OrderBy { get; set; }
         public Expression<Func<T, object>> OrderByDescending { get; set; }
         public Expression<Func<T, object>> ThenOrderBy { get; set; }
         public Expression<Func<T, object>> ThenOrderByDescending { get; set; }
-        public List<Func<IQueryable<T>, IQueryable<T>>> ThenIncludes { get; set; } = new List<Func<IQueryable<T>, IQueryable<T>>>();
+        public List<Func<IQueryable<T>, IQueryable<T>>> ThenIncludes { get; set; } = new();
 
         public int Skip { get; set; }
         public int Take { get; set; }
         public bool IsPaginationEnabled { get; set; }
-        public Expression<Func<T, object>> Selector { get; set; }
+        public LambdaExpression? Selector { get; set; }
 
         public BaseSpecifications()
         {
-
         }
 
-        public BaseSpecifications(Expression<Func<T, bool>> CriteriaExpression)
+        public BaseSpecifications(Expression<Func<T, bool>> criteriaExpression)
         {
-            Criteria = CriteriaExpression;
+            Criteria = criteriaExpression;
         }
 
-        public void AddOrderBy(Expression<Func<T, object>> OrderByExpression)
+        public void AddOrderBy(Expression<Func<T, object>> orderByExpression)
         {
-            OrderBy = OrderByExpression;
-        }
-        public void AddOrderByDescending(Expression<Func<T, object>> OrderByExpressionDescending)
-        {
-            OrderByDescending = OrderByExpressionDescending;
+            OrderBy = orderByExpression;
         }
 
-        public void AddThenOrderBy(Expression<Func<T, object>> ThenOrderByExpression)
+        public void AddOrderByDescending(Expression<Func<T, object>> orderByExpressionDescending)
         {
-            ThenOrderBy = ThenOrderByExpression;
+            OrderByDescending = orderByExpressionDescending;
         }
-        public void AddThenOrderByDescending(Expression<Func<T, object>> ThenOrderByExpressionDescending)
+
+        public void AddThenOrderBy(Expression<Func<T, object>> thenOrderByExpression)
         {
-            ThenOrderByDescending = ThenOrderByExpressionDescending;
+            ThenOrderBy = thenOrderByExpression;
+        }
+
+        public void AddThenOrderByDescending(Expression<Func<T, object>> thenOrderByExpressionDescending)
+        {
+            ThenOrderByDescending = thenOrderByExpressionDescending;
         }
 
         public void ApplyPagination(int skip, int take)
@@ -56,7 +56,7 @@ namespace ITI_Project.Core.Specifications
             Take = take;
         }
 
-        public void ApplySelector(Expression<Func<T, object>> selectorExpression)
+        public void ApplySelector<TResult>(Expression<Func<T, TResult>> selectorExpression)
         {
             Selector = selectorExpression;
         }

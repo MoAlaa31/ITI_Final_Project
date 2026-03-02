@@ -28,7 +28,7 @@ namespace ITI_Project.Api.Controllers.RequestControllers
         }
 
         [Authorize(Roles = nameof(UserRoleType.Client))]
-        [HttpPost("create-service-request")]
+        [HttpPost("create-service-request")]                        // LocationDTO must be added to ServiceRequestFromUserDTO
         public async Task<ActionResult<ServiceRequestDTO>> CreateServiceRequest(ServiceRequestFromUserDTO serviceRequestDTO)
         {
             var clientIdClaim = User.FindFirstValue(Identifiers.ClientId);
@@ -60,7 +60,7 @@ namespace ITI_Project.Api.Controllers.RequestControllers
         }
 
         [Authorize]
-        [HttpGet("{id}")]
+        [HttpGet("get-request-byid/{id:int}")]
         public async Task<ActionResult<ServiceRequestDTO>> GetServiceRequestById(int id)
         {
             var serviceRequest = await unitOfWork.Repository<ServiceRequest>().GetByIdAsync(id);
@@ -164,44 +164,6 @@ namespace ITI_Project.Api.Controllers.RequestControllers
             return Ok(dto);
         }
 
-        //[Authorize(Roles = nameof(UserRoleType.Client))]
-        //[HttpPut("cancel/{id}")]
-        //public async Task<ActionResult<ServiceRequestDTO>> CancelServiceRequest(int id)
-        //{
-        //    var clientIdClaim = User.FindFirstValue(Identifiers.ClientId);
-        //    if (!int.TryParse(clientIdClaim, out var clientId))
-        //        return Unauthorized(new ApiResponse(StatusCodes.Status401Unauthorized, "ClientId claim is missing or invalid"));
-
-        //    var serviceRequest = await unitOfWork.Repository<ServiceRequest>().GetByIdAsync(id);
-        //    if (serviceRequest is null)
-        //        return NotFound(new ApiResponse(StatusCodes.Status404NotFound, "Service request not found"));
-
-        //    if (serviceRequest.ClientId != clientId)
-        //        return Forbid();
-
-        //    if (serviceRequest.RequestStatus == RequestStatus.Completed)
-        //        return BadRequest(new ApiResponse(StatusCodes.Status400BadRequest, "Cannot cancel a completed request"));
-
-        //    if (serviceRequest.RequestStatus == RequestStatus.Cancelled)
-        //        return BadRequest(new ApiResponse(StatusCodes.Status400BadRequest, "Request is already cancelled"));
-
-        //    serviceRequest.RequestStatus = RequestStatus.Cancelled;
-
-        //    try
-        //    {
-        //        unitOfWork.Repository<ServiceRequest>().Update(serviceRequest);
-        //        await unitOfWork.CompleteAsync();
-        //    }
-        //    catch (Exception ex)
-        //    {
-        //        return StatusCode(StatusCodes.Status500InternalServerError,
-        //            new ApiResponse(StatusCodes.Status500InternalServerError, "An error occurred while cancelling the service request. Please try again."));
-        //    }
-
-        //    var dto = mapper.Map<ServiceRequestDTO>(serviceRequest);
-        //    return Ok(dto);
-        //}
-
         //[Authorize(Roles = $"{nameof(UserRoleType.Provider)},{nameof(UserRoleType.Admin)}")]
         //[HttpPut("update-status/{id}")]
         //public async Task<ActionResult<ServiceRequestDTO>> UpdateServiceRequestStatus(int id, [FromQuery] RequestStatus status)
@@ -233,6 +195,147 @@ namespace ITI_Project.Api.Controllers.RequestControllers
         //    var dto = mapper.Map<ServiceRequestDTO>(serviceRequest);
         //    return CreatedAtAction(nameof(CreateServiceRequest), new { id = serviceRequest.Id }, dto);
         //}
+
+
+        [Authorize(Roles = nameof(UserRoleType.Client))]
+        [HttpPut("assign/{id:int}")]
+        public async Task<ActionResult<ServiceRequestDTO>> AssignServiceRequest(int id, [FromQuery] int providerId)
+        {
+            var clientIdClaim = User.FindFirstValue(Identifiers.ClientId);
+            if (!int.TryParse(clientIdClaim, out var clientId))
+                return Unauthorized(new ApiResponse(StatusCodes.Status401Unauthorized, "ClientId claim is missing or invalid"));
+
+            var serviceRequest = await unitOfWork.Repository<ServiceRequest>()
+                .GetByIdWithIncludesAsync(id, sr => sr.RequestOffers!);
+
+            if (serviceRequest is null)
+                return NotFound(new ApiResponse(StatusCodes.Status404NotFound, "Service request not found"));
+
+            if (serviceRequest.ClientId != clientId)
+                return Forbid();
+
+            if (serviceRequest.RequestStatus != RequestStatus.Open || serviceRequest.ProviderId != null)
+                return BadRequest(new ApiResponse(StatusCodes.Status400BadRequest, "Request is not available for assignment"));
+
+            var hasOffer = serviceRequest.RequestOffers?.Any(o => o.ProviderId == providerId) == true;
+            if (!hasOffer)
+                return BadRequest(new ApiResponse(StatusCodes.Status400BadRequest, "Provider did not submit an offer for this request"));
+
+            serviceRequest.ProviderId = providerId;
+            serviceRequest.RequestStatus = RequestStatus.Assigned;
+
+            unitOfWork.Repository<ServiceRequest>().Update(serviceRequest);
+            await unitOfWork.CompleteAsync();
+
+            var dto = mapper.Map<ServiceRequestDTO>(serviceRequest);
+            return Ok(dto);
+        }
+
+        [Authorize(Roles = nameof(UserRoleType.Provider))]
+        [HttpPut("start/{id:int}")]
+        public async Task<ActionResult<ServiceRequestDTO>> StartServiceRequest(int id, [FromQuery] bool isAccepted)
+        {
+            var providerIdClaim = User.FindFirstValue(Identifiers.ProviderId);
+            if (!int.TryParse(providerIdClaim, out var providerId))
+                return Unauthorized(new ApiResponse(StatusCodes.Status401Unauthorized, "ProviderId claim is missing or invalid"));
+
+            var serviceRequest = await unitOfWork.Repository<ServiceRequest>().GetByIdAsync(id);
+            if (serviceRequest is null)
+                return NotFound(new ApiResponse(StatusCodes.Status404NotFound, "Service request not found"));
+
+            if (serviceRequest.ProviderId != providerId)
+                return Forbid();
+
+            if (serviceRequest.RequestStatus != RequestStatus.Assigned)
+                return BadRequest(new ApiResponse(StatusCodes.Status400BadRequest, "Request is not assigned to you"));
+
+            if (!isAccepted)
+            {
+                serviceRequest.ProviderId = null;
+                serviceRequest.RequestStatus = RequestStatus.Open;
+                unitOfWork.Repository<ServiceRequest>().Update(serviceRequest);
+                await unitOfWork.CompleteAsync();
+                var dto = mapper.Map<ServiceRequestDTO>(serviceRequest);
+                return Ok(dto);
+            }
+            else
+            {
+                serviceRequest.RequestStatus = RequestStatus.InProgress;
+                unitOfWork.Repository<ServiceRequest>().Update(serviceRequest);
+                await unitOfWork.CompleteAsync();
+                var dto = mapper.Map<ServiceRequestDTO>(serviceRequest);
+                return Ok(dto);
+            }
+        }
+
+        [Authorize(Roles = nameof(UserRoleType.Client))]
+        [HttpPut("complete/{id:int}")]
+        public async Task<ActionResult<ServiceRequestDTO>> CompleteServiceRequest(int id)
+        {
+            var clientIdClaim = User.FindFirstValue(Identifiers.ClientId);
+            if (!int.TryParse(clientIdClaim, out var clientId))
+                return Unauthorized(new ApiResponse(StatusCodes.Status401Unauthorized, "ClientId claim is missing or invalid"));
+
+            var serviceRequest = await unitOfWork.Repository<ServiceRequest>().GetByIdAsync(id);
+            if (serviceRequest is null)
+                return NotFound(new ApiResponse(StatusCodes.Status404NotFound, "Service request not found"));
+
+            if (serviceRequest.ClientId != clientId)
+                return Forbid();
+
+            if (serviceRequest.RequestStatus != RequestStatus.InProgress)
+                return BadRequest(new ApiResponse(StatusCodes.Status400BadRequest, "Request is not in progress"));
+
+            serviceRequest.RequestStatus = RequestStatus.Completed;
+
+            unitOfWork.Repository<ServiceRequest>().Update(serviceRequest);
+            await unitOfWork.CompleteAsync();
+
+            var dto = mapper.Map<ServiceRequestDTO>(serviceRequest);
+            return Ok(dto);
+        }
+
+        [Authorize(Roles = nameof(UserRoleType.Client))]
+        [HttpPut("cancel/{id}")]
+        public async Task<ActionResult<ServiceRequestDTO>> CancelServiceRequest(int id)
+        {
+            var clientIdClaim = User.FindFirstValue(Identifiers.ClientId);
+            if (!int.TryParse(clientIdClaim, out var clientId))
+                return Unauthorized(new ApiResponse(StatusCodes.Status401Unauthorized, "ClientId claim is missing or invalid"));
+
+            var serviceRequest = await unitOfWork.Repository<ServiceRequest>().GetByIdAsync(id);
+            if (serviceRequest is null)
+                return NotFound(new ApiResponse(StatusCodes.Status404NotFound, "Service request not found"));
+
+            if (serviceRequest.ClientId != clientId)
+                return Forbid();
+
+            if (serviceRequest.RequestStatus == RequestStatus.Completed)
+                return BadRequest(new ApiResponse(StatusCodes.Status400BadRequest, "Cannot cancel a completed request"));
+
+            if (serviceRequest.RequestStatus == RequestStatus.Cancelled)
+                return BadRequest(new ApiResponse(StatusCodes.Status400BadRequest, "Request is already cancelled"));
+
+            serviceRequest.RequestStatus = RequestStatus.Cancelled;
+
+            try
+            {
+                unitOfWork.Repository<ServiceRequest>().Update(serviceRequest);
+                await unitOfWork.CompleteAsync();
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(StatusCodes.Status500InternalServerError,
+                    new ApiResponse(StatusCodes.Status500InternalServerError, "An error occurred while cancelling the service request. Please try again."));
+            }
+
+            var dto = mapper.Map<ServiceRequestDTO>(serviceRequest);
+            return Ok(dto);
+        }
+
+
+
+
 
         private static double GetDistanceKm(double lat1, double lon1, double lat2, double lon2)
         {
