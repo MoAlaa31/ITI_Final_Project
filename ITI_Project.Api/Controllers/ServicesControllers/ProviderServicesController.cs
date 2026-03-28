@@ -7,7 +7,6 @@ using ITI_Project.Core.Constants;
 using ITI_Project.Core.Enums;
 using ITI_Project.Core.Models.Services;
 using ITI_Project.Core.Models.Users;
-using ITI_Project.Core.Specifications.ServiceSpecs;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
@@ -37,10 +36,10 @@ namespace ITI_Project.Api.Controllers.ServicesControllers
             if (lang?.ToLower() != "ar" && lang?.ToLower() != "en")
                 return BadRequest(new ApiResponse(StatusCodes.Status406NotAcceptable, "Invalid Language"));
 
-            var spec = new ProviderServicesByProviderIdSpecification(providerId);
-            var providerServices = await unitOfWork.Repository<ProviderService>().GetAllWithSpecAsync(spec);
+            var providerServices = await unitOfWork.Repository<ProviderService>().GetManyByConditionAsync(ps => ps.ProviderId == providerId, ps => ps.Service!);
+                //.GetAllWithSpecAsync(spec);
 
-            if(providerServices == null || providerServices.Count == 0)
+            if (providerServices == null || providerServices.Count == 0)
                 return NotFound(new ApiResponse(StatusCodes.Status404NotFound, "No services found for this provider"));
             //var result = providerServices.Select(ps => new ServiceDTO
             //{

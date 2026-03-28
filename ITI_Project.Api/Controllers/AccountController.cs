@@ -1,10 +1,12 @@
 ﻿using ITI_Project.Api.DTO;
 using ITI_Project.Api.DTO.Account;
 using ITI_Project.Api.ErrorHandling;
+using ITI_Project.Api.Helpers;
 using ITI_Project.Core;
 using ITI_Project.Core.Enums;
 using ITI_Project.Core.IServices;
 using ITI_Project.Core.Models.Identity;
+using ITI_Project.Core.Models.Location;
 using ITI_Project.Core.Models.Users;
 using ITI_Project.Services.Token;
 using Microsoft.AspNetCore.Authorization;
@@ -115,7 +117,53 @@ namespace ITI_Project.Api.Controllers
 
             logger.LogInformation("User registered successfully: {Email}", model.Email);
 
-            return Ok("User registered successfully");
+            // after creating Client (newClient)
+            if (model.IsProvider)
+            {
+                if (model.Provider is null)
+                    return BadRequest(new ApiResponse(StatusCodes.Status400BadRequest, "Provider info is required"));
+
+                var governorateExists = await unitOfWork.Repository<Governorate>()
+                    .AnyAsync(g => g.Id == model.Provider.GovernorateId);
+                var regionExists = await unitOfWork.Repository<Region>()
+                    .AnyAsync(r => r.Id == model.Provider.RegionId);
+
+                if (!governorateExists || !regionExists)
+                    return BadRequest(new ApiResponse(StatusCodes.Status400BadRequest, "Invalid Governorate or Region"));
+
+                var clientFromDB = await unitOfWork.Repository<Client>().GetByIdAsync(newClient.Id);
+                if (clientFromDB == null)
+                    return BadRequest(new ApiResponse(400, "Provider registration failed."));
+
+                var provider = new Provider
+                {
+                    ClientId = clientFromDB.Id,
+                    StartedAt = DateHelper.GetTodayInEgypt(),
+                    VerificationStatus = VerificationStatus.Pending,
+                    Isverified = false,
+                    Rating = null,
+                    JobsCount = 0,
+                    Nickname = model.Provider.Nickname,
+                    Bio = model.Provider.Bio,
+                    GovernorateId = model.Provider.GovernorateId,
+                    RegionId = model.Provider.RegionId
+                };
+
+                try
+                {
+                    await unitOfWork.Repository<Provider>().AddAsync(provider);
+                    await unitOfWork.CompleteAsync();
+                }
+                catch (Exception ex)
+                {
+                    logger.LogError(ex, "Error while creating provider for client: {Email}", model.Email);
+                    await userManager.DeleteAsync(registeredUser); // Rollback user creation
+                    unitOfWork.Repository<Client>().Delete(clientFromDB); // Rollback client creation
+                    return BadRequest(new ApiResponse(500, "An unexpected error occurred while registering as a provider."));
+                }
+                logger.LogInformation("Provider registered successfully: {Email}", model.Email);
+            }
+            return Ok($"{(model.IsProvider ? "Provider" : "Client")} registered successfully");
         }
 
         #endregion
@@ -123,7 +171,7 @@ namespace ITI_Project.Api.Controllers
 
         #region Login
         [HttpPost("login")] // POST: api/Account/login
-        public async Task<ActionResult> Login(LoginDTO model)
+        public async Task<ActionResult<ClientDto>> Login(LoginDTO model)
         {
             var appUser = await userManager.FindByEmailAsync(model.Email);
 
@@ -142,11 +190,11 @@ namespace ITI_Project.Api.Controllers
             var accessToken = await authService.CreateTokenAsync(appUser, userManager);
 
             // Generate or Retrieve Active Refresh Token
-            var refreshToken = appUser.RefreshTokens.FirstOrDefault(rt => rt.IsActive);
+            var refreshToken = appUser.RefreshTokens?.FirstOrDefault(rt => rt.IsActive);
             if (refreshToken == null)
             {
                 refreshToken = TokenHelper.GenerateRefreshToken();
-                appUser.RefreshTokens.Add(refreshToken);
+                appUser.RefreshTokens?.Add(refreshToken);
                 await userManager.UpdateAsync(appUser);
             }
 
@@ -156,11 +204,11 @@ namespace ITI_Project.Api.Controllers
                 new ClientDto()
                 {
                     FullName = appUser.FullName,
-                    Email = appUser.Email,
+                    Email = appUser.Email!,
                     AccessToken = accessToken,
                     Role = roles,
                     //PictureUrl = !(string.IsNullOrEmpty(user.PictureUrl)) ? $"{configuration["AzureStorageUrl"]}/{user.PictureUrl}" : string.Empty,
-                    AccessTokenExpiration = DateTime.UtcNow.AddMinutes(double.Parse(configuration["JWT:AccessTokenExpirationInMinutes"])),
+                    AccessTokenExpiration = DateTime.UtcNow.AddMinutes(double.Parse(configuration["JWT:AccessTokenExpirationInMinutes"]!)),
                     IsAuthenticated = true
                 }
             );
@@ -185,7 +233,7 @@ namespace ITI_Project.Api.Controllers
             await signInManager.SignOutAsync();
 
             return Ok(new { message = "Logged out successfully" });
-        } 
+        }
 
         #endregion
 
@@ -241,7 +289,7 @@ namespace ITI_Project.Api.Controllers
         public async Task<ActionResult> ChangePassword([FromBody] ChangePasswordDto request)
         {
             var email = User.FindFirstValue(ClaimTypes.Email);
-            var user = await userManager.FindByEmailAsync(email);
+            var user = await userManager.FindByEmailAsync(email!);
             if (user is null)
                 return Unauthorized(new ApiResponse(StatusCodes.Status401Unauthorized, "User is unauthorized"));
 

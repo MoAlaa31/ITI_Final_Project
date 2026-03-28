@@ -113,6 +113,10 @@ namespace ITI_Project.Repository.Data
                 .HasForeignKey(o => o.ProviderId)
                 .OnDelete(DeleteBehavior.Restrict);
 
+            modelBuilder.Entity<RequestOffer>()
+                .Property(o => o.Price)
+                .HasPrecision(8, 2);
+
             /* --------------------- Areas & Locations Models -----------------  */
             modelBuilder.Entity<Provider>()
                 .HasOne(p => p.Region)

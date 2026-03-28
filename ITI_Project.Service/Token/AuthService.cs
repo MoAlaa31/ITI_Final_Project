@@ -1,7 +1,10 @@
 ﻿using ITI_Project.Core;
+using ITI_Project.Core.Constants;
 using ITI_Project.Core.DTOs;
+using ITI_Project.Core.Enums;
 using ITI_Project.Core.IServices;
 using ITI_Project.Core.Models.Identity;
+using ITI_Project.Core.Models.Users;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
@@ -45,13 +48,27 @@ namespace ITI_Project.Services.Token
                 authClaims.Add(new Claim(ClaimTypes.Role, role));
             }
 
-            var authKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(configuration["JWT:SecretKey"]));
+            var client = await unitOfWork.Repository<Client>().GetByAppUserIdAsync(user.Id);
+            if (userRoles.Any(ur => ur.Contains(nameof(UserRoleType.Client))))
+            {
+                authClaims.Add(new Claim(Identifiers.ClientId, client!.Id.ToString()));
+            }
+            if (userRoles.Any(ur => ur.Contains(nameof(UserRoleType.Provider))))
+            {
+                var provider = await unitOfWork.Repository<Provider>().GetByConditionAsync(p => p.ClientId == client!.Id);
+                authClaims.Add(new Claim(Identifiers.ProviderId, provider!.Id.ToString()));
+            }
+            if (userRoles.Any(ur => ur.Contains(nameof(UserRoleType.Admin))))
+            {
+                authClaims.Add(new Claim(Identifiers.AdminId, client!.Id.ToString()));
+            }
+            var authKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(configuration["JWT:SecretKey"]!));
             var token = new JwtSecurityToken(
                 // Payload
                 // 1. Registered claims
                 audience: configuration["JWT:ValidAudience"],
                 issuer: configuration["JWT:ValidIssuer"],
-                expires: DateTime.UtcNow.AddMinutes(double.Parse(configuration["JWT:AccessTokenExpirationInMinutes"])),
+                expires: DateTime.UtcNow.AddMinutes(double.Parse(configuration["JWT:AccessTokenExpirationInMinutes"]!)),
                 // 2. Private claims
                 claims: authClaims,
                 // 3. secret key

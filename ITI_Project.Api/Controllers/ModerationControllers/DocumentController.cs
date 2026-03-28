@@ -28,28 +28,23 @@ namespace ITI_Project.Api.Controllers.ModerationControllers
             this.fileStorageService = fileStorageService;
         }
 
-        [Authorize(Roles = $"{nameof(UserRoleType.Provider)},{nameof(UserRoleType.Admin)}")]
+        [Authorize(Roles = $"{nameof(UserRoleType.Admin)},{nameof(UserRoleType.Provider)}")]
         [HttpGet("get-documents")]
         public async Task<ActionResult<ProviderDocumentDto>> GetAllProviderDocuments([FromQuery] int? providerId = null)
         {
             int actualProviderId;
 
-            if (User.IsInRole(nameof(UserRoleType.Provider)))
+            if (!User.IsInRole(nameof(UserRoleType.Admin)))
             {
                 var providerIdClaim = User.FindFirstValue(Identifiers.ProviderId);
                 if (!int.TryParse(providerIdClaim, out actualProviderId))
                     return Unauthorized(new ApiResponse(StatusCodes.Status401Unauthorized, "ProviderId claim is missing or invalid"));
             }
-            else if (User.IsInRole(nameof(UserRoleType.Admin)))
+            else
             {
                 if (!providerId.HasValue)
                     return BadRequest(new ApiResponse(StatusCodes.Status400BadRequest, "ProviderId is required for admin users"));
-
                 actualProviderId = providerId.Value;
-            }
-            else
-            {
-                return Forbid();
             }
 
             var provider = await unitOfWork.Repository<Provider>().GetByIdAsync(actualProviderId);
@@ -66,15 +61,15 @@ namespace ITI_Project.Api.Controllers.ModerationControllers
             return Ok(dto);
         }
 
-        [Authorize(Roles = nameof(UserRoleType.Provider))]
+        [Authorize(Roles = nameof(UserRoleType.Client))]
         [HttpPost("upload-document")]
         public async Task<ActionResult<ProviderDocumentDto>> AddProviderDocument([FromForm] ProviderDocumentUploadDTO uploadDTO)
         {
-            var providerIdClaim = User.FindFirstValue(Identifiers.ProviderId);
-            if (!int.TryParse(providerIdClaim, out var providerId))
-                return Unauthorized(new ApiResponse(StatusCodes.Status401Unauthorized, "ProviderId claim is missing or invalid"));
+            var clientIdClaim = User.FindFirstValue(Identifiers.ClientId);
+            if (!int.TryParse(clientIdClaim, out var clientId))
+                return Unauthorized(new ApiResponse(StatusCodes.Status401Unauthorized, "ClientId claim is missing or invalid"));
 
-            var provider = await unitOfWork.Repository<Provider>().GetByIdAsync(providerId);
+            var provider = await unitOfWork.Repository<Provider>().GetByConditionAsync(p => p.ClientId == clientId);
             if (provider is null) 
                 return NotFound(new ApiResponse(StatusCodes.Status404NotFound, "Provider not found"));
 
@@ -90,7 +85,7 @@ namespace ITI_Project.Api.Controllers.ModerationControllers
 
             var document = new ProviderDocument
             {
-                ProviderId = providerId,
+                ProviderId = provider.Id,
                 DocumentType = uploadDTO.DocumentType,
                 DocumentUrl = uploadResult.FilePath!,
                 IsApproved = false
@@ -113,7 +108,7 @@ namespace ITI_Project.Api.Controllers.ModerationControllers
         }
 
         [Authorize(Roles = nameof(UserRoleType.Admin))]
-        [HttpPut("validate-document/{documentId}")]
+        [HttpPut("validate-document/{documentId:int}")]
         public async Task<ActionResult<ProviderDocumentDto>> ValidateProviderDocument(int documentId, [FromQuery] bool isValid)
         {
             var document = await unitOfWork.Repository<ProviderDocument>().GetByIdAsync(documentId);

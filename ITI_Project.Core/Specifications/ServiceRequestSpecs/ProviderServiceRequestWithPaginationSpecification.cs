@@ -3,9 +3,9 @@ using ITI_Project.Core.Specifications.ServiceRequestSpecs;
 
 namespace ITI_Project.Core.Specifications.RequestSpecs
 {
-    public class ProviderServiceRequestWithPaginationSpecifications : BaseSpecifications<ServiceRequest>
+    public class ProviderServiceRequestWithPaginationSpecification : BaseSpecifications<ServiceRequest>
     {
-        public ProviderServiceRequestWithPaginationSpecifications(RequestSpecParams specParams)
+        public ProviderServiceRequestWithPaginationSpecification(RequestSpecParams specParams)
             : base(sr =>
                 sr.ProviderId == null
                 && sr.RequestStatus == Enums.RequestStatus.Open

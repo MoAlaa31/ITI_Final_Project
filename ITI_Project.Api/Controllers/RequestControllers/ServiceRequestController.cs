@@ -49,7 +49,7 @@ namespace ITI_Project.Api.Controllers.RequestControllers
                 await unitOfWork.Repository<ServiceRequest>().AddAsync(serviceRequest);
                 await unitOfWork.CompleteAsync();
             }
-            catch (Exception ex)
+            catch
             {
                 return StatusCode(StatusCodes.Status500InternalServerError, 
                     new ApiResponse(StatusCodes.Status500InternalServerError, "An error occurred while creating the service request. Please try again."));
@@ -128,7 +128,7 @@ namespace ITI_Project.Api.Controllers.RequestControllers
             specParams.MinLongitude = lng - deltaLng;
             specParams.MaxLongitude = lng + deltaLng;
 
-            var specs = new ProviderServiceRequestWithPaginationSpecifications(specParams);
+            var specs = new ProviderServiceRequestWithPaginationSpecification(specParams);
             var serviceRequests = await unitOfWork.Repository<ServiceRequest>().GetAllWithSpecAsync(specs);
 
             if (serviceRequests is null || serviceRequests.Count == 0)
@@ -323,7 +323,7 @@ namespace ITI_Project.Api.Controllers.RequestControllers
                 unitOfWork.Repository<ServiceRequest>().Update(serviceRequest);
                 await unitOfWork.CompleteAsync();
             }
-            catch (Exception ex)
+            catch
             {
                 return StatusCode(StatusCodes.Status500InternalServerError,
                     new ApiResponse(StatusCodes.Status500InternalServerError, "An error occurred while cancelling the service request. Please try again."));

@@ -1,10 +1,13 @@
 ﻿using AutoMapper;
 using ITI_Project.Api.DTO.Location;
 using ITI_Project.Api.DTO.Moderation;
+using ITI_Project.Api.DTO.Post;
+using ITI_Project.Api.DTO.Posts;
 using ITI_Project.Api.DTO.Requests;
 using ITI_Project.Api.DTO.Services;
 using ITI_Project.Core.Models.Location;
 using ITI_Project.Core.Models.Moderation;
+using ITI_Project.Core.Models.Posts;
 using ITI_Project.Core.Models.Requests;
 using ITI_Project.Core.Models.Services;
 
@@ -30,6 +33,18 @@ namespace ITI_Project.Api.Helpers
 
             /****************************************** Mapping for Request Offer ******************************************/
             CreateMap<RequestOffer, RequestOfferDTO>();
+
+            /****************************************** Mapping for Live Location ******************************************/
+            CreateMap<LiveLocation, LiveLocationDTO>();
+
+            /****************************************** Mapping for Posts ******************************************/
+            CreateMap<Post, PostDTO>()
+                .ForMember(d => d.ImageUrls,
+                    o => o.MapFrom(s => s.PostImages != null
+                        ? s.PostImages.Select(pi => pi.ImageUrl).ToList()
+                        : new List<string>()));
+
+            CreateMap<PostFromUserDTO, Post>();
         }
     }
 }

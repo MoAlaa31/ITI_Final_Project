@@ -22,11 +22,12 @@ namespace ITI_Project.Api
                     .CreateLogger();
             #endregion
 
-            // Load environment variables from .env file
-            var root = Directory.GetCurrentDirectory();
-            Env.Load(Path.Combine(root, ".env"));
-
             var builder = WebApplication.CreateBuilder(args);
+
+            if (builder.Environment.IsDevelopment())
+            {
+                DotNetEnv.Env.Load(Path.Combine(Directory.GetCurrentDirectory(), ".env"));
+            }
 
             builder.Configuration.AddEnvironmentVariables();
             builder.Host.UseSerilog();
@@ -48,6 +49,7 @@ namespace ITI_Project.Api
             // Learn more about configuring OpenAPI at https://aka.ms/aspnet/openapi
             builder.Services.AddEndpointsApiExplorer();
             builder.Services.AddSwaggerGen();
+            builder.Services.AddSignalR();                  // need to add this to use SignalR in the project
 
             #region Connection String (local | global)
             /****************************** Connection String ********************************/
@@ -107,6 +109,7 @@ namespace ITI_Project.Api
                 var logger = factoryLogger.CreateLogger<Program>();
                 logger.LogError(ex, "An error occurred during migration");
             }
+
             #endregion
             #region Configure kestrel Middlewares
             //Middlewares of Exception Handling 
@@ -127,6 +130,8 @@ namespace ITI_Project.Api
             app.UseAuthorization();
 
             app.MapControllers();
+            app.MapHub<Hubs.LiveLocationHub>("/hubs/live-location");
+            app.MapHub<Hubs.ChatHub>("/hubs/chat");
 
             #endregion
             app.Run();

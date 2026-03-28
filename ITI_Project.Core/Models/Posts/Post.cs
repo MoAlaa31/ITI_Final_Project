@@ -16,13 +16,12 @@ namespace ITI_Project.Core.Models.Posts
         public required string Title { get; set; }
         [StringLength(300, ErrorMessage = "Description cannot be longer than 300 characters.")]
         public string? Description { get; set; }
-        public VerificationStatus VerificationStatus { get; set; }
         public DateTime CreatedAt { get; set; }
 
         // Relationships
-        [ForeignKey("User")]
-        public required int UserId { get; set; }
-        public required Client User { get; set; }
+        [ForeignKey(nameof(Client))]
+        public required int ClientId { get; set; }
+        public required Client Client { get; set; }
 
         [ForeignKey(nameof(Region))]
         public int? RegionId { get; set; }

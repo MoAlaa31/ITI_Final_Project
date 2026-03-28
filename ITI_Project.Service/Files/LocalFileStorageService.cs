@@ -1,6 +1,8 @@
 using ITI_Project.Core.IServices;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Http;
+using Microsoft.Extensions.Configuration;
+using System.Reflection.Metadata;
 using System.Security.Claims;
 
 namespace ITI_Project.Services.Files
@@ -8,10 +10,12 @@ namespace ITI_Project.Services.Files
     public class LocalFileStorageService : IFileStorageService
     {
         private readonly IWebHostEnvironment environment;
+        private readonly IConfiguration configuration;
 
-        public LocalFileStorageService(IWebHostEnvironment environment)
+        public LocalFileStorageService(IWebHostEnvironment environment, IConfiguration configuration)
         {
             this.environment = environment;
+            this.configuration = configuration;
         }
 
         public async Task<(bool Success, string Message, string? FilePath)> UploadFileAsync(
