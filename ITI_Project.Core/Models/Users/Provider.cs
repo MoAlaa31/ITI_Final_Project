@@ -34,12 +34,12 @@ namespace ITI_Project.Core.Models.Users
         public LiveLocation? LiveLocation { get; set; }
 
         [ForeignKey(nameof(Governorate))]
-        public int GovernorateId { get; set; }
-        public Governorate Governorate { get; set; } = null!;
+        public int? GovernorateId { get; set; }
+        public Governorate? Governorate { get; set; }
 
         [ForeignKey(nameof(Region))]
-        public int RegionId { get; set; }
-        public Region Region { get; set; } = null!;
+        public int? RegionId { get; set; }
+        public Region? Region { get; set; }
 
         public ICollection<ProviderService>? ProviderServices { get; set; }
         public ICollection<ProviderDocument>? ProviderDocuments { get; set; }

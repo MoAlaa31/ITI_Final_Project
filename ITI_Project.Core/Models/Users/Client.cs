@@ -20,9 +20,7 @@ namespace ITI_Project.Core.Models.Users
         [StringLength(25, ErrorMessage = "Last name cannot be longer than 25 characters.")]
         [Required(ErrorMessage = "Last Name is required.")]
         public required string LastName { get; set; }
-        [Required(ErrorMessage = "Gender is required.")]
         public Gender Gender { get; set; }
-        [Required(ErrorMessage = "Date of birth is required.")]
         public DateOnly DateOfBirth { get; set; }
         public DateOnly CreatedAt { get; set; }
         public string? PictureUrl { get; set; }

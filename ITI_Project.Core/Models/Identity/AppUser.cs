@@ -7,7 +7,7 @@ namespace ITI_Project.Core.Models.Identity
 {
     public class AppUser : IdentityUser
     {
-        public string FullName { get; set; }
+        public string FullName { get; set; } = null!;
         public List<RefreshToken>? RefreshTokens { get; set; }
         public string? DeviceToken { get; set; }
     }

@@ -37,8 +37,8 @@ namespace ITI_Project.Api.Controllers.LocationControllers
         }
 
         [Authorize(Roles = nameof(UserRoleType.Provider))]
-        [HttpPost("add-base-location")]
-        public async Task<ActionResult<BaseLocationDTO>> AddBaseLocation(BaseLocationCreateDTO baseLocationFromUserDTO)
+        [HttpPut("update-base-location")]
+        public async Task<ActionResult<BaseLocationDTO>> UpdateBaseLocation(BaseLocationCreateDTO baseLocationFromUserDTO)
         {
             var providerIdClaim = User.FindFirstValue(Identifiers.ProviderId);
             if (!int.TryParse(providerIdClaim, out var providerId))
@@ -48,18 +48,27 @@ namespace ITI_Project.Api.Controllers.LocationControllers
             if (!providerExists)
                 return BadRequest(new ApiResponse(StatusCodes.Status400BadRequest, "Provider not found"));
 
-            var existingBaseLocation = await unitOfWork.Repository<BaseLocation>().AnyAsync(bl => bl.ProviderId == providerId);
-            if (existingBaseLocation)
-                return Conflict(new ApiResponse(StatusCodes.Status409Conflict, "Base Location already exists for this provider"));
+            var baseLocation = await unitOfWork.Repository<BaseLocation>().GetByConditionAsync(bl => bl.ProviderId == providerId);
 
-            var baseLocation = mapper.Map<BaseLocation>(baseLocationFromUserDTO);
-            baseLocation.ProviderId = providerId;
+            if (baseLocation != null)
+            {
+                mapper.Map(baseLocationFromUserDTO, baseLocation);
+                unitOfWork.Repository<BaseLocation>().Update(baseLocation);
+                await unitOfWork.CompleteAsync();
+                var dto = mapper.Map<BaseLocationDTO>(baseLocation);
+                return Ok(dto);
+            }
+            else
+            {
+                baseLocation = mapper.Map<BaseLocation>(baseLocationFromUserDTO);
+                baseLocation.ProviderId = providerId;
+                await unitOfWork.Repository<BaseLocation>().AddAsync(baseLocation);
+                await unitOfWork.CompleteAsync(); 
+                var dto = mapper.Map<BaseLocationDTO>(baseLocation);
+                return CreatedAtAction(nameof(GetBaseLocation), new { baseLocationId = baseLocation.Id }, dto);
+            }
 
-            await unitOfWork.Repository<BaseLocation>().AddAsync(baseLocation);
-            await unitOfWork.CompleteAsync();
 
-            var dto = mapper.Map<BaseLocationDTO>(baseLocation);
-            return CreatedAtAction(nameof(GetBaseLocation), new { baseLocationId = baseLocation.Id }, dto);
         }
     }
 }

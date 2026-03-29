@@ -22,7 +22,7 @@ namespace ITI_Project.Core.Specifications.PostSpecs
         {
             AddOrderByDescending(p => p.CreatedAt);
 
-            ThenIncludes.Add(p => p.Include(p => p.Comments!).ThenInclude(c => c.Reactions));
+            Includes.Add(p => p.Comments!);
             Includes.Add(p => p.PostImages!);
             Includes.Add(p => p.Reactions!);
 

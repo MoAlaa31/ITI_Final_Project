@@ -53,7 +53,7 @@ namespace ITI_Project.Api.Controllers
 
             var user = new AppUser
             {
-                FullName = model.FullName,
+                FullName = $"{model.FirstName} {model.LastName}".Trim(),
                 Email = model.Email,
                 UserName = model.Email.Split("@")[0],
             };
@@ -93,18 +93,15 @@ namespace ITI_Project.Api.Controllers
             //if (!reuslt)
             //    return StatusCode(500, new ApiResponse(500, "Failed to send new OTP code"));
 
-            var nameParts = model.FullName?.Trim().Split(' ', StringSplitOptions.RemoveEmptyEntries) ?? Array.Empty<string>();
-
-            var newClient = new Client()
+            var newClient = new Client
             {
                 AppUserId = registeredUser.Id,
-                FirstName = nameParts.Length > 0 ? nameParts[0] : string.Empty,
-                LastName = nameParts.Length > 1 ? string.Join(" ", nameParts.Skip(1)) : string.Empty,
-                Gender = model.Gender
+                FirstName = model.FirstName,
+                LastName = model.LastName,
             };
             try
             {
-                await unitOfWork.Repository<Client>().AddWithSaveAsync(newClient);
+                await unitOfWork.Repository<Client>().AddAsync(newClient);
                 await unitOfWork.CompleteAsync();
             }
             catch (DbUpdateException ex)
@@ -120,33 +117,14 @@ namespace ITI_Project.Api.Controllers
             // after creating Client (newClient)
             if (model.IsProvider)
             {
-                if (model.Provider is null)
-                    return BadRequest(new ApiResponse(StatusCodes.Status400BadRequest, "Provider info is required"));
-
-                var governorateExists = await unitOfWork.Repository<Governorate>()
-                    .AnyAsync(g => g.Id == model.Provider.GovernorateId);
-                var regionExists = await unitOfWork.Repository<Region>()
-                    .AnyAsync(r => r.Id == model.Provider.RegionId);
-
-                if (!governorateExists || !regionExists)
-                    return BadRequest(new ApiResponse(StatusCodes.Status400BadRequest, "Invalid Governorate or Region"));
-
-                var clientFromDB = await unitOfWork.Repository<Client>().GetByIdAsync(newClient.Id);
-                if (clientFromDB == null)
-                    return BadRequest(new ApiResponse(400, "Provider registration failed."));
-
                 var provider = new Provider
                 {
-                    ClientId = clientFromDB.Id,
+                    ClientId = newClient.Id,
                     StartedAt = DateHelper.GetTodayInEgypt(),
                     VerificationStatus = VerificationStatus.Pending,
                     Isverified = false,
                     Rating = null,
                     JobsCount = 0,
-                    Nickname = model.Provider.Nickname,
-                    Bio = model.Provider.Bio,
-                    GovernorateId = model.Provider.GovernorateId,
-                    RegionId = model.Provider.RegionId
                 };
 
                 try
@@ -158,7 +136,7 @@ namespace ITI_Project.Api.Controllers
                 {
                     logger.LogError(ex, "Error while creating provider for client: {Email}", model.Email);
                     await userManager.DeleteAsync(registeredUser); // Rollback user creation
-                    unitOfWork.Repository<Client>().Delete(clientFromDB); // Rollback client creation
+                    unitOfWork.Repository<Client>().Delete(newClient); // Rollback client creation
                     return BadRequest(new ApiResponse(500, "An unexpected error occurred while registering as a provider."));
                 }
                 logger.LogInformation("Provider registered successfully: {Email}", model.Email);
@@ -186,6 +164,11 @@ namespace ITI_Project.Api.Controllers
             var roles = await userManager.GetRolesAsync(appUser);
 
             var client = await unitOfWork.Repository<Client>().GetByAppUserIdAsync(appUser.Id);
+            if (client == null)
+                return StatusCode(StatusCodes.Status500InternalServerError,(new ApiResponse(StatusCodes.Status500InternalServerError, "An error occurred while registering")));
+
+            var provider = await unitOfWork.Repository<Provider>().GetByConditionAsync(p => p.ClientId == client.Id);
+            var providerStatus = provider != null ? provider.VerificationStatus.ToString() : null;
             // Generate Access Token
             var accessToken = await authService.CreateTokenAsync(appUser, userManager);
 
@@ -207,6 +190,8 @@ namespace ITI_Project.Api.Controllers
                     Email = appUser.Email!,
                     AccessToken = accessToken,
                     Role = roles,
+                    IsProvider = provider != null,
+                    ProviderStatus = providerStatus,
                     //PictureUrl = !(string.IsNullOrEmpty(user.PictureUrl)) ? $"{configuration["AzureStorageUrl"]}/{user.PictureUrl}" : string.Empty,
                     AccessTokenExpiration = DateTime.UtcNow.AddMinutes(double.Parse(configuration["JWT:AccessTokenExpirationInMinutes"]!)),
                     IsAuthenticated = true

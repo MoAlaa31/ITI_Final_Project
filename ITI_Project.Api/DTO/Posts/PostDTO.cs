@@ -10,5 +10,7 @@ namespace ITI_Project.Api.DTO.Posts
         public string? Description { get; set; }
         public DateTime CreatedAt { get; set; }
         public IReadOnlyList<string>? ImageUrls { get; set; }
+        public int CommentsCount { get; set; }
+        public IReadOnlyList<ReactionCountDTO> TopReactions { get; set; } = new List<ReactionCountDTO>();
     }
 }

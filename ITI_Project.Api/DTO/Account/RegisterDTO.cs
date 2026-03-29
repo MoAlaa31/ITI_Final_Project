@@ -1,5 +1,4 @@
-﻿using ITI_Project.Api.Attributes;
-using ITI_Project.Api.DTO.Users;
+﻿using ITI_Project.Api.DTO.Users;
 using ITI_Project.Core.Enums;
 using System.ComponentModel.DataAnnotations;
 
@@ -7,10 +6,13 @@ namespace ITI_Project.Api.DTO.Account
 {
     public class RegisterDTO
     {
-        [FullName(ErrorMessage = "Full name must contain at least two words.")]     // Fname + Lname    
-        [Required(ErrorMessage = "FullName is required.")]
-        [StringLength(maximumLength: 100, MinimumLength = 3, ErrorMessage = "Full Name must be at least 3 characters and at most 100 characters.")]
-        public required string FullName { get; set; }
+        [Required(ErrorMessage = "FirstName is required.")]
+        [StringLength(maximumLength: 50, MinimumLength = 2, ErrorMessage = "FirstName must be at least 2 characters and at most 50 characters.")]
+        public required string FirstName { get; set; }
+
+        [Required(ErrorMessage = "LastName is required.")]
+        [StringLength(maximumLength: 50, MinimumLength = 2, ErrorMessage = "LastName must be at least 2 characters and at most 50 characters.")]
+        public required string LastName { get; set; }
 
         [Required(ErrorMessage = "Email is required.")]
         [EmailAddress]
@@ -23,11 +25,6 @@ namespace ITI_Project.Api.DTO.Account
             ErrorMessage = "Password must be between 8 and 15 characters and contain at least one lowercase letter," +
             " one uppercase letter, one digit and one special character.")]
         public required string Password { get; set; }
-
-        [Required(ErrorMessage = "Gender is required.")]
-        [RegularExpression("^(Male|Female)$", ErrorMessage = "Gender must be either 'Male' or 'Female'.")]
-        public Gender Gender { get; set; }
         public bool IsProvider { get; set; } = false;
-        public ProviderDTO? Provider { get; set; }
     }
 }

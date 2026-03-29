@@ -63,6 +63,11 @@ namespace ITI_Project.Api.Controllers.ServicesControllers
                 return BadRequest(new ApiResponse(StatusCodes.Status400BadRequest, "ServiceIds are required"));
 
             var distinctIds = dto.ServiceIds.Distinct().ToList();
+            if(distinctIds.Count > 2)
+            {
+                return BadRequest(new ApiResponse(StatusCodes.Status400BadRequest, "A provider can only offer up to 2 services"));
+            }
+
             var services = await unitOfWork.Repository<Service>().GetManyByConditionAsync(s => distinctIds.Contains(s.Id)) ?? new List<Service>();
             if (services.Count != distinctIds.Count)
                 return BadRequest(new ApiResponse(StatusCodes.Status400BadRequest, "One or more ServiceIds are invalid"));

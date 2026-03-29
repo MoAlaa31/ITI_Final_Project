@@ -144,7 +144,7 @@ namespace ITI_Project.Api.Controllers.LocationControllers
         }
 
 
-        public static double CalculateDistanceMeters(double lat1, double lon1, double lat2, double lon2)
+        private static double CalculateDistanceMeters(double lat1, double lon1, double lat2, double lon2)
         {
             var R = 6371000; // meters
             var dLat = ToRad(lat2 - lat1);

@@ -17,11 +17,11 @@ namespace ITI_Project.Core.Models.Posts
         //Relationships
         [ForeignKey("Client")]
         public required int ClientId { get; set; }
-        public required Client Client { get; set; }
+        public Client Client { get; set; } = null!;
 
         [ForeignKey("Post")]
         public required int PostId { get; set; }
-        public required Post Post { get; set; }
+        public Post Post { get; set; } = null!;
 
         public ICollection<CommentReaction>? Reactions { get; set; }
 

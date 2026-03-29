@@ -131,7 +131,6 @@ namespace ITI_Project.Api
 
             app.MapControllers();
             app.MapHub<Hubs.LiveLocationHub>("/hubs/live-location");
-            app.MapHub<Hubs.ChatHub>("/hubs/chat");
 
             #endregion
             app.Run();
