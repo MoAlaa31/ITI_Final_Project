@@ -1,4 +1,5 @@
-﻿using ITI_Project.Core.Enums;
+﻿using ITI_Project.Api.DTO.Location;
+using ITI_Project.Core.Enums;
 using ITI_Project.Core.Models.Location;
 using ITI_Project.Core.Models.Moderation;
 using ITI_Project.Core.Models.Requests;
@@ -16,6 +17,6 @@ namespace ITI_Project.Api.DTO.Requests
         [Range(0.0, 1000000.0, ErrorMessage = "Final Price must be a positive number.")]
         public decimal? FinalPrice { get; set; }
         public DateTime? PreferredTime { get; set; }
-        public ServiceRequestLocation? ServiceRequestLocation { get; set; }
+        public ServiceRequestLocationDTO? ServiceRequestLocation { get; set; }
     }
 }

@@ -12,8 +12,6 @@ namespace ITI_Project.Core.Models.Location
         public int Id { get; set; }
         public double Latitude { get; set; }
         public double Longitude { get; set; }
-        [StringLength(100, ErrorMessage = "Address cannot be longer than 100 characters.")]
-        public string? AddressText { get; set; }
 
         // Relationships
         [ForeignKey(nameof(ServiceRequest))]

@@ -12,11 +12,11 @@ namespace ITI_Project.Core.Models.Posts
     {
         [ForeignKey(nameof(Post))]
         public required int ServicePostId { get; set; }
-        public required Post Post { get; set; }
+        public Post Post { get; set; } = null!;
 
         [ForeignKey(nameof(Client))]
         public required int ClientId { get; set; }
-        public required Client Client { get; set; }
+        public Client Client { get; set; } = null!;
 
         public required ReactionType ReactionType { get; set; }
     }

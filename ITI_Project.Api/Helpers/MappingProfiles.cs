@@ -29,11 +29,24 @@ namespace ITI_Project.Api.Helpers
             /****************************************** Mapping for Provider ******************************************/
             CreateMap<Provider, ProviderDTO>();
 
+            /****************************************** Mapping for Client ******************************************/
+            CreateMap<Client, ClientDTO>()
+                .ForMember(d => d.PhoneNumbers,
+                    o => o.MapFrom(s => s.phoneNumbers != null
+                        ? s.phoneNumbers.Select(p => p.PhoneNumber).ToList()
+                        : new List<string>()));
+
+            CreateMap<ClientUpdateDTO, Client>()
+                .ForMember(d => d.phoneNumbers, o => o.Ignore())
+                .ForMember(d => d.PictureUrl, o => o.Ignore());
+    
+            /****************************************** Mapping for Base Location ******************************************/
             CreateMap<BaseLocation, BaseLocationDTO>();
 
             /****************************************** Mapping for Service Request ******************************************/
             CreateMap<ServiceRequest, ServiceRequestDTO>();
-            CreateMap<ServiceRequestLocation, ServiceRequestLocationDTO>();
+            CreateMap<ServiceRequestLocation, ServiceRequestLocationDTO>()
+                .ReverseMap();
             CreateMap<ServiceRequestFromUserDTO, ServiceRequest>();
 
             /****************************************** Mapping for Request Offer ******************************************/

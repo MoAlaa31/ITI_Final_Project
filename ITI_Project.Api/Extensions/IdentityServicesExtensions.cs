@@ -29,6 +29,7 @@ namespace ITI_Project.Api.Extensions
                 //options.Tokens.EmailConfirmationTokenProvider = TokenOptions.DefaultEmailProvider;
                 //options.Lockout.MaxFailedAccessAttempts = 5;
                 //options.Lockout.DefaultLockoutTimeSpan = TimeSpan.FromMinutes(5);
+                options.User.RequireUniqueEmail = true;
 
             }).AddEntityFrameworkStores<AppIdentityDBContext>()
             .AddDefaultTokenProviders()
@@ -51,42 +52,41 @@ namespace ITI_Project.Api.Extensions
                     ValidIssuer = configuration["JWT:ValidIssuer"],
                     IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(configuration["JWT:SecretKey"])),
                     ValidateLifetime = true,
-                    //ClockSkew = TimeSpan.FromDays(double.Parse(configuration["JWT:DurationInDays"])),
                     ClockSkew = TimeSpan.Zero
                 };
 
-                //options.Events = new JwtBearerEvents
-                //{
-                //    OnMessageReceived = context =>
-                //    {
-                //        var accessToken = context.Request.Query["access_token"];
+                options.Events = new JwtBearerEvents
+                {
+                    //OnMessageReceived = context =>
+                    //{
+                    //    var accessToken = context.Request.Cookies["access_token"];
 
-                //        // Allow JWT token via WebSockets
-                //        if (!string.IsNullOrEmpty(accessToken) &&
-                //            context.HttpContext.Request.Path.StartsWithSegments("/Hubs/NotificationHub"))           // SignalR for notifications
-                //        {
-                //            context.Token = accessToken;
-                //        }
+                    //    // Allow JWT token via WebSockets
+                    //    if (!string.IsNullOrEmpty(accessToken))
+                    //    //&&    context.HttpContext.Request.Path.StartsWithSegments("/Hubs/NotificationHub"))           // SignalR for notifications
+                    //    {
+                    //        context.Token = accessToken;
+                    //    }
 
-                //        return Task.CompletedTask;
-                //    }
-                //OnAuthenticationFailed = context =>
-                //{
-                //    var logger = context.HttpContext.RequestServices
-                //        .GetRequiredService<ILoggerFactory>()
-                //        .CreateLogger("JwtBearer");
-                //    logger.LogError(context.Exception, "JWT authentication failed.");
-                //    return Task.CompletedTask;
-                //},
-                //    OnChallenge = context =>
-                //    {
-                //        var logger = context.HttpContext.RequestServices
-                //            .GetRequiredService<ILoggerFactory>()
-                //            .CreateLogger("JwtBearer");
-                //        logger.LogWarning("JWT challenge triggered. Error: {Error}, Description: {Description}", context.Error, context.ErrorDescription);
-                //        return Task.CompletedTask;
-                //    }
-                //};
+                    //    return Task.CompletedTask;
+                    //}
+                    //OnAuthenticationFailed = context =>
+                    //{
+                    //    var logger = context.HttpContext.RequestServices
+                    //        .GetRequiredService<ILoggerFactory>()
+                    //        .CreateLogger("JwtBearer");
+                    //    logger.LogError(context.Exception, "JWT authentication failed.");
+                    //    return Task.CompletedTask;
+                    //},
+                    //OnChallenge = context =>
+                    //{
+                    //    var logger = context.HttpContext.RequestServices
+                    //        .GetRequiredService<ILoggerFactory>()
+                    //        .CreateLogger("JwtBearer");
+                    //    logger.LogWarning("JWT challenge triggered. Error: {Error}, Description: {Description}", context.Error, context.ErrorDescription);
+                    //    return Task.CompletedTask;
+                    //}
+                };
             });
 
             return services;

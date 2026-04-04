@@ -1,17 +1,11 @@
-﻿using ITI_Project.Api.Attributes;
-using ITI_Project.Core.Enums;
 using System.ComponentModel.DataAnnotations;
 
 namespace ITI_Project.Api.DTO.Moderation
 {
-    public class ProviderDocumentUploadDTO
+    public class ProviderDocumentUpdateDTO
     {
         [Required(ErrorMessage = "Document file is required")]
         public IFormFile DocumentFile { get; set; } = null!;
-
-        [ValidEnum<DocumentType>]
-        [Required(ErrorMessage = "DocumentType is required")]
-        public DocumentType DocumentType { get; set; }
         public string? FileName { get; set; }
     }
 }

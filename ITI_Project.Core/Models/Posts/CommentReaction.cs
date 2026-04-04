@@ -11,11 +11,11 @@ namespace ITI_Project.Core.Models.Posts
     {
         [ForeignKey(nameof(Comment))]
         public required int CommentId { get; set; }
-        public required Comment Comment { get; set; }
+        public Comment Comment { get; set; } = null!;
 
         [ForeignKey(nameof(Client))]
         public required int ClientId { get; set; }
-        public required Client Client { get; set; }
+        public Client Client { get; set; } = null!;
 
         public required ReactionType ReactionType { get; set; }
     }

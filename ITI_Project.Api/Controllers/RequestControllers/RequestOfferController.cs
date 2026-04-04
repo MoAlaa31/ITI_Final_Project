@@ -71,7 +71,7 @@ namespace ITI_Project.Api.Controllers.RequestControllers
         }
 
         [Authorize(Roles = $"{nameof(UserRoleType.Provider)},{nameof(UserRoleType.Client)}")]
-        [HttpGet("{serviceRequestId:int}")]
+        [HttpGet("get-request-offers/{serviceRequestId:int}")]
         public async Task<ActionResult<RequestOfferDTO>> GetRequestOffersByServiceRequestId(int serviceRequestId)
         {
             var serviceRequest = await unitOfWork.Repository<ServiceRequest>()

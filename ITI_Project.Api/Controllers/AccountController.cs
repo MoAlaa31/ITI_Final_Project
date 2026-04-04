@@ -55,15 +55,22 @@ namespace ITI_Project.Api.Controllers
             {
                 FullName = $"{model.FirstName} {model.LastName}".Trim(),
                 Email = model.Email,
-                UserName = model.Email.Split("@")[0],
+                UserName = model.Email,
             };
 
             var result = await userManager.CreateAsync(user, model.Password);
             if (!result.Succeeded)
+            {
+                var isDuplicate = result.Errors.Any(e => e.Code == "DuplicateUserName" || e.Code == "DuplicateEmail");
+                var errors = isDuplicate
+                    ? new[] { "Email already exists." }
+                    : result.Errors.Select(e => e.Description).ToArray();
+
                 return BadRequest(new ApiValidationErrorResponse(StatusCodes.Status400BadRequest, "Failed to create user.")
                 {
-                    Errors = result.Errors.Select(e => e.Description).ToArray()
+                    Errors = errors
                 });
+            }
 
             // Fetch registered user
             var registeredUser = await userManager.FindByEmailAsync(model.Email);
@@ -192,7 +199,7 @@ namespace ITI_Project.Api.Controllers
                     Role = roles,
                     IsProvider = provider != null,
                     ProviderStatus = providerStatus,
-                    //PictureUrl = !(string.IsNullOrEmpty(user.PictureUrl)) ? $"{configuration["AzureStorageUrl"]}/{user.PictureUrl}" : string.Empty,
+                    PictureUrl = client.PictureUrl,
                     AccessTokenExpiration = DateTime.UtcNow.AddMinutes(double.Parse(configuration["JWT:AccessTokenExpirationInMinutes"]!)),
                     IsAuthenticated = true
                 }

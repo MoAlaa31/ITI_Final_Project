@@ -15,6 +15,6 @@ namespace ITI_Project.Core.Models.Users
         // Relationships
         [ForeignKey(nameof(Client))]
         public required int ClientId { get; set; }
-        public required Client Client { get; set; }
+        public Client Client { get; set; } = null!;
     }
 }

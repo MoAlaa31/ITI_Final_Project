@@ -50,8 +50,9 @@ namespace ITI_Project.Services.Files
 
                 var safeGivenName = string.IsNullOrWhiteSpace(givenName) ? "user" : givenName;
                 var safeNameId = string.IsNullOrWhiteSpace(nameId) ? Guid.NewGuid().ToString("N") : nameId;
+                var uniqueSuffix = Guid.NewGuid().ToString("N");
 
-                baseName = $"{safeGivenName}-{safeNameId}";
+                baseName = $"{safeGivenName}-{safeNameId}-{uniqueSuffix}";
             }
 
             var fileName = $"{baseName}{extension}";

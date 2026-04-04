@@ -1,13 +1,15 @@
+using DotNetEnv;
 using ITI_Project.Api.Extensions;
 using ITI_Project.Api.Middlewares;
 using ITI_Project.Core.Models.Identity;
 using ITI_Project.Repository.Data;
 using ITI_Project.Repository.Identity;
+using Microsoft.AspNetCore.CookiePolicy;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 using Serilog;
-using DotNetEnv;
+using System.Diagnostics.Metrics;
 
 namespace ITI_Project.Api
 {
@@ -46,6 +48,14 @@ namespace ITI_Project.Api
             });
 
             builder.Services.AddControllers();
+            //In Program.cs, after AddControllers
+            builder.Services.Configure<CookiePolicyOptions>(options =>
+            {
+                options.MinimumSameSitePolicy = SameSiteMode.None;
+                options.Secure = CookieSecurePolicy.Always;
+                options.HttpOnly = HttpOnlyPolicy.Always;
+            });
+
             // Learn more about configuring OpenAPI at https://aka.ms/aspnet/openapi
             builder.Services.AddEndpointsApiExplorer();
             builder.Services.AddSwaggerGen();
@@ -125,6 +135,8 @@ namespace ITI_Project.Api
             app.UseStaticFiles();
 
             app.UseCors("CorsPolicy");
+            // Then in the middleware pipeline, after UseCors and before UseAuthentication
+            app.UseCookiePolicy();
             //app.UseRateLimiter();
             app.UseAuthentication();
             app.UseAuthorization();

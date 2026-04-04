@@ -1,4 +1,5 @@
 ﻿using AutoMapper;
+using ITI_Project.Api.Attributes;
 using ITI_Project.Api.DTO.Moderation;
 using ITI_Project.Api.ErrorHandling;
 using ITI_Project.Core;
@@ -73,6 +74,17 @@ namespace ITI_Project.Api.Controllers.ModerationControllers
             if (provider is null) 
                 return NotFound(new ApiResponse(StatusCodes.Status404NotFound, "Provider not found"));
 
+            var existingDocuments = await unitOfWork.Repository<ProviderDocument>()
+                .GetManyByConditionAsync(d => d.ProviderId == provider.Id) ?? new List<ProviderDocument>();
+
+            if (existingDocuments.Count >= 3)
+                return BadRequest(new ApiResponse(StatusCodes.Status400BadRequest, "Providers can only upload 3 documents."));
+
+            var existingDocument = existingDocuments
+                .FirstOrDefault(d => d.DocumentType == uploadDTO.DocumentType);
+            if (existingDocument != null)
+                return Conflict(new ApiResponse(StatusCodes.Status409Conflict, "A document of this type already exists for this provider."));
+
             var uploadResult = await fileStorageService.UploadFileAsync(
                 uploadDTO.DocumentFile,
                 "provider-documents",
@@ -125,6 +137,56 @@ namespace ITI_Project.Api.Controllers.ModerationControllers
             catch(Exception ex)
             {
                 return StatusCode(StatusCodes.Status500InternalServerError, new ApiResponse(StatusCodes.Status500InternalServerError, "An error occurred while validating the document. Please try again."));
+            }
+
+            var dto = mapper.Map<ProviderDocumentDto>(document);
+            return Ok(dto);
+        }
+
+        [Authorize(Roles = nameof(UserRoleType.Client))]
+        [HttpPut("update-document/{documentId:int}")]
+        public async Task<ActionResult<ProviderDocumentDto>> UpdateProviderDocument(int documentId, [FromForm] ProviderDocumentUpdateDTO updateDTO)
+        {
+            var clientIdClaim = User.FindFirstValue(Identifiers.ClientId);
+            if (!int.TryParse(clientIdClaim, out var clientId))
+                return Unauthorized(new ApiResponse(StatusCodes.Status401Unauthorized, "ClientId claim is missing or invalid"));
+
+            var provider = await unitOfWork.Repository<Provider>().GetByConditionAsync(p => p.ClientId == clientId);
+            if (provider is null)
+                return NotFound(new ApiResponse(StatusCodes.Status404NotFound, "Provider not found"));
+
+            var document = await unitOfWork.Repository<ProviderDocument>().GetByIdAsync(documentId);
+            if (document is null)
+                return NotFound(new ApiResponse(StatusCodes.Status404NotFound, "Document not found"));
+
+            if (document.ProviderId != provider.Id)
+                return Forbid();
+
+            var uploadResult = await fileStorageService.UploadFileAsync(
+                updateDTO.DocumentFile,
+                "provider-documents",
+                User,
+                updateDTO.FileName
+            );
+
+            if (!uploadResult.Success)
+                return BadRequest(new ApiResponse(StatusCodes.Status400BadRequest, uploadResult.Message));
+
+            if (!string.IsNullOrWhiteSpace(document.DocumentUrl))
+                fileStorageService.DeleteFile(document.DocumentUrl);
+
+            document.DocumentUrl = uploadResult.FilePath!;
+            document.IsApproved = false;
+
+            try
+            {
+                unitOfWork.Repository<ProviderDocument>().Update(document);
+                await unitOfWork.CompleteAsync();
+            }
+            catch
+            {
+                fileStorageService.DeleteFile(uploadResult.FilePath!);
+                return StatusCode(StatusCodes.Status500InternalServerError, new ApiResponse(StatusCodes.Status500InternalServerError, "An error occurred while updating the document. Please try again."));
             }
 
             var dto = mapper.Map<ProviderDocumentDto>(document);

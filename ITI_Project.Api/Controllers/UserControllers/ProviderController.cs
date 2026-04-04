@@ -8,6 +8,7 @@ using ITI_Project.Core.Constants;
 using ITI_Project.Core.Enums;
 using ITI_Project.Core.Models.Identity;
 using ITI_Project.Core.Models.Location;
+using ITI_Project.Core.Models.Moderation;
 using ITI_Project.Core.Models.Services;
 using ITI_Project.Core.Models.Users;
 using Microsoft.AspNetCore.Authorization;
@@ -15,6 +16,7 @@ using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Http.HttpResults;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
+using System.Collections.ObjectModel;
 using System.Security.Claims;
 
 namespace ITI_Project.Api.Controllers.UserControllers
@@ -133,8 +135,11 @@ namespace ITI_Project.Api.Controllers.UserControllers
 
             var hasBaseLocation = provider.BaseLocation != null;
             var hasServices = provider.ProviderServices != null && provider.ProviderServices.Any();
-            var hasDocuments = provider.ProviderDocuments != null && provider.ProviderDocuments.Any();
-            var allDocumentsApproved = hasDocuments && provider.ProviderDocuments!.All(d => d.IsApproved);
+
+            var documents = provider.ProviderDocuments ?? new List<ProviderDocument>();
+            var hasDocuments = documents.Count > 0;
+            var distinctDocumentTypes = documents.Select(d => d.DocumentType).Distinct().Count();
+            var allDocumentsApproved = documents.Count == 3 && distinctDocumentTypes == 3 && documents.All(d => d.IsApproved);
 
             if(isVerified && (!hasBaseLocation || !hasServices || !hasDocuments || !allDocumentsApproved))
                 return BadRequest(new ApiResponse(StatusCodes.Status400BadRequest, "Provider cannot be verified. Ensure that the provider has a base location, at least one service, and all documents are approved."));
