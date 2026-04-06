@@ -6,6 +6,7 @@ using ITI_Project.Core;
 using ITI_Project.Core.Constants;
 using ITI_Project.Core.Enums;
 using ITI_Project.Core.Models.Requests;
+using ITI_Project.Core.Models.Services;
 using ITI_Project.Core.Models.Users;
 using ITI_Project.Core.Specifications.RequestSpecs;
 using ITI_Project.Core.Specifications.ServiceRequestSpecs;
@@ -38,6 +39,10 @@ namespace ITI_Project.Api.Controllers.RequestControllers
             var clientExists = await unitOfWork.Repository<Client>().AnyAsync(u => u.Id == clientId);
             if (!clientExists)
                 return NotFound(new ApiResponse(StatusCodes.Status404NotFound, "Client not found"));
+
+            var serviceExists = await unitOfWork.Repository<Service>().AnyAsync(s => s.Id == serviceRequestDTO.ServiceId);
+            if (!serviceExists)
+                return BadRequest(new ApiResponse(StatusCodes.Status400BadRequest, "Invalid service"));
 
             var serviceRequest = mapper.Map<ServiceRequest>(serviceRequestDTO);
             serviceRequest.ClientId = clientId;
@@ -128,7 +133,14 @@ namespace ITI_Project.Api.Controllers.RequestControllers
             specParams.MinLongitude = lng - deltaLng;
             specParams.MaxLongitude = lng + deltaLng;
 
-            var specs = new ProviderServiceRequestWithPaginationSpecification(specParams);
+            var providerServiceIds = await unitOfWork.Repository<ProviderService>()
+                .GetManyByConditionAsync(ps => ps.ProviderId == providerId) ?? new List<ProviderService>();
+
+            var serviceIds = providerServiceIds.Select(ps => ps.ServiceId).Distinct().ToList();
+            if (serviceIds.Count == 0)
+                return BadRequest(new ApiResponse(StatusCodes.Status400BadRequest, "Provider has no services"));
+
+            var specs = new ProviderServiceRequestWithPaginationSpecification(specParams, serviceIds);
             var serviceRequests = await unitOfWork.Repository<ServiceRequest>().GetAllWithSpecAsync(specs);
 
             if (serviceRequests is null || serviceRequests.Count == 0)

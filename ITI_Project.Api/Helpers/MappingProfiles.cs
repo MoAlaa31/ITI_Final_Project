@@ -82,8 +82,21 @@ namespace ITI_Project.Api.Helpers
 
             CreateMap<PostFromUserDTO, Post>();
 
+            /****************************************** Mapping for Comments ******************************************/
             CreateMap<Comment, CommentDTO>()
-                .ForMember(d => d.Reactions, o => o.Ignore());
+                .ForMember(d => d.Reactions, o => o.MapFrom(s =>
+                    s.Reactions == null
+                        ? new List<ReactionCountDTO>()
+                        : s.Reactions
+                            .GroupBy(r => r.ReactionType)
+                            .Select(g => new ReactionCountDTO
+                            {
+                                ReactionType = g.Key,
+                                Count = g.Count()
+                            })
+                            .OrderByDescending(r => r.Count)
+                            .Take(3)
+                            .ToList()));
             CreateMap<CommentReaction, CommentReactionDTO>();
             CreateMap<PostReaction, PostReactionDTO>();
         }

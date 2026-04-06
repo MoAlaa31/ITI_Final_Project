@@ -104,27 +104,14 @@ namespace ITI_Project.Api.Controllers.PostControllers
                 return NotFound(new ApiResponse(StatusCodes.Status404NotFound, "Post not found"));
 
             var comments = await unitOfWork.Repository<Comment>()
-                .GetAllWithSpecAsync(new CommentsWithPaginationSpecification(postId, specParams)) ?? new List<Comment>();
+                .GetAllWithSpecAsync(new CommentsForPostWithPaginationSpecification(postId, specParams)) ?? new List<Comment>();
 
-            var commentDtos = comments.Select(comment =>
-            {
-                var dto = mapper.Map<CommentDTO>(comment);
-                dto.Reactions = comment.Reactions == null
-                    ? new List<ReactionCountDTO>()
-                    : comment.Reactions
-                        .GroupBy(r => r.ReactionType)
-                        .Select(cr => new ReactionCountDTO
-                        {
-                            ReactionType = cr.Key,
-                            Count = cr.Count()
-                        })
-                        .OrderByDescending(r => r.Count)
-                        .Take(3)
-                        .ToList();
-                return dto;
-            }).ToList();
+            var count = await unitOfWork.Repository<Comment>()
+                .GetCountAsync(new CountCommentsForPostSpecification(postId));
 
-            return Ok(commentDtos);
+            var data = mapper.Map<IReadOnlyList<CommentDTO>>(comments);
+
+            return Ok(new Pagination<CommentDTO>(specParams.PageIndex, specParams.PageSize, count, data));
         }
     }
 }

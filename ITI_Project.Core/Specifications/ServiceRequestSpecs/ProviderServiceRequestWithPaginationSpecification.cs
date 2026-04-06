@@ -5,7 +5,7 @@ namespace ITI_Project.Core.Specifications.RequestSpecs
 {
     public class ProviderServiceRequestWithPaginationSpecification : BaseSpecifications<ServiceRequest>
     {
-        public ProviderServiceRequestWithPaginationSpecification(RequestSpecParams specParams)
+        public ProviderServiceRequestWithPaginationSpecification(RequestSpecParams specParams, IReadOnlyCollection<int> serviceIds)
             : base(sr =>
                 sr.ProviderId == null
                 && sr.RequestStatus == Enums.RequestStatus.Open
@@ -16,6 +16,7 @@ namespace ITI_Project.Core.Specifications.RequestSpecs
                 && (!specParams.MaxLongitude.HasValue || sr.ServiceRequestLocation.Longitude <= specParams.MaxLongitude)
                 && (string.IsNullOrEmpty(specParams.Search) || sr.Description.ToLower().Contains(specParams.Search))
                 && (!specParams.MinPrice.HasValue || sr.FinalPrice >= specParams.MinPrice)
+                && serviceIds.Contains(sr.ServiceId)
             )
         {
             if (!string.IsNullOrEmpty(specParams.Sort))

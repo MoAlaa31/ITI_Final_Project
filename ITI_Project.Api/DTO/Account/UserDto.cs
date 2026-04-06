@@ -1,4 +1,5 @@
 ﻿using System.Text.Json.Serialization;
+using ITI_Project.Core.Enums;
 
 namespace ITI_Project.Api.DTO.Account
 {
@@ -11,7 +12,7 @@ namespace ITI_Project.Api.DTO.Account
         public IList<string> Role { get; set; }
         public bool IsAuthenticated { get; set; }
         public bool IsProvider { get; set; }
-        public string? ProviderStatus { get; set; }
+        public ProfileStatus Status { get; set; }
         [JsonIgnore]
         public DateTime AccessTokenExpiration { get; set; }
     }

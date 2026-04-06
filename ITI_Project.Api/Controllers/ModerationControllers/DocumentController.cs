@@ -100,12 +100,25 @@ namespace ITI_Project.Api.Controllers.ModerationControllers
                 ProviderId = provider.Id,
                 DocumentType = uploadDTO.DocumentType,
                 DocumentUrl = uploadResult.FilePath!,
-                IsApproved = false
+                IsApproved = null
             };
 
             try
             {
                 await unitOfWork.Repository<ProviderDocument>().AddAsync(document);
+
+                var distinctDocumentTypes = existingDocuments
+                    .Select(d => d.DocumentType)
+                    .Append(document.DocumentType)
+                    .Distinct()
+                    .Count();
+
+                if (distinctDocumentTypes == 3)
+                {
+                    provider.VerificationStatus = VerificationStatus.UnderReview;
+                    unitOfWork.Repository<Provider>().Update(provider);
+                }
+
                 await unitOfWork.CompleteAsync();
             }
             catch(Exception ex) 
@@ -176,7 +189,7 @@ namespace ITI_Project.Api.Controllers.ModerationControllers
                 fileStorageService.DeleteFile(document.DocumentUrl);
 
             document.DocumentUrl = uploadResult.FilePath!;
-            document.IsApproved = false;
+            document.IsApproved = null;
 
             try
             {

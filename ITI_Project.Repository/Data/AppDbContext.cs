@@ -118,16 +118,16 @@ namespace ITI_Project.Repository.Data
                 .HasPrecision(8, 2);
 
             /* --------------------- Areas & Locations Models -----------------  */
-            modelBuilder.Entity<Provider>()
-                .HasOne(p => p.Region)
-                .WithMany(r => r.Providers)
-                .HasForeignKey(p => p.RegionId)
+            modelBuilder.Entity<Client>()
+                .HasOne(c => c.Region)
+                .WithMany(r => r.Clients)
+                .HasForeignKey(c => c.RegionId)
                 .OnDelete(DeleteBehavior.Restrict);
 
-            modelBuilder.Entity<Provider>()
-                .HasOne(p => p.Governorate)
-                .WithMany(g => g.Providers)
-                .HasForeignKey(p => p.GovernorateId)
+            modelBuilder.Entity<Client>()
+                .HasOne(c => c.Governorate)
+                .WithMany(g => g.Clients)
+                .HasForeignKey(c => c.GovernorateId)
                 .OnDelete(DeleteBehavior.Restrict);
 
             /* --------------------- Reviews & Reports Models -----------------  */

@@ -1,4 +1,5 @@
 ﻿using ITI_Project.Core.Enums;
+using ITI_Project.Core.Models.Location;
 using ITI_Project.Core.Models.Moderation;
 using ITI_Project.Core.Models.Posts;
 using ITI_Project.Core.Models.Requests;
@@ -6,6 +7,7 @@ using Microsoft.Extensions.DependencyInjection;
 using System;
 using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
+using System.ComponentModel.DataAnnotations.Schema;
 using System.Text;
 
 namespace ITI_Project.Core.Models.Users
@@ -22,11 +24,19 @@ namespace ITI_Project.Core.Models.Users
         public required string LastName { get; set; }
         public Gender Gender { get; set; }
         public DateOnly DateOfBirth { get; set; }
-        public DateOnly CreatedAt { get; set; }
+        public DateOnly CreatedAt { get; set; } 
         public string? PictureUrl { get; set; }
 
         // Relationships
         public Provider? Provider { get; set; }
+
+        [ForeignKey(nameof(Governorate))]
+        public int? GovernorateId { get; set; }
+        public Governorate? Governorate { get; set; }
+
+        [ForeignKey(nameof(Region))]
+        public int? RegionId { get; set; }
+        public Region? Region { get; set; }
 
         public ICollection<ServiceRequest>? ServiceRequests { get; set; }
         public ICollection<Post>? ServicePosts { get; set; }

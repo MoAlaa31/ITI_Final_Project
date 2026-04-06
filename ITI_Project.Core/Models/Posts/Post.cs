@@ -29,7 +29,7 @@ namespace ITI_Project.Core.Models.Posts
 
         [ForeignKey(nameof(Governorate))]
         public required int GovernorateId { get; set; }
-        public required Governorate Governorate { get; set; }
+        public Governorate Governorate { get; set; } = null!;
 
         public ICollection<Comment>? Comments { get; set; }
         public ICollection<PostImage>? PostImages { get; set; }

@@ -42,18 +42,23 @@ namespace ITI_Project.Api.Controllers.UserControllers
             if (!int.TryParse(clientIdClaim, out var clientId))
                 return Unauthorized(new ApiResponse(StatusCodes.Status401Unauthorized, "ClientId claim is missing or invalid"));
 
-            var clientExists = await unitOfWork.Repository<Client>().AnyAsync(c => c.Id == clientId);
-            if (!clientExists)
+            var client = await unitOfWork.Repository<Client>().GetByIdAsync(clientId);
+            if (client == null)
                 return NotFound(new ApiResponse(StatusCodes.Status404NotFound, "Client not found"));
 
             var alreadyProvider = await unitOfWork.Repository<Provider>().AnyAsync(p => p.ClientId == clientId);
             if (alreadyProvider)
                 return Conflict(new ApiResponse(StatusCodes.Status409Conflict, "You already have a provider request."));
 
-            var governorateExists = await unitOfWork.Repository<Governorate>().AnyAsync(g => g.Id == providerFromUserDTO.GovernorateId);
-            var regionExists = await unitOfWork.Repository<Region>().AnyAsync(r => r.Id == providerFromUserDTO.RegionId);
-            if (!governorateExists || !regionExists)
-                return BadRequest(new ApiResponse(StatusCodes.Status400BadRequest, "Invalid Governorate or Region"));
+            var region = await unitOfWork.Repository<Region>().GetByIdAsync(providerFromUserDTO.RegionId);
+            if (region == null)
+                return BadRequest(new ApiResponse(StatusCodes.Status400BadRequest, "Invalid Region"));
+
+            if (region.GovernorateId != providerFromUserDTO.GovernorateId)
+                return BadRequest(new ApiResponse(StatusCodes.Status400BadRequest, "Region does not belong to the selected governorate"));
+
+            client.GovernorateId = providerFromUserDTO.GovernorateId;
+            client.RegionId = providerFromUserDTO.RegionId;
 
             var provider = new Provider
             {
@@ -62,15 +67,16 @@ namespace ITI_Project.Api.Controllers.UserControllers
                 VerificationStatus = VerificationStatus.Pending,
                 Isverified = false,
                 Rating = null,
+                RatingSum = 0,
+                ReviewsCount = 0,
                 JobsCount = 0,
                 Nickname = providerFromUserDTO.Nickname,
-                Bio = providerFromUserDTO.Bio,
-                GovernorateId = providerFromUserDTO.GovernorateId,
-                RegionId = providerFromUserDTO.RegionId,
+                Bio = providerFromUserDTO.Bio
             };
 
             try
             {
+                unitOfWork.Repository<Client>().Update(client);
                 await unitOfWork.Repository<Provider>().AddAsync(provider);
                 await unitOfWork.CompleteAsync();
                 return StatusCode(StatusCodes.Status201Created, new ApiResponse(StatusCodes.Status201Created, "Your request to become a provider has been submitted successfully."));
@@ -80,42 +86,6 @@ namespace ITI_Project.Api.Controllers.UserControllers
                 return StatusCode(StatusCodes.Status500InternalServerError, new ApiResponse(StatusCodes.Status500InternalServerError, $"An error occurred while processing the request: {ex.Message}"));
             }
         }
-
-        //[Authorize(Roles = nameof(UserRoleType.Client))]
-        //[HttpPatch("update-provider-info")]
-        //public async Task<ActionResult<ProviderDTO>> UpdateProviderInfo(ProviderFromUserDTO providerFromUserDTO)
-        //{
-        //    var clientIdClaim = User.FindFirstValue(Identifiers.ClientId);
-        //    if(!int.TryParse(clientIdClaim, out var clientId))
-        //        return Unauthorized(new ApiResponse(StatusCodes.Status401Unauthorized, "ClientId claim is missing or invalid"));
-
-        //    var providerFromDb = await unitOfWork.Repository<Provider>().GetByConditionAsync(p => p.ClientId == clientId);
-        //    if(providerFromDb == null)
-        //        return NotFound(new ApiResponse(StatusCodes.Status404NotFound, "Provider not found"));
-
-        //    var governorateExists = await unitOfWork.Repository<Governorate>().AnyAsync(g => g.Id == providerFromUserDTO.GovernorateId);
-        //    var regionExists = await unitOfWork.Repository<Region>().AnyAsync(r => r.Id == providerFromUserDTO.RegionId);
-        //    if (!governorateExists || !regionExists)
-        //        return BadRequest(new ApiResponse(StatusCodes.Status400BadRequest, "Invalid Governorate or Region"));
-
-        //    providerFromDb.Nickname = providerFromUserDTO.Nickname;
-        //    providerFromDb.Bio = providerFromUserDTO.Bio;
-        //    providerFromDb.GovernorateId = providerFromUserDTO.GovernorateId;
-        //    providerFromDb.RegionId = providerFromUserDTO.RegionId;
-
-        //    try
-        //    {
-        //        unitOfWork.Repository<Provider>().Update(providerFromDb);
-        //        await unitOfWork.CompleteAsync();
-
-        //        var dto = mapper.Map<ProviderDTO>(providerFromDb);
-        //        return Ok(dto);
-        //    }
-        //    catch (Exception ex)
-        //    {
-        //        return StatusCode(StatusCodes.Status500InternalServerError, new ApiResponse(StatusCodes.Status500InternalServerError, $"An error occurred while processing the request: {ex.Message}"));
-        //    }
-        //}
 
         [Authorize(Roles = nameof(UserRoleType.Admin))]
         [HttpPatch("VerifyProvider/{providerId:int}")]
@@ -139,7 +109,7 @@ namespace ITI_Project.Api.Controllers.UserControllers
             var documents = provider.ProviderDocuments ?? new List<ProviderDocument>();
             var hasDocuments = documents.Count > 0;
             var distinctDocumentTypes = documents.Select(d => d.DocumentType).Distinct().Count();
-            var allDocumentsApproved = documents.Count == 3 && distinctDocumentTypes == 3 && documents.All(d => d.IsApproved);
+            var allDocumentsApproved = documents.Count == 3 && distinctDocumentTypes == 3 && documents.All(d => d.IsApproved == true);
 
             if(isVerified && (!hasBaseLocation || !hasServices || !hasDocuments || !allDocumentsApproved))
                 return BadRequest(new ApiResponse(StatusCodes.Status400BadRequest, "Provider cannot be verified. Ensure that the provider has a base location, at least one service, and all documents are approved."));
@@ -174,14 +144,22 @@ namespace ITI_Project.Api.Controllers.UserControllers
                 return NotFound(new ApiResponse(StatusCodes.Status404NotFound, "Provider not found"));
 
             var governorateExists = await unitOfWork.Repository<Governorate>().AnyAsync(g => g.Id == dto.GovernorateId);
-            var regionExists = await unitOfWork.Repository<Region>().AnyAsync(r => r.Id == dto.RegionId);
-            if (!governorateExists || !regionExists)
+            var region = await unitOfWork.Repository<Region>().GetByIdAsync(dto.RegionId);
+            if (!governorateExists || region == null)
                 return BadRequest(new ApiResponse(StatusCodes.Status400BadRequest, "Invalid Governorate or Region"));
+
+            if (region.GovernorateId != dto.GovernorateId)
+                return BadRequest(new ApiResponse(StatusCodes.Status400BadRequest, "Region does not belong to the selected governorate"));
 
             providerFromDb.Nickname = dto.Nickname;
             providerFromDb.Bio = dto.Bio;
-            providerFromDb.GovernorateId = dto.GovernorateId;
-            providerFromDb.RegionId = dto.RegionId;
+
+            var client = await unitOfWork.Repository<Client>().GetByIdAsync(clientId);
+            if (client == null)
+                return NotFound(new ApiResponse(StatusCodes.Status404NotFound, "Client not found"));
+
+            client.GovernorateId = dto.GovernorateId;
+            client.RegionId = dto.RegionId;
 
             if (dto.BaseLocation != null)
             {
@@ -232,6 +210,7 @@ namespace ITI_Project.Api.Controllers.UserControllers
 
             try
             {
+                unitOfWork.Repository<Client>().Update(client);
                 unitOfWork.Repository<Provider>().Update(providerFromDb);
                 await unitOfWork.CompleteAsync();
 

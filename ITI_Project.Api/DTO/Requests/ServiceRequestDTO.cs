@@ -14,6 +14,7 @@ namespace ITI_Project.Api.DTO.Requests
         public DateTime? PreferredTime { get; set; }
         public int ClientId { get; set; }
         public int? ProviderId { get; set; }
-        public Location.ServiceRequestLocationDTO? ServiceRequestLocation { get; set; }
+        public ServiceRequestLocationDTO? ServiceRequestLocation { get; set; }
+        public int ServiceId { get; set; }
     }
 }

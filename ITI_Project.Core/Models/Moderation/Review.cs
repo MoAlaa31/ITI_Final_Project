@@ -20,11 +20,11 @@ namespace ITI_Project.Core.Models.Moderation
         //Relationships
         [ForeignKey(nameof(Provider))]
         public required int ProviderId { get; set; }
-        public required Provider Provider { get; set; }
+        public Provider Provider { get; set; } = null!;
 
         [ForeignKey(nameof(ServiceRequest))]
         public required int ServiceRequestId { get; set; }
-        public required ServiceRequest ServiceRequest { get; set; }
+        public ServiceRequest ServiceRequest { get; set; } = null!;
 
     }
 }

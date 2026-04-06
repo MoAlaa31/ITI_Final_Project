@@ -6,11 +6,8 @@ namespace ITI_Project.Core.Enums
 {
     public enum DocumentType
     {
-        ActionTypeNationalId = 1,
-        CriminalRecord = 2,
-        ProfessionalLicense = 3,
-        TaxCard = 4,
-        CommercialRegister = 5,
-        Other = 6
+        PersonalPhoto = 1,
+        NationalId = 2,
+        CriminalRecord = 3
     }
 }

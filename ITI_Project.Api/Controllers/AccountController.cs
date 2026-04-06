@@ -131,6 +131,8 @@ namespace ITI_Project.Api.Controllers
                     VerificationStatus = VerificationStatus.Pending,
                     Isverified = false,
                     Rating = null,
+                    RatingSum = 0,
+                    ReviewsCount = 0,
                     JobsCount = 0,
                 };
 
@@ -175,7 +177,24 @@ namespace ITI_Project.Api.Controllers
                 return StatusCode(StatusCodes.Status500InternalServerError,(new ApiResponse(StatusCodes.Status500InternalServerError, "An error occurred while registering")));
 
             var provider = await unitOfWork.Repository<Provider>().GetByConditionAsync(p => p.ClientId == client.Id);
-            var providerStatus = provider != null ? provider.VerificationStatus.ToString() : null;
+
+            var isClientProfileComplete =
+                !string.IsNullOrWhiteSpace(client.FirstName) &&
+                !string.IsNullOrWhiteSpace(client.LastName) &&
+                client.GovernorateId.HasValue &&
+                client.RegionId.HasValue;
+
+            var status = provider != null
+                ? provider.VerificationStatus switch
+                {
+                    VerificationStatus.Pending => ProfileStatus.Pending,
+                    VerificationStatus.UnderReview => ProfileStatus.UnderReview,
+                    VerificationStatus.Approved => ProfileStatus.Approved,
+                    VerificationStatus.Rejected => ProfileStatus.Rejected,
+                    VerificationStatus.Suspended => ProfileStatus.Suspended,
+                    _ => ProfileStatus.Pending
+                }
+                : (isClientProfileComplete ? ProfileStatus.Completed : ProfileStatus.Pending);
             // Generate Access Token
             var accessToken = await authService.CreateTokenAsync(appUser, userManager);
 
@@ -198,7 +217,7 @@ namespace ITI_Project.Api.Controllers
                     AccessToken = accessToken,
                     Role = roles,
                     IsProvider = provider != null,
-                    ProviderStatus = providerStatus,
+                    Status = status,
                     PictureUrl = client.PictureUrl,
                     AccessTokenExpiration = DateTime.UtcNow.AddMinutes(double.Parse(configuration["JWT:AccessTokenExpirationInMinutes"]!)),
                     IsAuthenticated = true
@@ -296,6 +315,54 @@ namespace ITI_Project.Api.Controllers
                 return BadRequest(new ApiResponse(StatusCodes.Status400BadRequest, "Failed to change password"));
 
             return Ok(new ApiResponse(StatusCodes.Status200OK, "Password changed successfully"));
+        }
+
+        #endregion
+
+
+        #region Account Status
+        [Authorize]
+        [HttpGet("account-status")]
+        public async Task<ActionResult<AccountStatusDto>> GetAccountStatus()
+        {
+            var email = User.FindFirstValue(ClaimTypes.Email);
+            var appUser = await userManager.FindByEmailAsync(email!);
+            if (appUser == null)
+                return Unauthorized(new ApiResponse(StatusCodes.Status401Unauthorized, "User is unauthorized"));
+
+            var roles = await userManager.GetRolesAsync(appUser);
+
+            var client = await unitOfWork.Repository<Client>().GetByAppUserIdAsync(appUser.Id);
+            if (client == null)
+                return StatusCode(StatusCodes.Status500InternalServerError,
+                    new ApiResponse(StatusCodes.Status500InternalServerError, "Client not found"));
+
+            var provider = await unitOfWork.Repository<Provider>().GetByConditionAsync(p => p.ClientId == client.Id);
+
+            var isClientProfileComplete =
+                !string.IsNullOrWhiteSpace(client.FirstName) &&
+                !string.IsNullOrWhiteSpace(client.LastName) &&
+                client.GovernorateId.HasValue &&
+                client.RegionId.HasValue;
+
+            var status = provider != null
+                ? provider.VerificationStatus switch
+                {
+                    VerificationStatus.Pending => ProfileStatus.Pending,
+                    VerificationStatus.UnderReview => ProfileStatus.UnderReview,
+                    VerificationStatus.Approved => ProfileStatus.Approved,
+                    VerificationStatus.Rejected => ProfileStatus.Rejected,
+                    VerificationStatus.Suspended => ProfileStatus.Suspended,
+                    _ => ProfileStatus.Pending
+                }
+                : (isClientProfileComplete ? ProfileStatus.Completed : ProfileStatus.Pending);
+
+            return Ok(new AccountStatusDto
+            {
+                Role = roles,
+                IsProvider = provider != null,
+                Status = status
+            });
         }
 
         #endregion

@@ -1,6 +1,7 @@
 ﻿using ITI_Project.Core.Enums;
 using ITI_Project.Core.Models.Location;
 using ITI_Project.Core.Models.Moderation;
+using ITI_Project.Core.Models.Services;
 using ITI_Project.Core.Models.Users;
 using System;
 using System.Collections.Generic;
@@ -30,13 +31,17 @@ namespace ITI_Project.Core.Models.Requests
         [Required(ErrorMessage = "User Id is required.")]
         [ForeignKey(nameof(Client))]
         public required int ClientId { get; set; }
-        public required Client Client { get; set; }
+        public Client Client { get; set; } = null!;
 
         public Review? Review { get; set; }
 
         public ServiceRequestLocation? ServiceRequestLocation { get; set; }
 
-        public ICollection<RequestOffer>? RequestOffers { get; set; }   
+        public ICollection<RequestOffer>? RequestOffers { get; set; }
 
+        [Required(ErrorMessage = "User Id is required.")]
+        [ForeignKey(nameof(Service))]
+        public required int ServiceId { get; set; }
+        public Service Service { get; set; } = null!;
     }
 }

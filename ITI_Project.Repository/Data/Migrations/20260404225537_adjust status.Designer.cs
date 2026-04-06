@@ -4,6 +4,7 @@ using ITI_Project.Repository.Data;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 
 #nullable disable
@@ -11,9 +12,11 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace ITI_Project.Repository.Data.Migrations
 {
     [DbContext(typeof(AppDbContext))]
-    partial class AppDbContextModelSnapshot : ModelSnapshot
+    [Migration("20260404225537_adjust status")]
+    partial class adjuststatus
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -485,16 +488,11 @@ namespace ITI_Project.Repository.Data.Migrations
                     b.Property<int>("RequestStatus")
                         .HasColumnType("int");
 
-                    b.Property<int>("ServiceId")
-                        .HasColumnType("int");
-
                     b.HasKey("Id");
 
                     b.HasIndex("ClientId");
 
                     b.HasIndex("ProviderId");
-
-                    b.HasIndex("ServiceId");
 
                     b.ToTable("ServiceRequests");
                 });
@@ -611,12 +609,6 @@ namespace ITI_Project.Repository.Data.Migrations
 
                     b.Property<double?>("Rating")
                         .HasColumnType("float");
-
-                    b.Property<double>("RatingSum")
-                        .HasColumnType("float");
-
-                    b.Property<int>("ReviewsCount")
-                        .HasColumnType("int");
 
                     b.Property<DateOnly>("StartedAt")
                         .HasColumnType("date");
@@ -897,17 +889,9 @@ namespace ITI_Project.Repository.Data.Migrations
                         .WithMany("ServiceRequests")
                         .HasForeignKey("ProviderId");
 
-                    b.HasOne("ITI_Project.Core.Models.Services.Service", "Service")
-                        .WithMany("ServiceRequest")
-                        .HasForeignKey("ServiceId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
                     b.Navigation("Client");
 
                     b.Navigation("Provider");
-
-                    b.Navigation("Service");
                 });
 
             modelBuilder.Entity("ITI_Project.Core.Models.Services.ProviderService", b =>
@@ -1010,8 +994,6 @@ namespace ITI_Project.Repository.Data.Migrations
             modelBuilder.Entity("ITI_Project.Core.Models.Services.Service", b =>
                 {
                     b.Navigation("ProviderServices");
-
-                    b.Navigation("ServiceRequest");
                 });
 
             modelBuilder.Entity("ITI_Project.Core.Models.Users.Client", b =>

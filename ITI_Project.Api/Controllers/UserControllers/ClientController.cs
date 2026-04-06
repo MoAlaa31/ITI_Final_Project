@@ -5,6 +5,7 @@ using ITI_Project.Core;
 using ITI_Project.Core.Constants;
 using ITI_Project.Core.Enums;
 using ITI_Project.Core.IServices;
+using ITI_Project.Core.Models.Location;
 using ITI_Project.Core.Models.Users;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
@@ -56,6 +57,16 @@ namespace ITI_Project.Api.Controllers.UserControllers
                 return NotFound(new ApiResponse(StatusCodes.Status404NotFound, "Client not found"));
 
             mapper.Map(clientUpdateDTO, client);
+            // Ensure the selected region belongs to the selected governorate
+            var region = await unitOfWork.Repository<Region>().GetByIdAsync(clientUpdateDTO.RegionId);
+            if (region == null)
+                return BadRequest(new ApiResponse(StatusCodes.Status400BadRequest, "Invalid Region"));
+
+            if (region.GovernorateId != clientUpdateDTO.GovernorateId)
+                return BadRequest(new ApiResponse(StatusCodes.Status400BadRequest, "Region does not belong to the selected governorate"));
+
+            client.GovernorateId = clientUpdateDTO.GovernorateId;
+            client.RegionId = clientUpdateDTO.RegionId;
 
             if (clientUpdateDTO.Picture != null)
             {

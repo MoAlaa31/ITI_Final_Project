@@ -4,6 +4,7 @@ using ITI_Project.Repository.Data;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 
 #nullable disable
@@ -11,9 +12,11 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace ITI_Project.Repository.Data.Migrations
 {
     [DbContext(typeof(AppDbContext))]
-    partial class AppDbContextModelSnapshot : ModelSnapshot
+    [Migration("20260405213738_add service to serviceRequest")]
+    partial class addservicetoserviceRequest
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -611,12 +614,6 @@ namespace ITI_Project.Repository.Data.Migrations
 
                     b.Property<double?>("Rating")
                         .HasColumnType("float");
-
-                    b.Property<double>("RatingSum")
-                        .HasColumnType("float");
-
-                    b.Property<int>("ReviewsCount")
-                        .HasColumnType("int");
 
                     b.Property<DateOnly>("StartedAt")
                         .HasColumnType("date");

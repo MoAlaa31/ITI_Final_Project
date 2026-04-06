@@ -34,7 +34,7 @@ namespace ITI_Project.Services.Files
                 return (false, "Folder name is required.", null);
 
             var extension = Path.GetExtension(file.FileName).ToLowerInvariant();
-            var extensions = allowedExtensions ?? new[] { ".jpg", ".jpeg", ".png", ".gif", ".bmp", ".webp" };
+            var extensions = allowedExtensions ?? new[] { ".jpg", ".jpeg", ".png", ".webp" };
 
             if (string.IsNullOrWhiteSpace(extension) || !extensions.Contains(extension))
                 return (false, $"Invalid file format. Allowed formats: {string.Join(", ", extensions)}", null);

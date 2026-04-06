@@ -3,9 +3,9 @@ using Microsoft.EntityFrameworkCore;
 
 namespace ITI_Project.Core.Specifications.CommentSpecs
 {
-    public class CommentsWithPaginationSpecification : BaseSpecifications<Comment>
+    public class CommentsForPostWithPaginationSpecification : BaseSpecifications<Comment>
     {
-        public CommentsWithPaginationSpecification(int postId, CommentSpecParams specParams)
+        public CommentsForPostWithPaginationSpecification(int postId, CommentSpecParams specParams)
             : base(c => c.PostId == postId)
         {
             AddOrderByDescending(c => c.CreatedAt);

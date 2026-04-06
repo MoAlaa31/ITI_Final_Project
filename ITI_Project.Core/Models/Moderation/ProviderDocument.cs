@@ -12,10 +12,10 @@ namespace ITI_Project.Core.Models.Moderation
         public int Id { get; set; }
         public required string DocumentUrl { get; set; }
         public DocumentType DocumentType { get; set; }
-        public bool IsApproved { get; set; }
+        public bool? IsApproved { get; set; }
 
         [ForeignKey("Provider")]
         public required int ProviderId { get; set; }
-        public Provider Provider { get; set; }
+        public Provider Provider { get; set; } = null!;
     }
 }

@@ -5,6 +5,7 @@ using ITI_Project.Core;
 using ITI_Project.Core.Constants;
 using ITI_Project.Core.Enums;
 using ITI_Project.Core.Models.Location;
+using ITI_Project.Core.Models.Services;
 using ITI_Project.Core.Models.Users;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
@@ -70,5 +71,69 @@ namespace ITI_Project.Api.Controllers.LocationControllers
 
 
         }
+        [Authorize(Roles = nameof(UserRoleType.Client))]
+        [HttpGet("nearby-providers")]
+        public async Task<ActionResult<IReadOnlyList<NearbyProviderDTO>>> GetNearbyProviders([FromQuery] NearbyProvidersQueryDTO query)
+        {
+            var serviceExists = await unitOfWork.Repository<Service>().AnyAsync(s => s.Id == query.ServiceId);
+            if (!serviceExists)
+                return BadRequest(new ApiResponse(StatusCodes.Status400BadRequest, "Invalid service"));
+
+            var radius = Math.Max(1, query.RadiusKm);
+
+            var deltaLat = radius / 111.32;
+            var deltaLng = radius / (111.32 * Math.Cos(query.Latitude * Math.PI / 180));
+
+            var minLat = query.Latitude - deltaLat;
+            var maxLat = query.Latitude + deltaLat;
+            var minLng = query.Longitude - deltaLng;
+            var maxLng = query.Longitude + deltaLng;
+
+            var locations = await unitOfWork.Repository<BaseLocation>()
+                .GetManyByConditionAsync(
+                    bl => bl.Latitude >= minLat &&
+                          bl.Latitude <= maxLat &&
+                          bl.Longitude >= minLng &&
+                          bl.Longitude <= maxLng,
+                    bl => bl.Provider,
+                    bl => bl.Provider.Client,
+                    bl => bl.Provider.ProviderServices!) ?? new List<BaseLocation>();
+
+            var nearby = locations
+                .Where(bl =>
+                    bl.Provider?.ProviderServices?.Any(ps => ps.ServiceId == query.ServiceId) == true &&
+                    GetDistanceKm(query.Latitude, query.Longitude, bl.Latitude, bl.Longitude) <= radius)
+                .Select(bl => new NearbyProviderDTO
+                {
+                    Id = bl.Provider!.Id,
+                    Name = $"{bl.Provider.Client.FirstName} {bl.Provider.Client.LastName}".Trim(),
+                    Profession = query.ServiceId,
+                    Experience = bl.Provider.Bio,
+                    Rating = bl.Provider.Rating ?? 0,
+                    Distance = GetDistanceKm(query.Latitude, query.Longitude, bl.Latitude, bl.Longitude),
+                    Status = "متاح الآن",
+                    Position = new PositionDTO { Lat = bl.Latitude, Lng = bl.Longitude },
+                    Avatar = bl.Provider.Client.PictureUrl
+                })
+                .ToList();
+
+            return Ok(nearby);
+        }
+
+        private static double GetDistanceKm(double lat1, double lon1, double lat2, double lon2)
+        {
+            const double R = 6371;
+            var dLat = DegreesToRadians(lat2 - lat1);
+            var dLon = DegreesToRadians(lon2 - lon1);
+
+            var a = Math.Sin(dLat / 2) * Math.Sin(dLat / 2) +
+                    Math.Cos(DegreesToRadians(lat1)) * Math.Cos(DegreesToRadians(lat2)) *
+                    Math.Sin(dLon / 2) * Math.Sin(dLon / 2);
+
+            var c = 2 * Math.Atan2(Math.Sqrt(a), Math.Sqrt(1 - a));
+            return R * c;
+        }
+
+        private static double DegreesToRadians(double degrees) => degrees * (Math.PI / 180);
     }
 }

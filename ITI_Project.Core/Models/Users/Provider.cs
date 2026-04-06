@@ -18,6 +18,8 @@ namespace ITI_Project.Core.Models.Users
         public string? Bio { get; set; }
         public bool Isverified { get; set; }
         public double? Rating { get; set; }
+        public double RatingSum { get; set; }
+        public int ReviewsCount { get; set; }
         public int JobsCount { get; set; }
         [StringLength(25, ErrorMessage = "Nickname cannot be longer than 25 characters.")]
         public string? Nickname { get; set; }
@@ -32,14 +34,6 @@ namespace ITI_Project.Core.Models.Users
 
         public BaseLocation? BaseLocation { get; set; }
         public LiveLocation? LiveLocation { get; set; }
-
-        [ForeignKey(nameof(Governorate))]
-        public int? GovernorateId { get; set; }
-        public Governorate? Governorate { get; set; }
-
-        [ForeignKey(nameof(Region))]
-        public int? RegionId { get; set; }
-        public Region? Region { get; set; }
 
         public ICollection<ProviderService>? ProviderServices { get; set; }
         public ICollection<ProviderDocument>? ProviderDocuments { get; set; }

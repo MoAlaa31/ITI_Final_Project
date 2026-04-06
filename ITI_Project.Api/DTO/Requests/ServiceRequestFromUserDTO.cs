@@ -14,9 +14,8 @@ namespace ITI_Project.Api.DTO.Requests
         [StringLength(200, ErrorMessage = "Description cannot be longer than 200 characters.")]
         [Required(ErrorMessage = "Description is required.")]
         public required string Description { get; set; }
-        [Range(0.0, 1000000.0, ErrorMessage = "Final Price must be a positive number.")]
-        public decimal? FinalPrice { get; set; }
-        public DateTime? PreferredTime { get; set; }
         public ServiceRequestLocationDTO? ServiceRequestLocation { get; set; }
+        [Required(ErrorMessage = "ServiceId is required.")]
+        public int ServiceId { get; set; }
     }
 }

@@ -17,7 +17,7 @@ namespace ITI_Project.Core.Models.Location
 
         // Relations
         public ICollection<Region>? Regions { get; set; }
-        public ICollection<Provider>? Providers { get; set; }
+        public ICollection<Client>? Clients { get; set; }
         public ICollection<Post>? Posts { get; set; }
     }
 }

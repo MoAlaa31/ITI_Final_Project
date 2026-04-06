@@ -32,11 +32,17 @@ namespace ITI_Project.Api.Controllers.PostControllers
 
         [Authorize(Roles = nameof(UserRoleType.Client))]
         [HttpGet("get-recent-posts")]
-        public async Task<ActionResult> GetAllPosts(PostSpecParams specParams)
+        public async Task<ActionResult> GetAllPosts([FromQuery] PostSpecParams specParams)
         {
             var posts = await unitOfWork.Repository<Post>()
                 .GetAllWithSpecAsync(new PostsWithPaginationAndFiltersSpecification(specParams));
-            return Ok(mapper.Map<IReadOnlyList<PostDTO>>(posts));
+
+            var count = await unitOfWork.Repository<Post>()
+                .GetCountAsync(new CountPostsWithFilterSpecification(specParams));
+
+            var data = mapper.Map<IReadOnlyList<PostDTO>>(posts);
+
+            return Ok(new Pagination<PostDTO>(specParams.PageIndex, specParams.PageSize, count, data));
         }
 
         [Authorize(Roles = nameof(UserRoleType.Client))]
@@ -47,9 +53,12 @@ namespace ITI_Project.Api.Controllers.PostControllers
             if (!int.TryParse(clientIdClaim, out var clientId))
                 return Unauthorized(new ApiResponse(StatusCodes.Status401Unauthorized, "ClientId claim is missing or invalid"));
 
-            var clientExists = await unitOfWork.Repository<Client>().AnyAsync(c => c.Id == clientId);
-            if (!clientExists)
+            var client = await unitOfWork.Repository<Client>().GetByIdAsync(clientId);
+            if (client == null)
                 return NotFound(new ApiResponse(StatusCodes.Status404NotFound, "Client not found"));
+
+            if(client.GovernorateId == null)
+                return BadRequest(new ApiResponse(StatusCodes.Status400BadRequest, "Client must have a governorate to create a post"));
 
             var uploadedPaths = new List<string>();
 
@@ -72,6 +81,10 @@ namespace ITI_Project.Api.Controllers.PostControllers
 
             var post = mapper.Map<Post>(dto);
             post.ClientId = clientId;
+
+            post.GovernorateId = client.GovernorateId.Value;
+            if (client.RegionId.HasValue)
+                post.RegionId = client.RegionId.Value;
             post.CreatedAt = DateHelper.GetNowInEgypt();
 
             try
