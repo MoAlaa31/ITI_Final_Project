@@ -25,6 +25,8 @@ namespace ITI_Project.Core.Specifications.PostSpecs
             Includes.Add(p => p.Comments!);
             Includes.Add(p => p.PostImages!);
             Includes.Add(p => p.Reactions!);
+            Includes.Add(p => p.Client);
+            Includes.Add(p => p.Client.Provider!);
 
             ApplyPagination((specParams.PageIndex - 1) * specParams.PageSize, specParams.PageSize);
         }

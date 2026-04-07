@@ -11,8 +11,8 @@ namespace ITI_Project.Core.Models.Posts
         public required string ImageUrl { get; set; }
 
         // Relationships
-        [ForeignKey("Post")]
+        [ForeignKey(nameof(Post))]
         public required int PostId { get; set; }
-        public required Post Post { get; set; }
+        public Post Post { get; set; } = null!;
     }
 }

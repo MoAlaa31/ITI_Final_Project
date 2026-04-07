@@ -7,7 +7,7 @@ namespace ITI_Project.Core.Specifications.PostSpecs
 {
     public class PostSpecParams
     {
-        private const int MaxPageSize = 12;
+        private const int MaxPageSize = 20;
 		public int PageIndex { get; set; } = 1;
 
         private int pageSize;

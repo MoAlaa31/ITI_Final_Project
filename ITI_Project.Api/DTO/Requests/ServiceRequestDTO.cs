@@ -16,5 +16,6 @@ namespace ITI_Project.Api.DTO.Requests
         public int? ProviderId { get; set; }
         public ServiceRequestLocationDTO? ServiceRequestLocation { get; set; }
         public int ServiceId { get; set; }
+        public IReadOnlyList<string>? ImageUrls { get; set; }
     }
 }

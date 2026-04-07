@@ -16,6 +16,6 @@ namespace ITI_Project.Core.Models.Location
         // Relationships
         [ForeignKey(nameof(ServiceRequest))]
         public required int ServiceRequestId { get; set; }
-        public required ServiceRequest ServiceRequest { get; set; }
+        public ServiceRequest ServiceRequest { get; set; } = null!;
     }
 }

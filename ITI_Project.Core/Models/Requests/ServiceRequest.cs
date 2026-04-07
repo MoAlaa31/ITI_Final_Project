@@ -35,7 +35,7 @@ namespace ITI_Project.Core.Models.Requests
 
         public Review? Review { get; set; }
 
-        public ServiceRequestLocation? ServiceRequestLocation { get; set; }
+        public ServiceRequestLocation ServiceRequestLocation { get; set; } = null!;
 
         public ICollection<RequestOffer>? RequestOffers { get; set; }
 
@@ -43,5 +43,7 @@ namespace ITI_Project.Core.Models.Requests
         [ForeignKey(nameof(Service))]
         public required int ServiceId { get; set; }
         public Service Service { get; set; } = null!;
+
+        public ICollection<ServiceRequestImage>? ServiceRequestImages { get; set; }
     }
 }

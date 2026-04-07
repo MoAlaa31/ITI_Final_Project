@@ -5,6 +5,7 @@ using ITI_Project.Api.Helpers;
 using ITI_Project.Core;
 using ITI_Project.Core.Constants;
 using ITI_Project.Core.Enums;
+using ITI_Project.Core.Models.Location;
 using ITI_Project.Core.Models.Requests;
 using ITI_Project.Core.Models.Services;
 using ITI_Project.Core.Models.Users;
@@ -14,6 +15,7 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using System.Security.Claims;
+using ITI_Project.Core.IServices;
 
 namespace ITI_Project.Api.Controllers.RequestControllers
 {
@@ -21,16 +23,18 @@ namespace ITI_Project.Api.Controllers.RequestControllers
     {
         private readonly IUnitOfWork unitOfWork;
         private readonly IMapper mapper;
+        private readonly IFileStorageService fileStorageService;
 
-        public ServiceRequestController(IUnitOfWork unitOfWork, IMapper mapper)
+        public ServiceRequestController(IUnitOfWork unitOfWork, IMapper mapper, IFileStorageService fileStorageService)
         {
             this.unitOfWork = unitOfWork;
             this.mapper = mapper;
+            this.fileStorageService = fileStorageService;
         }
 
         [Authorize(Roles = nameof(UserRoleType.Client))]
-        [HttpPost("create-service-request")]                        // LocationDTO must be added to ServiceRequestFromUserDTO
-        public async Task<ActionResult<ServiceRequestDTO>> CreateServiceRequest(ServiceRequestFromUserDTO serviceRequestDTO)
+        [HttpPost("create-service-request")]
+        public async Task<ActionResult<ServiceRequestDTO>> CreateServiceRequest([FromForm] ServiceRequestFromUserDTO serviceRequestDTO)
         {
             var clientIdClaim = User.FindFirstValue(Identifiers.ClientId);
             if(!int.TryParse(clientIdClaim, out var clientId))
@@ -44,6 +48,25 @@ namespace ITI_Project.Api.Controllers.RequestControllers
             if (!serviceExists)
                 return BadRequest(new ApiResponse(StatusCodes.Status400BadRequest, "Invalid service"));
 
+            var uploadedPaths = new List<string>();
+
+            if (serviceRequestDTO.Images is { Count: > 0 })
+            {
+                foreach (var image in serviceRequestDTO.Images)
+                {
+                    var uploadResult = await fileStorageService.UploadFileAsync(image, "service-request-images", User);
+                    if (!uploadResult.Success)
+                    {
+                        foreach (var path in uploadedPaths)
+                            fileStorageService.DeleteFile(path);
+
+                        return BadRequest(new ApiResponse(StatusCodes.Status400BadRequest, uploadResult.Message));
+                    }
+
+                    uploadedPaths.Add(uploadResult.FilePath!);
+                }
+            }
+
             var serviceRequest = mapper.Map<ServiceRequest>(serviceRequestDTO);
             serviceRequest.ClientId = clientId;
             serviceRequest.RequestStatus = RequestStatus.Open;
@@ -53,22 +76,49 @@ namespace ITI_Project.Api.Controllers.RequestControllers
             {
                 await unitOfWork.Repository<ServiceRequest>().AddAsync(serviceRequest);
                 await unitOfWork.CompleteAsync();
+
+                serviceRequest.ServiceRequestLocation = new ServiceRequestLocation
+                {
+                    Latitude = serviceRequestDTO.Latitude,
+                    Longitude = serviceRequestDTO.Longitude,
+                    ServiceRequestId = serviceRequest.Id
+                };
+
+                unitOfWork.Repository<ServiceRequest>().Update(serviceRequest);
+                await unitOfWork.CompleteAsync();
+
+                if (uploadedPaths.Count > 0)
+                {
+                    var images = uploadedPaths.Select(path => new ServiceRequestImage
+                    {
+                        ImageUrl = path,
+                        ServiceRequestId = serviceRequest.Id,
+                        ServiceRequest = serviceRequest
+                    }).ToList();
+
+                    await unitOfWork.Repository<ServiceRequestImage>().AddRangeAsync(images);
+                    await unitOfWork.CompleteAsync();
+                }
             }
             catch
             {
+                foreach (var path in uploadedPaths)
+                    fileStorageService.DeleteFile(path);
+
                 return StatusCode(StatusCodes.Status500InternalServerError, 
                     new ApiResponse(StatusCodes.Status500InternalServerError, "An error occurred while creating the service request. Please try again."));
             }
 
             var dto = mapper.Map<ServiceRequestDTO>(serviceRequest);
-            return CreatedAtAction(nameof(GetServiceRequestById), new { id = serviceRequest.Id }, dto);   // to be reviewed later, should it be GetServiceRequestById instead of CreateServiceRequest?
+            return CreatedAtAction(nameof(GetServiceRequestById), new { id = serviceRequest.Id }, dto);
         }
 
         [Authorize]
         [HttpGet("get-request-byid/{id:int}")]
         public async Task<ActionResult<ServiceRequestDTO>> GetServiceRequestById(int id)
         {
-            var serviceRequest = await unitOfWork.Repository<ServiceRequest>().GetByIdAsync(id);
+            var serviceRequest = await unitOfWork.Repository<ServiceRequest>()
+                .GetByIdWithIncludesAsync(id, sr => sr.ServiceRequestLocation!, sr => sr.ServiceRequestImages!);
             if (serviceRequest is null)
                 return NotFound(new ApiResponse(StatusCodes.Status404NotFound, "Service request not found"));
 
@@ -98,7 +148,7 @@ namespace ITI_Project.Api.Controllers.RequestControllers
                 return Unauthorized(new ApiResponse(StatusCodes.Status401Unauthorized, "ClientId claim is missing or invalid"));
 
             var serviceRequests = await unitOfWork.Repository<ServiceRequest>()
-                .GetManyByConditionAsync(sr => sr.ClientId == clientId);
+                .GetManyByConditionAsync(sr => sr.ClientId == clientId, sr => sr.ServiceRequestImages!);
 
             if (serviceRequests is null || serviceRequests.Count == 0)
                 return Ok(new List<ServiceRequestDTO>());
@@ -167,7 +217,7 @@ namespace ITI_Project.Api.Controllers.RequestControllers
                 return Unauthorized(new ApiResponse(StatusCodes.Status401Unauthorized, "ProviderId claim is missing or invalid"));
 
             var serviceRequests = await unitOfWork.Repository<ServiceRequest>()
-                .GetManyByConditionAsync(sr => sr.ProviderId == providerId, sr => sr.ServiceRequestLocation!);
+                .GetManyByConditionAsync(sr => sr.ProviderId == providerId, sr => sr.ServiceRequestLocation!, sr => sr.ServiceRequestImages!);
 
             if (serviceRequests is null || serviceRequests.Count == 0)
                 return Ok(new List<ServiceRequestDTO>());
@@ -343,6 +393,42 @@ namespace ITI_Project.Api.Controllers.RequestControllers
 
             var dto = mapper.Map<ServiceRequestDTO>(serviceRequest);
             return Ok(dto);
+        }
+
+        [Authorize(Roles = nameof(UserRoleType.Client))]
+        [HttpDelete("delete-service-request/{id:int}")]
+        public async Task<ActionResult> DeleteServiceRequest(int id)
+        {
+            var clientIdClaim = User.FindFirstValue(Identifiers.ClientId);
+            if (!int.TryParse(clientIdClaim, out var clientId))
+                return Unauthorized(new ApiResponse(StatusCodes.Status401Unauthorized, "ClientId claim is missing or invalid"));
+
+            var serviceRequest = await unitOfWork.Repository<ServiceRequest>()
+                .GetByIdWithIncludesAsync(id, sr => sr.ServiceRequestImages!);
+            if (serviceRequest is null)
+                return NotFound(new ApiResponse(StatusCodes.Status404NotFound, "Service request not found"));
+
+            if (serviceRequest.ClientId != clientId)
+                return Forbid();
+
+            try
+            {
+                if (serviceRequest.ServiceRequestImages != null)
+                {
+                    foreach (var image in serviceRequest.ServiceRequestImages)
+                        fileStorageService.DeleteFile(image.ImageUrl);
+                }
+
+                unitOfWork.Repository<ServiceRequest>().Delete(serviceRequest);
+                await unitOfWork.CompleteAsync();
+
+                return Ok(new ApiResponse(StatusCodes.Status200OK, "Service request deleted successfully"));
+            }
+            catch
+            {
+                return StatusCode(StatusCodes.Status500InternalServerError,
+                    new ApiResponse(StatusCodes.Status500InternalServerError, "An error occurred while deleting the service request"));
+            }
         }
 
 

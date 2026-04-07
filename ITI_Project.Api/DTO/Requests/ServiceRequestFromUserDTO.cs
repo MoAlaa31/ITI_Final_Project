@@ -1,11 +1,6 @@
 ﻿using ITI_Project.Api.DTO.Location;
-using ITI_Project.Core.Enums;
-using ITI_Project.Core.Models.Location;
-using ITI_Project.Core.Models.Moderation;
-using ITI_Project.Core.Models.Requests;
-using ITI_Project.Core.Models.Users;
+using Microsoft.AspNetCore.Http;
 using System.ComponentModel.DataAnnotations;
-using System.ComponentModel.DataAnnotations.Schema;
 
 namespace ITI_Project.Api.DTO.Requests
 {
@@ -14,8 +9,16 @@ namespace ITI_Project.Api.DTO.Requests
         [StringLength(200, ErrorMessage = "Description cannot be longer than 200 characters.")]
         [Required(ErrorMessage = "Description is required.")]
         public required string Description { get; set; }
-        public ServiceRequestLocationDTO? ServiceRequestLocation { get; set; }
+
+        [Required(ErrorMessage = "Latitude is required.")]
+        public double Latitude { get; set; }
+
+        [Required(ErrorMessage = "Longitude is required.")]
+        public double Longitude { get; set; }
+
         [Required(ErrorMessage = "ServiceId is required.")]
         public int ServiceId { get; set; }
+
+        public List<IFormFile>? Images { get; set; }
     }
 }

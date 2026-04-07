@@ -30,10 +30,10 @@ namespace ITI_Project.Core.Specifications.RequestSpecs
                         AddOrderByDescending(sr => sr.CreatedAt);
                         break;
                     case "priceasc":
-                        AddOrderBy(sr => sr.FinalPrice);
+                        AddOrderBy(sr => sr.FinalPrice!);
                         break;
                     case "pricedesc":
-                        AddOrderByDescending(sr => sr.FinalPrice);
+                        AddOrderByDescending(sr => sr.FinalPrice!);
                         break;
                     default:
                         AddOrderByDescending(sr => sr.CreatedAt);
@@ -45,7 +45,8 @@ namespace ITI_Project.Core.Specifications.RequestSpecs
                 AddOrderByDescending(sr => sr.CreatedAt);
             }
 
-            Includes.Add(sr => sr.ServiceRequestLocation);
+            Includes.Add(sr => sr.ServiceRequestLocation!);
+            Includes.Add(sr => sr.ServiceRequestImages!);
             ApplyPagination((specParams.PageIndex - 1) * specParams.PageSize, specParams.PageSize);
         }
     }

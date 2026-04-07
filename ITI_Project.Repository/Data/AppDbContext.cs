@@ -40,6 +40,7 @@ namespace ITI_Project.Repository.Data
         // Requests & offers
         public DbSet<ServiceRequest> ServiceRequests { get; set; }
         public DbSet<RequestOffer> RequestOffers { get; set; }
+        public DbSet<ServiceRequestImage> ServiceRequestImages { get; set; }
 
         // Posts & media
         public DbSet<Post> Posts { get; set; }

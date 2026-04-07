@@ -12,5 +12,9 @@ namespace ITI_Project.Api.DTO.Posts
         public IReadOnlyList<string>? ImageUrls { get; set; }
         public int CommentsCount { get; set; }
         public IReadOnlyList<ReactionCountDTO> TopReactions { get; set; } = new List<ReactionCountDTO>();
+        public bool IsProvider { get; set; }
+        public int? ProviderId { get; set; }
+        public string ClientName { get; set; } = string.Empty;
+        public string? ClientPictureUrl { get; set; }
     }
 }

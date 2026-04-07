@@ -28,7 +28,7 @@ namespace ITI_Project.Api.Controllers.PostControllers
 
         [Authorize(Roles = nameof(UserRoleType.Client))]
         [HttpPost("add-comment")]
-        public async Task<ActionResult<CommentDTO>> AddComment(CommentCreateDTO dto)
+        public async Task<ActionResult<CommentCreateResultDTO>> AddComment(CommentCreateDTO dto)
         {
             var clientIdClaim = User.FindFirstValue(Identifiers.ClientId);
             if (!int.TryParse(clientIdClaim, out var clientId))
@@ -55,8 +55,7 @@ namespace ITI_Project.Api.Controllers.PostControllers
                 await unitOfWork.Repository<Comment>().AddAsync(comment);
                 await unitOfWork.CompleteAsync();
 
-                var result = mapper.Map<CommentDTO>(comment);
-                result.Reactions = new List<ReactionCountDTO>();
+                var result = mapper.Map<CommentCreateResultDTO>(comment);
                 return Ok(result);
             }
             catch
