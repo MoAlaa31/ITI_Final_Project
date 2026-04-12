@@ -16,7 +16,7 @@ namespace ITI_Project.Core.Specifications.RequestSpecs
                 && (!specParams.MaxLongitude.HasValue || sr.ServiceRequestLocation.Longitude <= specParams.MaxLongitude)
                 && (string.IsNullOrEmpty(specParams.Search) || sr.Description.ToLower().Contains(specParams.Search))
                 && (!specParams.MinPrice.HasValue || sr.FinalPrice >= specParams.MinPrice)
-                && serviceIds.Contains(sr.ServiceId)
+                && (sr.ServiceId.HasValue && serviceIds.Contains(sr.ServiceId.Value))
             )
         {
             if (!string.IsNullOrEmpty(specParams.Sort))

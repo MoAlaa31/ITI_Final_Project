@@ -1,11 +1,9 @@
 namespace ITI_Project.Api.DTO.Requests
 {
-    public class RequestOfferDTO
+    public class RequestOfferProviderDTO
     {
         public int Id { get; set; }
-        public int ProviderId { get; set; }
-        public string ProviderName { get; set; } = string.Empty;
-        public string? ProviderPictureUrl { get; set; }
+        public int ServiceRequestId { get; set; }
         public decimal Price { get; set; }
         public string Message { get; set; } = string.Empty;
         public DateTime CreatedAt { get; set; }

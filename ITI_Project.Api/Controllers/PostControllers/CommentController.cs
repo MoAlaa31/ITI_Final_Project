@@ -108,9 +108,45 @@ namespace ITI_Project.Api.Controllers.PostControllers
             var count = await unitOfWork.Repository<Comment>()
                 .GetCountAsync(new CountCommentsForPostSpecification(postId));
 
-            var data = mapper.Map<IReadOnlyList<CommentDTO>>(comments);
+            var data = mapper.Map<List<CommentDTO>>(comments);
+
+            var clientIdClaim = User.FindFirstValue(Identifiers.ClientId);
+            if (int.TryParse(clientIdClaim, out var clientId))
+            {
+                var commentIds = data.Select(c => c.Id).ToList();
+                var reactions = await unitOfWork.Repository<CommentReaction>()
+                    .GetManyByConditionAsync(r => r.ClientId == clientId && commentIds.Contains(r.CommentId)) ?? new List<CommentReaction>();
+
+                var reactionByCommentId = reactions.ToDictionary(r => r.CommentId, r => r.ReactionType);
+
+                foreach (var comment in data)
+                    comment.UserReaction = reactionByCommentId.TryGetValue(comment.Id, out var reaction) ? reaction : null;
+            }
 
             return Ok(new Pagination<CommentDTO>(specParams.PageIndex, specParams.PageSize, count, data));
+        }
+
+        [Authorize(Roles = nameof(UserRoleType.Client))]
+        [HttpPut("update-comment/{commentId:int}")]
+        public async Task<ActionResult> UpdateComment(int commentId, [FromBody] CommentUpdateDTO dto)
+        {
+            var clientIdClaim = User.FindFirstValue(Identifiers.ClientId);
+            if (!int.TryParse(clientIdClaim, out var clientId))
+                return Unauthorized(new ApiResponse(StatusCodes.Status401Unauthorized, "ClientId claim is missing or invalid"));
+
+            var comment = await unitOfWork.Repository<Comment>().GetByIdAsync(commentId);
+            if (comment == null)
+                return NotFound(new ApiResponse(StatusCodes.Status404NotFound, "Comment not found"));
+
+            if (comment.ClientId != clientId)
+                return Forbid();
+
+            comment.Message = dto.Message;
+
+            unitOfWork.Repository<Comment>().Update(comment);
+            await unitOfWork.CompleteAsync();
+
+            return Ok(new ApiResponse(StatusCodes.Status200OK, "Comment updated successfully"));
         }
     }
 }

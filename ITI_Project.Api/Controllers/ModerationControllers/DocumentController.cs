@@ -144,6 +144,16 @@ namespace ITI_Project.Api.Controllers.ModerationControllers
 
             try
             {
+                if (!isValid)
+                {
+                    var provider = await unitOfWork.Repository<Provider>().GetByIdAsync(document.ProviderId);
+                    if (provider is null)
+                        return NotFound(new ApiResponse(StatusCodes.Status404NotFound, "Provider not found"));
+
+                    provider.VerificationStatus = VerificationStatus.Pending;
+                    unitOfWork.Repository<Provider>().Update(provider);
+                }
+
                 unitOfWork.Repository<ProviderDocument>().Update(document);
                 await unitOfWork.CompleteAsync();
             }

@@ -27,7 +27,7 @@ namespace ITI_Project.Api.Controllers.RequestControllers
 
         [Authorize(Roles = nameof(UserRoleType.Provider))]
         [HttpPost("create-offer/{serviceRequestId:int}")]
-        public async Task<ActionResult<RequestOfferDTO>> CreateRequestOffer(
+        public async Task<ActionResult<RequestOfferProviderDTO>> CreateRequestOffer(
             int serviceRequestId,
             [FromBody] RequestOfferFromUserDTO requestOfferFromUser)
         {
@@ -67,10 +67,10 @@ namespace ITI_Project.Api.Controllers.RequestControllers
                     new ApiResponse(StatusCodes.Status500InternalServerError, "An error occurred while creating the request offer"));
             }
 
-            return Ok(mapper.Map<RequestOfferDTO>(requestOffer));
+            return Ok(mapper.Map<RequestOfferProviderDTO>(requestOffer));
         }
 
-        [Authorize(Roles = $"{nameof(UserRoleType.Provider)},{nameof(UserRoleType.Client)}")]
+        [Authorize(Roles = nameof(UserRoleType.Client))]
         [HttpGet("get-request-offers/{serviceRequestId:int}")]
         public async Task<ActionResult<RequestOfferDTO>> GetRequestOffersByServiceRequestId(int serviceRequestId)
         {
@@ -80,42 +80,38 @@ namespace ITI_Project.Api.Controllers.RequestControllers
             if (serviceRequest is null)
                 return NotFound(new ApiResponse(StatusCodes.Status404NotFound, "Service request not found"));
 
-            var offers = serviceRequest.RequestOffers ?? new List<RequestOffer>();
+            var clientIdClaim = User.FindFirstValue(Identifiers.ClientId);
+            if (!int.TryParse(clientIdClaim, out var clientId))
+                return Unauthorized(new ApiResponse(StatusCodes.Status401Unauthorized, "ClientId claim is missing or invalid"));
 
-            var isClient = User.IsInRole(nameof(UserRoleType.Client));
-            var isProvider = User.IsInRole(nameof(UserRoleType.Provider));
+            if (serviceRequest.ClientId != clientId)
+                return Forbid();
 
-            if (isClient)
+            var offers = await unitOfWork.Repository<RequestOffer>()
+                .GetManyByConditionAsync(o => o.ServiceRequestId == serviceRequestId, o => o.Provider) ?? new List<RequestOffer>();
+
+            var providerIds = offers.Select(o => o.ProviderId).Distinct().ToList();
+            var providers = await unitOfWork.Repository<Provider>()
+                .GetManyByConditionAsync(p => providerIds.Contains(p.Id), p => p.Client) ?? new List<Provider>();
+
+            var providerById = providers.ToDictionary(p => p.Id, p => p.Client);
+
+            var dtoList = mapper.Map<List<RequestOfferDTO>>(offers);
+            foreach (var dto in dtoList)
             {
-                var clientIdClaim = User.FindFirstValue(Identifiers.ClientId);
-                if (!int.TryParse(clientIdClaim, out var clientId))
-                    return Unauthorized(new ApiResponse(StatusCodes.Status401Unauthorized, "ClientId claim is missing or invalid"));
-
-                if (serviceRequest.ClientId == clientId)
+                if (providerById.TryGetValue(dto.ProviderId, out var client))
                 {
-                    return Ok(mapper.Map<IReadOnlyList<RequestOfferDTO>>(offers));
+                    dto.ProviderName = $"{client.FirstName} {client.LastName}".Trim();
+                    dto.ProviderPictureUrl = client.PictureUrl;
                 }
             }
 
-            if (isProvider)
-            {
-                var providerIdClaim = User.FindFirstValue(Identifiers.ProviderId);
-                if (!int.TryParse(providerIdClaim, out var providerId))
-                    return Unauthorized(new ApiResponse(StatusCodes.Status401Unauthorized, "ProviderId claim is missing or invalid"));
-
-                var providerOffer = offers.FirstOrDefault(o => o.ProviderId == providerId);
-                if (providerOffer is null)
-                    return Ok(new List<RequestOfferDTO>());
-
-                return Ok(mapper.Map<RequestOfferDTO>(providerOffer));
-            }
-
-            return Forbid();
+            return Ok(dtoList);
         }
 
         [Authorize(Roles = nameof(UserRoleType.Provider))]
         [HttpPut("update-offer/{serviceRequestId:int}")]
-        public async Task<ActionResult<RequestOfferDTO>> UpdateRequestOffer(
+        public async Task<ActionResult<RequestOfferProviderDTO>> UpdateRequestOffer(
             int serviceRequestId,
             [FromBody] RequestOfferFromUserDTO requestOfferFromUser)
         {
@@ -144,7 +140,42 @@ namespace ITI_Project.Api.Controllers.RequestControllers
             unitOfWork.Repository<RequestOffer>().Update(offer);
             await unitOfWork.CompleteAsync();
 
-            return Ok(mapper.Map<RequestOfferDTO>(offer));
+            return Ok(mapper.Map<RequestOfferProviderDTO>(offer));
+        }
+
+        [Authorize(Roles = nameof(UserRoleType.Provider))]
+        [HttpGet("my-offers")]
+        public async Task<ActionResult<IReadOnlyList<RequestOfferProviderDTO>>> GetMyOffers()
+        {
+            var providerIdClaim = User.FindFirstValue(Identifiers.ProviderId);
+            if (!int.TryParse(providerIdClaim, out int providerId))
+                return Unauthorized(new ApiResponse(StatusCodes.Status401Unauthorized, "ProviderId claim is missing or invalid"));
+
+            var offers = await unitOfWork.Repository<RequestOffer>()
+                .GetManyByConditionAsync(o => o.ProviderId == providerId) ?? new List<RequestOffer>();
+
+            return Ok(mapper.Map<IReadOnlyList<RequestOfferProviderDTO>>(offers));
+        }
+
+        [Authorize(Roles = nameof(UserRoleType.Provider))]
+        [HttpDelete("delete-offer/{offerId:int}")]
+        public async Task<ActionResult> DeleteOffer(int offerId)
+        {
+            var providerIdClaim = User.FindFirstValue(Identifiers.ProviderId);
+            if (!int.TryParse(providerIdClaim, out int providerId))
+                return Unauthorized(new ApiResponse(StatusCodes.Status401Unauthorized, "ProviderId claim is missing or invalid"));
+
+            var offer = await unitOfWork.Repository<RequestOffer>().GetByIdAsync(offerId);
+            if (offer is null)
+                return NotFound(new ApiResponse(StatusCodes.Status404NotFound, "Offer not found"));
+
+            if (offer.ProviderId != providerId)
+                return Forbid();
+
+            unitOfWork.Repository<RequestOffer>().Delete(offer);
+            await unitOfWork.CompleteAsync();
+
+            return Ok(new ApiResponse(StatusCodes.Status200OK, "Offer deleted successfully"));
         }
     }
 }

@@ -1,4 +1,5 @@
 ﻿using AutoMapper;
+using ITI_Project.Api.DTO.Services;
 using ITI_Project.Api.DTO.Users;
 using ITI_Project.Api.ErrorHandling;
 using ITI_Project.Api.Filters;
@@ -34,6 +35,7 @@ namespace ITI_Project.Api.Controllers.UserControllers
             this.userManager = userManager;
         }
 
+        #region Request to be provider
         [Authorize(Roles = nameof(UserRoleType.Client))]
         [HttpPost("BeProvider")]
         public async Task<ActionResult> RequestToBeProvider(ProviderDTO providerFromUserDTO)
@@ -86,7 +88,10 @@ namespace ITI_Project.Api.Controllers.UserControllers
                 return StatusCode(StatusCodes.Status500InternalServerError, new ApiResponse(StatusCodes.Status500InternalServerError, $"An error occurred while processing the request: {ex.Message}"));
             }
         }
+        #endregion
 
+
+        #region Verify Provider
         [Authorize(Roles = nameof(UserRoleType.Admin))]
         [HttpPatch("VerifyProvider/{providerId:int}")]
         public async Task<ActionResult> VerifyProvider(int providerId, [FromQuery] bool isVerified)
@@ -111,7 +116,7 @@ namespace ITI_Project.Api.Controllers.UserControllers
             var distinctDocumentTypes = documents.Select(d => d.DocumentType).Distinct().Count();
             var allDocumentsApproved = documents.Count == 3 && distinctDocumentTypes == 3 && documents.All(d => d.IsApproved == true);
 
-            if(isVerified && (!hasBaseLocation || !hasServices || !hasDocuments || !allDocumentsApproved))
+            if (isVerified && (!hasBaseLocation || !hasServices || !hasDocuments || !allDocumentsApproved))
                 return BadRequest(new ApiResponse(StatusCodes.Status400BadRequest, "Provider cannot be verified. Ensure that the provider has a base location, at least one service, and all documents are approved."));
 
             // 2- Update the provider's verification status if the data is valid
@@ -129,7 +134,8 @@ namespace ITI_Project.Api.Controllers.UserControllers
             await unitOfWork.CompleteAsync();
 
             return Ok(new ApiResponse(StatusCodes.Status200OK, $"Provider has been {(isVerified ? "verified" : "rejected")} successfully."));
-        }
+        } 
+        #endregion
 
         [Authorize(Roles = nameof(UserRoleType.Client))]
         [HttpPatch("update-provider-profile")]
@@ -221,6 +227,71 @@ namespace ITI_Project.Api.Controllers.UserControllers
             {
                 return StatusCode(StatusCodes.Status500InternalServerError, new ApiResponse(StatusCodes.Status500InternalServerError, $"An error occurred while processing the request: {ex.Message}"));
             }
+        }
+
+        [Authorize(Roles = nameof(UserRoleType.Client))]
+        [HttpGet("get-provider-profile/{providerId:int}")]
+        public async Task<ActionResult<ProviderProfileDTO>> GetProviderProfile(int providerId)
+        {
+            var provider = await unitOfWork.Repository<Provider>()
+                .GetByIdWithIncludesAsync(
+                    providerId,
+                    p => p.Client,
+                    p => p.BaseLocation!,
+                    p => p.ProviderServices!);
+
+            if (provider == null)
+                return NotFound(new ApiResponse(StatusCodes.Status404NotFound, "Provider not found"));
+
+            var providerServices = await unitOfWork.Repository<ProviderService>()
+                .GetManyByConditionAsync(ps => ps.ProviderId == providerId, ps => ps.Service!) ?? new List<ProviderService>();
+
+            var services = providerServices
+                .Select(ps => ps.Service)
+                .Where(s => s != null)
+                .ToList();
+
+            var dto = mapper.Map<ProviderProfileDTO>(provider);
+            dto.Services = mapper.Map<IReadOnlyList<ServiceDTO>>(services, opt => opt.Items["lang"] = "ar");
+
+            return Ok(dto);
+        }
+
+        [Authorize(Roles = nameof(UserRoleType.Admin))]
+        [HttpGet("underReview-providers")]
+        public async Task<ActionResult<IReadOnlyList<ProviderApprovalDTO>>> GetUnderReviewProviders()
+        {
+            var providers = await unitOfWork.Repository<Provider>()
+                .GetManyByConditionAsync(
+                    p => p.VerificationStatus == VerificationStatus.UnderReview,
+                    p => p.Client,
+                    p => p.ProviderDocuments!) ?? new List<Provider>();
+
+            var today = DateOnly.FromDateTime(DateTime.UtcNow);
+
+            var result = providers.Select(p =>
+            {
+                var dob = p.Client.DateOfBirth;
+                var age = today.Year - dob.Year;
+                if (dob > today.AddYears(-age)) age--;
+
+                return new ProviderApprovalDTO
+                {
+                    Id = p.Id,
+                    Name = $"{p.Client.FirstName} {p.Client.LastName}".Trim(),
+                    Age = age,
+                    PictureUrl = p.Client.PictureUrl,
+                    Documents = (p.ProviderDocuments ?? new List<ProviderDocument>())
+                        .Select(d => new ProviderDocumentItemDTO
+                        {
+                            Id = d.Id,
+                            Url = d.DocumentUrl
+                        })
+                        .ToList()
+                };
+            }).ToList();
+
+            return Ok(result);
         }
     }
 }

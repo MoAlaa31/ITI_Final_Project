@@ -1,3 +1,5 @@
+using ITI_Project.Core.Enums;
+
 namespace ITI_Project.Api.DTO.Posts
 {
     public class PostDTO
@@ -16,5 +18,6 @@ namespace ITI_Project.Api.DTO.Posts
         public int? ProviderId { get; set; }
         public string ClientName { get; set; } = string.Empty;
         public string? ClientPictureUrl { get; set; }
+        public ReactionType? UserReaction { get; set; }
     }
 }

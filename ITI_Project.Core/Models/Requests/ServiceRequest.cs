@@ -39,10 +39,9 @@ namespace ITI_Project.Core.Models.Requests
 
         public ICollection<RequestOffer>? RequestOffers { get; set; }
 
-        [Required(ErrorMessage = "User Id is required.")]
         [ForeignKey(nameof(Service))]
-        public required int ServiceId { get; set; }
-        public Service Service { get; set; } = null!;
+        public int? ServiceId { get; set; }
+        public Service? Service { get; set; }
 
         public ICollection<ServiceRequestImage>? ServiceRequestImages { get; set; }
     }

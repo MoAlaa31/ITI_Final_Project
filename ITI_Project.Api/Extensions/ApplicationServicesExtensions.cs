@@ -1,4 +1,5 @@
 ﻿using ITI_Project.Api.ErrorHandling;
+using ITI_Project.Api.Filters;
 using ITI_Project.Api.Helpers;
 using ITI_Project.Core;
 using ITI_Project.Core.IRepository;
@@ -23,6 +24,7 @@ namespace ITI_Project.Api.Extensions
             services.AddScoped(typeof(IGenericRepository<>), typeof(GenericRepository<>));
             services.AddScoped<IFileStorageService, LocalFileStorageService>();
 
+            services.AddScoped(typeof(ExistingIdFilter<>));
             services.AddAutoMapper(cfg => cfg.AddProfile<MappingProfiles>());
 
             services.Configure<ApiBehaviorOptions>(options =>
@@ -30,7 +32,7 @@ namespace ITI_Project.Api.Extensions
                 options.InvalidModelStateResponseFactory = ActionContext =>
                 {
                     var errors = ActionContext.ModelState
-                                              .Where(p => p.Value.Errors.Count() > 0)
+                                              .Where(p => p.Value?.Errors.Count() > 0)
                                               .SelectMany(p => p.Value.Errors)
                                               .Select(e => e.ErrorMessage).ToArray();
                     var ValidationErrorResponse = new ApiValidationErrorResponse()

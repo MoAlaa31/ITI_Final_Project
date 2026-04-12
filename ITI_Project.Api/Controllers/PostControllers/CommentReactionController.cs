@@ -1,4 +1,5 @@
 ﻿using ITI_Project.Api.Attributes;
+using ITI_Project.Api.DTO.Posts;
 using ITI_Project.Api.ErrorHandling;
 using ITI_Project.Api.Filters;
 using ITI_Project.Core;
@@ -62,6 +63,25 @@ namespace ITI_Project.Api.Controllers.PostControllers
             }
             await unitOfWork.CompleteAsync();
             return Ok(new ApiResponse(StatusCodes.Status200OK, "Reaction updated successfully"));
+        }
+
+        [Authorize(Roles = nameof(UserRoleType.Client))]
+        [ServiceFilter(typeof(ExistingIdFilter<Comment>))]
+        [HttpGet("comment-reactions/{commentId:int}")]
+        public async Task<ActionResult<IReadOnlyList<CommentReactionDetailsDTO>>> GetCommentReactions(int commentId)
+        {
+            var reactions = await unitOfWork.Repository<CommentReaction>()
+                .GetManyByConditionAsync(r => r.CommentId == commentId, r => r.Client) ?? new List<CommentReaction>();
+
+            var data = reactions.Select(r => new CommentReactionDetailsDTO
+            {
+                ClientId = r.ClientId,
+                ClientName = $"{r.Client.FirstName} {r.Client.LastName}".Trim(),
+                ClientPictureUrl = r.Client.PictureUrl,
+                ReactionType = r.ReactionType
+            }).ToList();
+
+            return Ok(data);
         }
     }
 }

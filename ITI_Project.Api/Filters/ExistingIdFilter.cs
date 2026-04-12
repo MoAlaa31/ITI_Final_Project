@@ -3,6 +3,7 @@ using ITI_Project.Core;
 using ITI_Project.Core.Models;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Filters;
+using System.Linq;
 
 namespace ITI_Project.Api.Filters
 {
@@ -16,7 +17,10 @@ namespace ITI_Project.Api.Filters
         }
         public async Task OnActionExecutionAsync(ActionExecutingContext context, ActionExecutionDelegate next)
         {
-            if (context.ActionArguments.TryGetValue("id", out var idObj) && idObj is int id && id > 0)
+            var idArgument = context.ActionArguments
+                .FirstOrDefault(a => a.Key.EndsWith("Id", StringComparison.OrdinalIgnoreCase));
+
+            if (idArgument.Value is int id && id > 0)
             {
                 var entity = await _unitOfWork.Repository<T>().GetAsync(id);
                 if (entity == null)

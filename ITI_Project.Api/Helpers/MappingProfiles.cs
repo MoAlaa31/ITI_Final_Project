@@ -1,7 +1,6 @@
 ﻿using AutoMapper;
 using ITI_Project.Api.DTO.Location;
 using ITI_Project.Api.DTO.Moderation;
-using ITI_Project.Api.DTO.Post;
 using ITI_Project.Api.DTO.Posts;
 using ITI_Project.Api.DTO.Requests;
 using ITI_Project.Api.DTO.Services;
@@ -29,6 +28,13 @@ namespace ITI_Project.Api.Helpers
             /****************************************** Mapping for Provider ******************************************/
             CreateMap<Provider, ProviderDTO>();
 
+            CreateMap<Provider, ProviderProfileDTO>()
+                .ForMember(d => d.Name, o => o.MapFrom(s => $"{s.Client.FirstName} {s.Client.LastName}".Trim()))
+                .ForMember(d => d.PictureUrl, o => o.MapFrom(s => s.Client.PictureUrl))
+                .ForMember(d => d.GovernorateId, o => o.MapFrom(s => s.Client.GovernorateId))
+                .ForMember(d => d.RegionId, o => o.MapFrom(s => s.Client.RegionId))
+                .ForMember(d => d.Services, o => o.Ignore());
+
             /****************************************** Mapping for Client ******************************************/
             CreateMap<Client, ClientDTO>()
                 .ForMember(d => d.PhoneNumbers,
@@ -55,6 +61,7 @@ namespace ITI_Project.Api.Helpers
 
             /****************************************** Mapping for Request Offer ******************************************/
             CreateMap<RequestOffer, RequestOfferDTO>();
+            CreateMap<RequestOffer, RequestOfferProviderDTO>();
             CreateMap<RequestOfferFromUserDTO, RequestOffer>();
 
             /****************************************** Mapping for Live Location ******************************************/

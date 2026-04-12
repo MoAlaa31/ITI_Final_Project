@@ -32,7 +32,7 @@ namespace ITI_Project.Api.Controllers.PostControllers
 
         [Authorize(Roles = nameof(UserRoleType.Client))]
         [HttpGet("get-recent-posts")]
-        public async Task<ActionResult> GetAllPosts([FromQuery] PostSpecParams specParams)
+        public async Task<ActionResult<IReadOnlyList<PostDTO>>> GetAllPosts([FromQuery] PostSpecParams specParams)
         {
             var posts = await unitOfWork.Repository<Post>()
                 .GetAllWithSpecAsync(new PostsWithPaginationAndFiltersSpecification(specParams));
@@ -40,7 +40,20 @@ namespace ITI_Project.Api.Controllers.PostControllers
             var count = await unitOfWork.Repository<Post>()
                 .GetCountAsync(new CountPostsWithFilterSpecification(specParams));
 
-            var data = mapper.Map<IReadOnlyList<PostDTO>>(posts);
+            var data = mapper.Map<List<PostDTO>>(posts);
+
+            var clientIdClaim = User.FindFirstValue(Identifiers.ClientId);
+            if (int.TryParse(clientIdClaim, out var clientId))
+            {
+                var postIds = data.Select(p => p.Id).ToList();
+                var reactions = await unitOfWork.Repository<PostReaction>()
+                    .GetManyByConditionAsync(r => r.ClientId == clientId && postIds.Contains(r.ServicePostId)) ?? new List<PostReaction>();
+
+                var reactionByPostId = reactions.ToDictionary(r => r.ServicePostId, r => r.ReactionType);
+
+                foreach (var post in data)
+                    post.UserReaction = reactionByPostId.TryGetValue(post.Id, out var reaction) ? reaction : null;
+            }
 
             return Ok(new Pagination<PostDTO>(specParams.PageIndex, specParams.PageSize, count, data));
         }
@@ -150,6 +163,30 @@ namespace ITI_Project.Api.Controllers.PostControllers
                 return StatusCode(StatusCodes.Status500InternalServerError,
                     new ApiResponse(StatusCodes.Status500InternalServerError, "An error occurred while deleting the post"));
             }
+        }
+
+        [Authorize(Roles = nameof(UserRoleType.Client))]
+        [HttpPut("update-post/{postId:int}")]
+        public async Task<ActionResult> UpdatePost(int postId, [FromBody] PostUpdateDTO dto)
+        {
+            var clientIdClaim = User.FindFirstValue(Identifiers.ClientId);
+            if (!int.TryParse(clientIdClaim, out var clientId))
+                return Unauthorized(new ApiResponse(StatusCodes.Status401Unauthorized, "ClientId claim is missing or invalid"));
+
+            var post = await unitOfWork.Repository<Post>().GetByIdAsync(postId);
+            if (post is null)
+                return NotFound(new ApiResponse(StatusCodes.Status404NotFound, "Post not found"));
+
+            if (post.ClientId != clientId)
+                return Forbid();
+
+            post.Title = dto.Title;
+            post.Description = dto.Description;
+
+            unitOfWork.Repository<Post>().Update(post);
+            await unitOfWork.CompleteAsync();
+
+            return Ok(new ApiResponse(StatusCodes.Status200OK, "Post updated successfully"));
         }
     }
 }

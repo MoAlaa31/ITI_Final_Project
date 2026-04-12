@@ -1,4 +1,5 @@
 using ITI_Project.Api.Attributes;
+using ITI_Project.Api.DTO.Posts;
 using ITI_Project.Api.ErrorHandling;
 using ITI_Project.Api.Filters;
 using ITI_Project.Core;
@@ -38,6 +39,7 @@ namespace ITI_Project.Api.Controllers.PostControllers
             var reactionFromDb = await unitOfWork.Repository<PostReaction>()
                 .GetByConditionAsync(r => r.ServicePostId == postId && r.ClientId == clientId);
 
+
             if (reactionFromDb != null)
             {
                 if (reactionFromDb.ReactionType == reaction)
@@ -63,6 +65,25 @@ namespace ITI_Project.Api.Controllers.PostControllers
 
             await unitOfWork.CompleteAsync();
             return Ok(new ApiResponse(StatusCodes.Status200OK, "Reaction updated successfully"));
+        }
+
+        [Authorize(Roles = nameof(UserRoleType.Client))]
+        [ServiceFilter(typeof(ExistingIdFilter<Post>))]
+        [HttpGet("post-reactions/{postId:int}")]
+        public async Task<ActionResult<IReadOnlyList<PostReactionDetailsDTO>>> GetPostReactions(int postId)
+        {
+            var reactions = await unitOfWork.Repository<PostReaction>()
+                .GetManyByConditionAsync(r => r.ServicePostId == postId, r => r.Client) ?? new List<PostReaction>();
+
+            var data = reactions.Select(r => new PostReactionDetailsDTO
+            {
+                ClientId = r.ClientId,
+                ClientName = $"{r.Client.FirstName} {r.Client.LastName}".Trim(),
+                ClientPictureUrl = r.Client.PictureUrl,
+                ReactionType = r.ReactionType
+            }).ToList();
+
+            return Ok(data);
         }
     }
 }

@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using ITI_Project.Core.Enums;
 
 namespace ITI_Project.Api.DTO.Posts
 {
@@ -15,5 +16,6 @@ namespace ITI_Project.Api.DTO.Posts
         public string? ClientPictureUrl { get; set; }
         public bool IsProvider { get; set; }
         public int? ProviderId { get; set; }
+        public ReactionType? UserReaction { get; set; }
     }
 }

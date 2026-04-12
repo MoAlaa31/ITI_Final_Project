@@ -148,7 +148,7 @@ namespace ITI_Project.Api.Controllers.RequestControllers
                 return Unauthorized(new ApiResponse(StatusCodes.Status401Unauthorized, "ClientId claim is missing or invalid"));
 
             var serviceRequests = await unitOfWork.Repository<ServiceRequest>()
-                .GetManyByConditionAsync(sr => sr.ClientId == clientId, sr => sr.ServiceRequestImages!);
+                .GetManyByConditionAsync(sr => sr.ClientId == clientId, sr => sr.ServiceRequestLocation!, sr => sr.ServiceRequestImages!);
 
             if (serviceRequests is null || serviceRequests.Count == 0)
                 return Ok(new List<ServiceRequestDTO>());
@@ -190,13 +190,15 @@ namespace ITI_Project.Api.Controllers.RequestControllers
             if (serviceIds.Count == 0)
                 return BadRequest(new ApiResponse(StatusCodes.Status400BadRequest, "Provider has no services"));
 
+            var countSpec = new ProviderServiceRequestCountSpecification(specParams, serviceIds);
+            var count = await unitOfWork.Repository<ServiceRequest>().GetCountAsync(countSpec);
+
             var specs = new ProviderServiceRequestWithPaginationSpecification(specParams, serviceIds);
             var serviceRequests = await unitOfWork.Repository<ServiceRequest>().GetAllWithSpecAsync(specs);
 
             if (serviceRequests is null || serviceRequests.Count == 0)
-                return Ok(new List<ServiceRequestDTO>());
+                return Ok(new Pagination<ServiceRequestDTO>(specParams.PageIndex, specParams.PageSize, count, new List<ServiceRequestDTO>()));
 
-            // exact distance filter (Haversine)
             var filtered = serviceRequests
                 .Where(sr => sr.ServiceRequestLocation != null &&
                     GetDistanceKm(lat, lng,
@@ -204,13 +206,14 @@ namespace ITI_Project.Api.Controllers.RequestControllers
                         sr.ServiceRequestLocation.Longitude) <= radiusKm)
                 .ToList();
 
-            var dto = mapper.Map<IReadOnlyList<ServiceRequestDTO>>(filtered);
-            return Ok(dto);
+            var data = mapper.Map<IReadOnlyList<ServiceRequestDTO>>(filtered);
+
+            return Ok(new Pagination<ServiceRequestDTO>(specParams.PageIndex, specParams.PageSize, count, data));
         }
 
         [Authorize(Roles = nameof(UserRoleType.Provider))]
         [HttpGet("my-assigned-requests")]
-        public async Task<ActionResult<IReadOnlyList<ServiceRequestDTO>>> GetMyAssignedRequests()
+        public async Task<ActionResult<IReadOnlyList<ServiceRequestDTO>>> GetMyAssignedRequests([FromQuery] bool inProgressStatus = false)
         {
             var providerIdClaim = User.FindFirstValue(Identifiers.ProviderId);
             if (!int.TryParse(providerIdClaim, out var providerId))
@@ -222,42 +225,12 @@ namespace ITI_Project.Api.Controllers.RequestControllers
             if (serviceRequests is null || serviceRequests.Count == 0)
                 return Ok(new List<ServiceRequestDTO>());
 
+            var filterProgress = inProgressStatus ? RequestStatus.InProgress : RequestStatus.Assigned;
+                serviceRequests = serviceRequests.Where(sr => sr.RequestStatus == filterProgress).ToList();
+
             var dto = mapper.Map<IReadOnlyList<ServiceRequestDTO>>(serviceRequests);
             return Ok(dto);
         }
-
-        //[Authorize(Roles = $"{nameof(UserRoleType.Provider)},{nameof(UserRoleType.Admin)}")]
-        //[HttpPut("update-status/{id}")]
-        //public async Task<ActionResult<ServiceRequestDTO>> UpdateServiceRequestStatus(int id, [FromQuery] RequestStatus status)
-        //{
-        //    var serviceRequest = await unitOfWork.Repository<ServiceRequest>().GetByIdAsync(id);
-        //    if (serviceRequest is null)
-        //        return NotFound(new ApiResponse(StatusCodes.Status404NotFound, "Service request not found"));
-
-        //    if (User.IsInRole(nameof(UserRoleType.Provider)))
-        //    {
-        //        var providerIdClaim = User.FindFirstValue(Identifiers.ProviderId);
-        //        if (int.TryParse(providerIdClaim, out var providerId) && serviceRequest.ProviderId != providerId)
-        //            return Forbid();
-        //    }
-
-        //    serviceRequest.RequestStatus = status;
-
-        //    try
-        //    {
-        //        unitOfWork.Repository<ServiceRequest>().Update(serviceRequest);
-        //        await unitOfWork.CompleteAsync();
-        //    }
-        //    catch (Exception ex)
-        //    {
-        //        return StatusCode(StatusCodes.Status500InternalServerError,
-        //            new ApiResponse(StatusCodes.Status500InternalServerError, "An error occurred while updating the service request status. Please try again."));
-        //    }
-
-        //    var dto = mapper.Map<ServiceRequestDTO>(serviceRequest);
-        //    return CreatedAtAction(nameof(CreateServiceRequest), new { id = serviceRequest.Id }, dto);
-        //}
-
 
         [Authorize(Roles = nameof(UserRoleType.Client))]
         [HttpPut("assign/{id:int}")]
@@ -284,7 +257,7 @@ namespace ITI_Project.Api.Controllers.RequestControllers
                 return BadRequest(new ApiResponse(StatusCodes.Status400BadRequest, "Provider did not submit an offer for this request"));
 
             serviceRequest.ProviderId = providerId;
-            serviceRequest.RequestStatus = RequestStatus.Assigned;
+            serviceRequest.RequestStatus = RequestStatus.InProgress;
 
             unitOfWork.Repository<ServiceRequest>().Update(serviceRequest);
             await unitOfWork.CompleteAsync();
@@ -311,23 +284,20 @@ namespace ITI_Project.Api.Controllers.RequestControllers
             if (serviceRequest.RequestStatus != RequestStatus.Assigned)
                 return BadRequest(new ApiResponse(StatusCodes.Status400BadRequest, "Request is not assigned to you"));
 
-            if (!isAccepted)
+            if (isAccepted)
             {
-                serviceRequest.ProviderId = null;
-                serviceRequest.RequestStatus = RequestStatus.Open;
-                unitOfWork.Repository<ServiceRequest>().Update(serviceRequest);
-                await unitOfWork.CompleteAsync();
-                var dto = mapper.Map<ServiceRequestDTO>(serviceRequest);
-                return Ok(dto);
+                serviceRequest.RequestStatus = RequestStatus.InProgress;
             }
             else
             {
-                serviceRequest.RequestStatus = RequestStatus.InProgress;
-                unitOfWork.Repository<ServiceRequest>().Update(serviceRequest);
-                await unitOfWork.CompleteAsync();
-                var dto = mapper.Map<ServiceRequestDTO>(serviceRequest);
-                return Ok(dto);
+                serviceRequest.ProviderId = null;
+                serviceRequest.RequestStatus = RequestStatus.Open;
             }
+
+            unitOfWork.Repository<ServiceRequest>().Update(serviceRequest);
+            await unitOfWork.CompleteAsync();
+            var dto = mapper.Map<ServiceRequestDTO>(serviceRequest);
+            return Ok(dto);
         }
 
         [Authorize(Roles = nameof(UserRoleType.Client))]
@@ -429,6 +399,91 @@ namespace ITI_Project.Api.Controllers.RequestControllers
                 return StatusCode(StatusCodes.Status500InternalServerError,
                     new ApiResponse(StatusCodes.Status500InternalServerError, "An error occurred while deleting the service request"));
             }
+        }
+
+        [Authorize(Roles = nameof(UserRoleType.Client))]
+        [HttpPost("create-and-assign-request/{providerId:int}")]
+        public async Task<ActionResult<ServiceRequestDTO>> CreateAndAssignServiceRequest(int providerId, [FromForm] ServiceRequestToProviderDTO serviceRequestDTO)
+        {
+            var clientIdClaim = User.FindFirstValue(Identifiers.ClientId);
+            if (!int.TryParse(clientIdClaim, out var clientId))
+                return Unauthorized(new ApiResponse(StatusCodes.Status401Unauthorized, "ClientId claim is missing or invalid"));
+
+            var clientExists = await unitOfWork.Repository<Client>().AnyAsync(u => u.Id == clientId);
+            if (!clientExists)
+                return NotFound(new ApiResponse(StatusCodes.Status404NotFound, "Client not found"));
+
+            var provider = await unitOfWork.Repository<Provider>().GetByIdAsync(providerId);
+            if (provider is null)
+                return NotFound(new ApiResponse(StatusCodes.Status404NotFound, "Provider not found"));
+
+            var uploadedPaths = new List<string>();
+
+            if (serviceRequestDTO.Images is { Count: > 0 })
+            {
+                foreach (var image in serviceRequestDTO.Images)
+                {
+                    var uploadResult = await fileStorageService.UploadFileAsync(image, "service-request-images", User);
+                    if (!uploadResult.Success)
+                    {
+                        foreach (var path in uploadedPaths)
+                            fileStorageService.DeleteFile(path);
+
+                        return BadRequest(new ApiResponse(StatusCodes.Status400BadRequest, uploadResult.Message));
+                    }
+
+                    uploadedPaths.Add(uploadResult.FilePath!);
+                }
+            }
+
+            var serviceRequest = new ServiceRequest
+            {
+                ClientId = clientId,
+                ProviderId = providerId,
+                Description = serviceRequestDTO.Description,
+                RequestStatus = RequestStatus.Assigned,
+                CreatedAt = DateHelper.GetNowInEgypt()
+            };
+
+            try
+            {
+                await unitOfWork.Repository<ServiceRequest>().AddAsync(serviceRequest);
+                await unitOfWork.CompleteAsync();
+
+                serviceRequest.ServiceRequestLocation = new ServiceRequestLocation
+                {
+                    Latitude = serviceRequestDTO.Latitude,
+                    Longitude = serviceRequestDTO.Longitude,
+                    ServiceRequestId = serviceRequest.Id
+                };
+
+                unitOfWork.Repository<ServiceRequest>().Update(serviceRequest);
+                await unitOfWork.CompleteAsync();
+
+                if (uploadedPaths.Count > 0)
+                {
+                    var images = uploadedPaths.Select(path => new ServiceRequestImage
+                    {
+                        ImageUrl = path,
+                        ServiceRequestId = serviceRequest.Id,
+                        ServiceRequest = serviceRequest
+                    }).ToList();
+
+                    await unitOfWork.Repository<ServiceRequestImage>().AddRangeAsync(images);
+                    await unitOfWork.CompleteAsync();
+                }
+            }
+            catch
+            {
+                foreach (var path in uploadedPaths)
+                    fileStorageService.DeleteFile(path);
+
+                return StatusCode(StatusCodes.Status500InternalServerError,
+                    new ApiResponse(StatusCodes.Status500InternalServerError, "An error occurred while creating the service request. Please try again."));
+            }
+
+            var dto = mapper.Map<ServiceRequestDTO>(serviceRequest);
+            return CreatedAtAction(nameof(GetServiceRequestById), new { id = serviceRequest.Id }, dto);
         }
 
 
