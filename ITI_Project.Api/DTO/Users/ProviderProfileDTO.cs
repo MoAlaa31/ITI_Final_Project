@@ -17,5 +17,6 @@ namespace ITI_Project.Api.DTO.Users
         public int? RegionId { get; set; }
         public BaseLocationDTO? BaseLocation { get; set; }
         public IReadOnlyList<ServiceDTO> Services { get; set; } = new List<ServiceDTO>();
+        public List<string>? PhoneNumbers { get; set; }
     }
 }

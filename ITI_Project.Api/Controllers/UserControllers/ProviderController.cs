@@ -10,8 +10,10 @@ using ITI_Project.Core.Enums;
 using ITI_Project.Core.Models.Identity;
 using ITI_Project.Core.Models.Location;
 using ITI_Project.Core.Models.Moderation;
+using ITI_Project.Core.Models.Requests;
 using ITI_Project.Core.Models.Services;
 using ITI_Project.Core.Models.Users;
+using ITI_Project.Core.Specifications;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Http.HttpResults;
@@ -251,8 +253,58 @@ namespace ITI_Project.Api.Controllers.UserControllers
                 .Where(s => s != null)
                 .ToList();
 
+            var client = await unitOfWork.Repository<Client>()
+                .GetByIdWithIncludesAsync(provider.ClientId, c => c.phoneNumbers!) ?? provider.Client;
+
+            var completedJobsCount = await unitOfWork.Repository<ServiceRequest>()
+                .GetCountAsync(new BaseSpecifications<ServiceRequest>(sr =>
+                    sr.ProviderId == providerId && sr.RequestStatus == RequestStatus.Completed));
+
             var dto = mapper.Map<ProviderProfileDTO>(provider);
             dto.Services = mapper.Map<IReadOnlyList<ServiceDTO>>(services, opt => opt.Items["lang"] = "ar");
+            dto.PhoneNumbers = client.phoneNumbers?.Select(p => p.PhoneNumber).ToList();
+            dto.JobsCount = completedJobsCount;
+
+            return Ok(dto);
+        }
+
+        [Authorize(Roles = nameof(UserRoleType.Provider))]
+        [HttpGet("get-my-provider-profile")]
+        public async Task<ActionResult<ProviderProfileDTO>> GetMyProviderProfile()
+        {
+            var providerIdClaim = User.FindFirstValue(Identifiers.ProviderId);
+            if (!int.TryParse(providerIdClaim, out var providerId))
+                return Unauthorized(new ApiResponse(StatusCodes.Status401Unauthorized, "ProviderId claim is missing or invalid"));
+
+            var provider = await unitOfWork.Repository<Provider>()
+                .GetByIdWithIncludesAsync(
+                    providerId,
+                    p => p.Client,
+                    p => p.BaseLocation!,
+                    p => p.ProviderServices!);
+
+            if (provider == null)
+                return NotFound(new ApiResponse(StatusCodes.Status404NotFound, "Provider not found"));
+
+            var providerServices = await unitOfWork.Repository<ProviderService>()
+                .GetManyByConditionAsync(ps => ps.ProviderId == providerId, ps => ps.Service!) ?? new List<ProviderService>();
+
+            var services = providerServices
+                .Select(ps => ps.Service)
+                .Where(s => s != null)
+                .ToList();
+
+            var client = await unitOfWork.Repository<Client>()
+                .GetByIdWithIncludesAsync(provider.ClientId, c => c.phoneNumbers!) ?? provider.Client;
+
+            var completedJobsCount = await unitOfWork.Repository<ServiceRequest>()
+                .GetCountAsync(new BaseSpecifications<ServiceRequest>(sr =>
+                    sr.ProviderId == providerId && sr.RequestStatus == RequestStatus.Completed));
+
+            var dto = mapper.Map<ProviderProfileDTO>(provider);
+            dto.Services = mapper.Map<IReadOnlyList<ServiceDTO>>(services, opt => opt.Items["lang"] = "ar");
+            dto.PhoneNumbers = client.phoneNumbers?.Select(p => p.PhoneNumber).ToList();
+            dto.JobsCount = completedJobsCount;
 
             return Ok(dto);
         }

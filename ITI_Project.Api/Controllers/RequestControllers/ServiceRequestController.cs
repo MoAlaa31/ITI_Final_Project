@@ -153,13 +153,17 @@ namespace ITI_Project.Api.Controllers.RequestControllers
             if (serviceRequests is null || serviceRequests.Count == 0)
                 return Ok(new List<ServiceRequestDTO>());
 
+            serviceRequests = serviceRequests
+                .OrderByDescending(sr => sr.CreatedAt)
+                .ToList();
+
             var dto = mapper.Map<IReadOnlyList<ServiceRequestDTO>>(serviceRequests);
             return Ok(dto);
         }
 
         [Authorize(Roles = nameof(UserRoleType.Provider))]
         [HttpGet("available-requests")]
-        public async Task<ActionResult<IReadOnlyList<ServiceRequestDTO>>> GetAvailableServiceRequests([FromQuery] RequestSpecParams specParams)
+        public async Task<ActionResult<IReadOnlyList<ServiceRequestProviderDTO>>> GetAvailableServiceRequests([FromQuery] RequestSpecParams specParams)
         {
             var providerIdClaim = User.FindFirstValue(Identifiers.ProviderId);
             if (!int.TryParse(providerIdClaim, out var providerId))
@@ -197,7 +201,7 @@ namespace ITI_Project.Api.Controllers.RequestControllers
             var serviceRequests = await unitOfWork.Repository<ServiceRequest>().GetAllWithSpecAsync(specs);
 
             if (serviceRequests is null || serviceRequests.Count == 0)
-                return Ok(new Pagination<ServiceRequestDTO>(specParams.PageIndex, specParams.PageSize, count, new List<ServiceRequestDTO>()));
+                return Ok(new Pagination<ServiceRequestProviderDTO>(specParams.PageIndex, specParams.PageSize, count, new List<ServiceRequestProviderDTO>()));
 
             var filtered = serviceRequests
                 .Where(sr => sr.ServiceRequestLocation != null &&
@@ -206,29 +210,29 @@ namespace ITI_Project.Api.Controllers.RequestControllers
                         sr.ServiceRequestLocation.Longitude) <= radiusKm)
                 .ToList();
 
-            var data = mapper.Map<IReadOnlyList<ServiceRequestDTO>>(filtered);
+            var data = mapper.Map<IReadOnlyList<ServiceRequestProviderDTO>>(filtered);
 
-            return Ok(new Pagination<ServiceRequestDTO>(specParams.PageIndex, specParams.PageSize, count, data));
+            return Ok(new Pagination<ServiceRequestProviderDTO>(specParams.PageIndex, specParams.PageSize, count, data));
         }
 
         [Authorize(Roles = nameof(UserRoleType.Provider))]
         [HttpGet("my-assigned-requests")]
-        public async Task<ActionResult<IReadOnlyList<ServiceRequestDTO>>> GetMyAssignedRequests([FromQuery] bool inProgressStatus = false)
+        public async Task<ActionResult<IReadOnlyList<ServiceRequestProviderDTO>>> GetMyAssignedRequests([FromQuery] bool inProgressStatus = false)
         {
             var providerIdClaim = User.FindFirstValue(Identifiers.ProviderId);
             if (!int.TryParse(providerIdClaim, out var providerId))
                 return Unauthorized(new ApiResponse(StatusCodes.Status401Unauthorized, "ProviderId claim is missing or invalid"));
 
             var serviceRequests = await unitOfWork.Repository<ServiceRequest>()
-                .GetManyByConditionAsync(sr => sr.ProviderId == providerId, sr => sr.ServiceRequestLocation!, sr => sr.ServiceRequestImages!);
+                .GetManyByConditionAsync(sr => sr.ProviderId == providerId, sr => sr.ServiceRequestLocation!, sr => sr.ServiceRequestImages!, sr => sr.Client!);
 
             if (serviceRequests is null || serviceRequests.Count == 0)
-                return Ok(new List<ServiceRequestDTO>());
+                return Ok(new List<ServiceRequestProviderDTO>());
 
             var filterProgress = inProgressStatus ? RequestStatus.InProgress : RequestStatus.Assigned;
-                serviceRequests = serviceRequests.Where(sr => sr.RequestStatus == filterProgress).ToList();
+            serviceRequests = serviceRequests.Where(sr => sr.RequestStatus == filterProgress).ToList();
 
-            var dto = mapper.Map<IReadOnlyList<ServiceRequestDTO>>(serviceRequests);
+            var dto = mapper.Map<IReadOnlyList<ServiceRequestProviderDTO>>(serviceRequests);
             return Ok(dto);
         }
 

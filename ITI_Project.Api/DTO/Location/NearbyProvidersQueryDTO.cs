@@ -9,7 +9,7 @@ namespace ITI_Project.Api.DTO.Location
 
         [Required]
         public double Longitude { get; set; }
-        public double RadiusKm { get; set; } = 10;
+        public double? RadiusKm { get; set; }
 
         [Required]
         public int ServiceId { get; set; }

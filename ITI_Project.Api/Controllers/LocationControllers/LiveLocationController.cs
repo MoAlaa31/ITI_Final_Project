@@ -115,24 +115,22 @@ namespace ITI_Project.Api.Controllers.LocationControllers
             return Ok(result);
         }
 
-        [Authorize(Roles = $"{nameof(UserRoleType.Client)},{nameof(UserRoleType.Provider)},{nameof(UserRoleType.Admin)}")]
+        [Authorize(Roles = nameof(UserRoleType.Client))]
         [HttpGet("get-live-location/{providerId:int}")]
         public async Task<ActionResult<LiveLocationDTO>> GetLiveLocation(int providerId)
         {
-            if (User.IsInRole(nameof(UserRoleType.Client)))
-            {
-                var clientIdClaim = User.FindFirstValue(Identifiers.ClientId);
-                if (!int.TryParse(clientIdClaim, out var clientId))
-                    return Unauthorized(new ApiResponse(StatusCodes.Status401Unauthorized, "ClientId claim is missing or invalid"));
+            
+            var clientIdClaim = User.FindFirstValue(Identifiers.ClientId);
+            if (!int.TryParse(clientIdClaim, out var clientId))
+                return Unauthorized(new ApiResponse(StatusCodes.Status401Unauthorized, "ClientId claim is missing or invalid"));
 
-                var hasActiveRequest = await unitOfWork.Repository<ServiceRequest>()
-                    .AnyAsync(r => r.ProviderId == providerId
-                               && r.ClientId == clientId
-                               && (r.RequestStatus == RequestStatus.Assigned || r.RequestStatus == RequestStatus.InProgress));
+            var hasActiveRequest = await unitOfWork.Repository<ServiceRequest>()
+                .AnyAsync(r => r.ProviderId == providerId
+                            && r.ClientId == clientId
+                            && (r.RequestStatus == RequestStatus.Assigned || r.RequestStatus == RequestStatus.InProgress));
 
-                if (!hasActiveRequest)
-                    return Forbid();
-            }
+            if (!hasActiveRequest)
+                return Forbid();
 
             var liveLocation = await unitOfWork.Repository<LiveLocation>()
                 .GetByConditionAsync(l => l.ProviderId == providerId);

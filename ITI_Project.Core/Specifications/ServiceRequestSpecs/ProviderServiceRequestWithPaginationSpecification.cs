@@ -47,6 +47,7 @@ namespace ITI_Project.Core.Specifications.RequestSpecs
 
             Includes.Add(sr => sr.ServiceRequestLocation!);
             Includes.Add(sr => sr.ServiceRequestImages!);
+            Includes.Add(sr => sr.Client!);
             ApplyPagination((specParams.PageIndex - 1) * specParams.PageSize, specParams.PageSize);
         }
     }

@@ -55,6 +55,15 @@ namespace ITI_Project.Api.Helpers
                     o => o.MapFrom(s => s.ServiceRequestImages != null
                         ? s.ServiceRequestImages.Select(i => i.ImageUrl).ToList()
                         : new List<string>()));
+
+            CreateMap<ServiceRequest, ServiceRequestProviderDTO>()
+                .ForMember(d => d.ImageUrls,
+                    o => o.MapFrom(s => s.ServiceRequestImages != null
+                        ? s.ServiceRequestImages.Select(i => i.ImageUrl).ToList()
+                        : new List<string>()))
+                .ForMember(d => d.ClientName, o => o.MapFrom(s => s.Client != null ? $"{s.Client.FirstName} {s.Client.LastName}" : string.Empty))
+                .ForMember(d => d.ClientPictureUrl, o => o.MapFrom(s => s.Client != null ? s.Client.PictureUrl : null));
+
             CreateMap<ServiceRequestLocation, ServiceRequestLocationDTO>()
                 .ReverseMap();
             CreateMap<ServiceRequestFromUserDTO, ServiceRequest>();

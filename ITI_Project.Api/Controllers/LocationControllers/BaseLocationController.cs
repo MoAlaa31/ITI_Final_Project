@@ -79,7 +79,7 @@ namespace ITI_Project.Api.Controllers.LocationControllers
             if (!serviceExists)
                 return BadRequest(new ApiResponse(StatusCodes.Status400BadRequest, "Invalid service"));
 
-            var radius = Math.Max(1, query.RadiusKm);
+            var radius = Math.Max(1, query.RadiusKm ?? 10);
 
             var deltaLat = radius / 111.32;
             var deltaLng = radius / (111.32 * Math.Cos(query.Latitude * Math.PI / 180));
