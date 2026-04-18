@@ -1,10 +1,10 @@
 ﻿using ITI_Project.Core;
 using ITI_Project.Core.Constants;
-using ITI_Project.Core.DTOs;
 using ITI_Project.Core.Enums;
 using ITI_Project.Core.IServices;
 using ITI_Project.Core.Models.Identity;
 using ITI_Project.Core.Models.Users;
+using ITI_Project.Core.ServiceDTOs;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;

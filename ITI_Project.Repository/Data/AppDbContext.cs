@@ -157,9 +157,13 @@ namespace ITI_Project.Repository.Data
                 .HasForeignKey(r => r.ProviderId)
                 .OnDelete(DeleteBehavior.Restrict);
 
+            modelBuilder.Entity<Review>()
+                .HasOne(r => r.Client)
+                .WithMany(p => p.Reviews)
+                .HasForeignKey(r => r.ClientId)
+                .OnDelete(DeleteBehavior.Restrict);
 
             base.OnModelCreating(modelBuilder);
         }
-
     }
 }

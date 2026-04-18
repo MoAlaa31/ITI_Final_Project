@@ -9,7 +9,7 @@ namespace ITI_Project.Api.DTO.Posts
     {
         [Required(ErrorMessage = "Title is required.")]
         [StringLength(100, ErrorMessage = "Title cannot be longer than 100 characters.")]
-        public string Title { get; set; }
+        public string Title { get; set; } = null!;
         [StringLength(300, ErrorMessage = "Description cannot be longer than 300 characters.")]
         public string? Description { get; set; }
 

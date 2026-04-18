@@ -41,6 +41,7 @@ namespace ITI_Project.Core.Models.Users
         public ICollection<ServiceRequest>? ServiceRequests { get; set; }
         public ICollection<Post>? ServicePosts { get; set; }
         public ICollection<Comment>? Comments { get; set; }
+        public ICollection<Review>? Reviews { get; set; }
         public ICollection<UserPhoneNumber>? phoneNumbers { get; set; }
         public ICollection<AdminActionLog>? AdminActionLogs { get; set; }
         public ICollection<PostReaction>? PostReactions { get; set; }

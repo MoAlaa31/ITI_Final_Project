@@ -12,15 +12,15 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace ITI_Project.Repository.Data.Migrations
 {
     [DbContext(typeof(AppDbContext))]
-    [Migration("20260411204144_Set serviceId To Nullable")]
-    partial class SetserviceIdToNullable
+    [Migration("20260418030439_AddClientIdToReview")]
+    partial class AddClientIdToReview
     {
         /// <inheritdoc />
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
-                .HasAnnotation("ProductVersion", "10.0.2")
+                .HasAnnotation("ProductVersion", "8.0.15")
                 .HasAnnotation("Relational:MaxIdentifierLength", 128);
 
             SqlServerModelBuilderExtensions.UseIdentityColumns(modelBuilder);
@@ -269,6 +269,9 @@ namespace ITI_Project.Repository.Data.Migrations
 
                     SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
 
+                    b.Property<int>("ClientId")
+                        .HasColumnType("int");
+
                     b.Property<string>("Message")
                         .HasMaxLength(200)
                         .HasColumnType("nvarchar(200)");
@@ -283,6 +286,8 @@ namespace ITI_Project.Repository.Data.Migrations
                         .HasColumnType("int");
 
                     b.HasKey("Id");
+
+                    b.HasIndex("ClientId");
 
                     b.HasIndex("ProviderId");
 
@@ -781,6 +786,12 @@ namespace ITI_Project.Repository.Data.Migrations
 
             modelBuilder.Entity("ITI_Project.Core.Models.Moderation.Review", b =>
                 {
+                    b.HasOne("ITI_Project.Core.Models.Users.Client", "Client")
+                        .WithMany("Reviews")
+                        .HasForeignKey("ClientId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
                     b.HasOne("ITI_Project.Core.Models.Users.Provider", "Provider")
                         .WithMany("Reviews")
                         .HasForeignKey("ProviderId")
@@ -792,6 +803,8 @@ namespace ITI_Project.Repository.Data.Migrations
                         .HasForeignKey("ITI_Project.Core.Models.Moderation.Review", "ServiceRequestId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
+
+                    b.Navigation("Client");
 
                     b.Navigation("Provider");
 
@@ -1062,6 +1075,8 @@ namespace ITI_Project.Repository.Data.Migrations
                     b.Navigation("PostReactions");
 
                     b.Navigation("Provider");
+
+                    b.Navigation("Reviews");
 
                     b.Navigation("ServicePosts");
 

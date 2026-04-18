@@ -71,8 +71,9 @@ namespace ITI_Project.Api.Controllers.UserControllers
             if (clientUpdateDTO.Picture != null)
             {
                 var uploadResult = await fileStorageService.UploadFileAsync(
-                    clientUpdateDTO.Picture,
+                    clientUpdateDTO.Picture.OpenReadStream(),
                     "client-pictures",
+                    clientUpdateDTO.Picture.FileName,
                     User);
 
                 if (!uploadResult.Success)

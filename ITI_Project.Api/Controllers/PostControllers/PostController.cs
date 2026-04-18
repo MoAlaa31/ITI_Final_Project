@@ -79,7 +79,7 @@ namespace ITI_Project.Api.Controllers.PostControllers
             {
                 foreach (var image in dto.Images)
                 {
-                    var uploadResult = await fileStorageService.UploadFileAsync(image, "post-images", User);
+                    var uploadResult = await fileStorageService.UploadFileAsync(image.OpenReadStream(), "post-images", image.FileName, User);
                     if (!uploadResult.Success)
                     {
                         foreach (var path in uploadedPaths)

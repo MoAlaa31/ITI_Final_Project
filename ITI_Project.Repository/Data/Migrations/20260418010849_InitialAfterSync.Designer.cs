@@ -12,15 +12,15 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace ITI_Project.Repository.Data.Migrations
 {
     [DbContext(typeof(AppDbContext))]
-    [Migration("20260224222114_change the last user to client")]
-    partial class changethelastusertoclient
+    [Migration("20260418010849_InitialAfterSync")]
+    partial class InitialAfterSync
     {
         /// <inheritdoc />
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
-                .HasAnnotation("ProductVersion", "10.0.2")
+                .HasAnnotation("ProductVersion", "8.0.15")
                 .HasAnnotation("Relational:MaxIdentifierLength", 128);
 
             SqlServerModelBuilderExtensions.UseIdentityColumns(modelBuilder);
@@ -136,10 +136,6 @@ namespace ITI_Project.Repository.Data.Migrations
 
                     SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
 
-                    b.Property<string>("AddressText")
-                        .HasMaxLength(100)
-                        .HasColumnType("nvarchar(100)");
-
                     b.Property<double>("Latitude")
                         .HasColumnType("float");
 
@@ -206,7 +202,7 @@ namespace ITI_Project.Repository.Data.Migrations
                         .IsRequired()
                         .HasColumnType("nvarchar(max)");
 
-                    b.Property<bool>("IsApproved")
+                    b.Property<bool?>("IsApproved")
                         .HasColumnType("bit");
 
                     b.Property<int>("ProviderId")
@@ -273,6 +269,9 @@ namespace ITI_Project.Repository.Data.Migrations
 
                     SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
 
+                    b.Property<int>("ClientId")
+                        .HasColumnType("int");
+
                     b.Property<string>("Message")
                         .HasMaxLength(200)
                         .HasColumnType("nvarchar(200)");
@@ -287,6 +286,8 @@ namespace ITI_Project.Repository.Data.Migrations
                         .HasColumnType("int");
 
                     b.HasKey("Id");
+
+                    b.HasIndex("ClientId");
 
                     b.HasIndex("ProviderId");
 
@@ -353,6 +354,9 @@ namespace ITI_Project.Repository.Data.Migrations
 
                     SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
 
+                    b.Property<int>("ClientId")
+                        .HasColumnType("int");
+
                     b.Property<DateTime>("CreatedAt")
                         .HasColumnType("datetime2");
 
@@ -371,19 +375,13 @@ namespace ITI_Project.Repository.Data.Migrations
                         .HasMaxLength(100)
                         .HasColumnType("nvarchar(100)");
 
-                    b.Property<int>("UserId")
-                        .HasColumnType("int");
-
-                    b.Property<int>("VerificationStatus")
-                        .HasColumnType("int");
-
                     b.HasKey("Id");
+
+                    b.HasIndex("ClientId");
 
                     b.HasIndex("GovernorateId");
 
                     b.HasIndex("RegionId");
-
-                    b.HasIndex("UserId");
 
                     b.ToTable("Posts");
                 });
@@ -444,13 +442,14 @@ namespace ITI_Project.Repository.Data.Migrations
                         .HasMaxLength(200)
                         .HasColumnType("nvarchar(200)");
 
+                    b.Property<decimal>("Price")
+                        .HasPrecision(8, 2)
+                        .HasColumnType("decimal(8,2)");
+
                     b.Property<int>("ProviderId")
                         .HasColumnType("int");
 
                     b.Property<int>("ServiceRequestId")
-                        .HasColumnType("int");
-
-                    b.Property<int>("Status")
                         .HasColumnType("int");
 
                     b.HasKey("Id");
@@ -494,13 +493,40 @@ namespace ITI_Project.Repository.Data.Migrations
                     b.Property<int>("RequestStatus")
                         .HasColumnType("int");
 
+                    b.Property<int?>("ServiceId")
+                        .HasColumnType("int");
+
                     b.HasKey("Id");
 
                     b.HasIndex("ClientId");
 
                     b.HasIndex("ProviderId");
 
+                    b.HasIndex("ServiceId");
+
                     b.ToTable("ServiceRequests");
+                });
+
+            modelBuilder.Entity("ITI_Project.Core.Models.Requests.ServiceRequestImage", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<string>("ImageUrl")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<int>("ServiceRequestId")
+                        .HasColumnType("int");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("ServiceRequestId");
+
+                    b.ToTable("ServiceRequestImages");
                 });
 
             modelBuilder.Entity("ITI_Project.Core.Models.Services.ProviderService", b =>
@@ -565,6 +591,9 @@ namespace ITI_Project.Repository.Data.Migrations
                     b.Property<int>("Gender")
                         .HasColumnType("int");
 
+                    b.Property<int?>("GovernorateId")
+                        .HasColumnType("int");
+
                     b.Property<string>("LastName")
                         .IsRequired()
                         .HasMaxLength(25)
@@ -573,7 +602,14 @@ namespace ITI_Project.Repository.Data.Migrations
                     b.Property<string>("PictureUrl")
                         .HasColumnType("nvarchar(max)");
 
+                    b.Property<int?>("RegionId")
+                        .HasColumnType("int");
+
                     b.HasKey("Id");
+
+                    b.HasIndex("GovernorateId");
+
+                    b.HasIndex("RegionId");
 
                     b.ToTable("Clients");
                 });
@@ -593,9 +629,6 @@ namespace ITI_Project.Repository.Data.Migrations
                     b.Property<int>("ClientId")
                         .HasColumnType("int");
 
-                    b.Property<int>("GovernorateId")
-                        .HasColumnType("int");
-
                     b.Property<bool>("Isverified")
                         .HasColumnType("bit");
 
@@ -609,7 +642,10 @@ namespace ITI_Project.Repository.Data.Migrations
                     b.Property<double?>("Rating")
                         .HasColumnType("float");
 
-                    b.Property<int>("RegionId")
+                    b.Property<double>("RatingSum")
+                        .HasColumnType("float");
+
+                    b.Property<int>("ReviewsCount")
                         .HasColumnType("int");
 
                     b.Property<DateOnly>("StartedAt")
@@ -623,10 +659,6 @@ namespace ITI_Project.Repository.Data.Migrations
                     b.HasIndex("ClientId")
                         .IsUnique();
 
-                    b.HasIndex("GovernorateId");
-
-                    b.HasIndex("RegionId");
-
                     b.ToTable("Providers");
                 });
 
@@ -638,16 +670,16 @@ namespace ITI_Project.Repository.Data.Migrations
 
                     SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
 
+                    b.Property<int>("ClientId")
+                        .HasColumnType("int");
+
                     b.Property<string>("PhoneNumber")
                         .IsRequired()
                         .HasColumnType("nvarchar(max)");
 
-                    b.Property<int>("UserId")
-                        .HasColumnType("int");
-
                     b.HasKey("Id");
 
-                    b.HasIndex("UserId");
+                    b.HasIndex("ClientId");
 
                     b.ToTable("UserPhoneNumbers");
                 });
@@ -754,6 +786,12 @@ namespace ITI_Project.Repository.Data.Migrations
 
             modelBuilder.Entity("ITI_Project.Core.Models.Moderation.Review", b =>
                 {
+                    b.HasOne("ITI_Project.Core.Models.Users.Client", "Client")
+                        .WithMany("Reviews")
+                        .HasForeignKey("ClientId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
                     b.HasOne("ITI_Project.Core.Models.Users.Provider", "Provider")
                         .WithMany("Reviews")
                         .HasForeignKey("ProviderId")
@@ -765,6 +803,8 @@ namespace ITI_Project.Repository.Data.Migrations
                         .HasForeignKey("ITI_Project.Core.Models.Moderation.Review", "ServiceRequestId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
+
+                    b.Navigation("Client");
 
                     b.Navigation("Provider");
 
@@ -811,6 +851,12 @@ namespace ITI_Project.Repository.Data.Migrations
 
             modelBuilder.Entity("ITI_Project.Core.Models.Posts.Post", b =>
                 {
+                    b.HasOne("ITI_Project.Core.Models.Users.Client", "Client")
+                        .WithMany("ServicePosts")
+                        .HasForeignKey("ClientId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
                     b.HasOne("ITI_Project.Core.Models.Location.Governorate", "Governorate")
                         .WithMany("Posts")
                         .HasForeignKey("GovernorateId")
@@ -821,17 +867,11 @@ namespace ITI_Project.Repository.Data.Migrations
                         .WithMany("Posts")
                         .HasForeignKey("RegionId");
 
-                    b.HasOne("ITI_Project.Core.Models.Users.Client", "User")
-                        .WithMany("ServicePosts")
-                        .HasForeignKey("UserId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
+                    b.Navigation("Client");
 
                     b.Navigation("Governorate");
 
                     b.Navigation("Region");
-
-                    b.Navigation("User");
                 });
 
             modelBuilder.Entity("ITI_Project.Core.Models.Posts.PostImage", b =>
@@ -895,9 +935,26 @@ namespace ITI_Project.Repository.Data.Migrations
                         .WithMany("ServiceRequests")
                         .HasForeignKey("ProviderId");
 
+                    b.HasOne("ITI_Project.Core.Models.Services.Service", "Service")
+                        .WithMany("ServiceRequest")
+                        .HasForeignKey("ServiceId");
+
                     b.Navigation("Client");
 
                     b.Navigation("Provider");
+
+                    b.Navigation("Service");
+                });
+
+            modelBuilder.Entity("ITI_Project.Core.Models.Requests.ServiceRequestImage", b =>
+                {
+                    b.HasOne("ITI_Project.Core.Models.Requests.ServiceRequest", "ServiceRequest")
+                        .WithMany("ServiceRequestImages")
+                        .HasForeignKey("ServiceRequestId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("ServiceRequest");
                 });
 
             modelBuilder.Entity("ITI_Project.Core.Models.Services.ProviderService", b =>
@@ -919,6 +976,23 @@ namespace ITI_Project.Repository.Data.Migrations
                     b.Navigation("Service");
                 });
 
+            modelBuilder.Entity("ITI_Project.Core.Models.Users.Client", b =>
+                {
+                    b.HasOne("ITI_Project.Core.Models.Location.Governorate", "Governorate")
+                        .WithMany("Clients")
+                        .HasForeignKey("GovernorateId")
+                        .OnDelete(DeleteBehavior.Restrict);
+
+                    b.HasOne("ITI_Project.Core.Models.Location.Region", "Region")
+                        .WithMany("Clients")
+                        .HasForeignKey("RegionId")
+                        .OnDelete(DeleteBehavior.Restrict);
+
+                    b.Navigation("Governorate");
+
+                    b.Navigation("Region");
+                });
+
             modelBuilder.Entity("ITI_Project.Core.Models.Users.Provider", b =>
                 {
                     b.HasOne("ITI_Project.Core.Models.Users.Client", "Client")
@@ -927,50 +1001,34 @@ namespace ITI_Project.Repository.Data.Migrations
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
-                    b.HasOne("ITI_Project.Core.Models.Location.Governorate", "Governorate")
-                        .WithMany("Providers")
-                        .HasForeignKey("GovernorateId")
-                        .OnDelete(DeleteBehavior.Restrict)
-                        .IsRequired();
-
-                    b.HasOne("ITI_Project.Core.Models.Location.Region", "Region")
-                        .WithMany("Providers")
-                        .HasForeignKey("RegionId")
-                        .OnDelete(DeleteBehavior.Restrict)
-                        .IsRequired();
-
                     b.Navigation("Client");
-
-                    b.Navigation("Governorate");
-
-                    b.Navigation("Region");
                 });
 
             modelBuilder.Entity("ITI_Project.Core.Models.Users.UserPhoneNumber", b =>
                 {
-                    b.HasOne("ITI_Project.Core.Models.Users.Client", "User")
+                    b.HasOne("ITI_Project.Core.Models.Users.Client", "Client")
                         .WithMany("phoneNumbers")
-                        .HasForeignKey("UserId")
+                        .HasForeignKey("ClientId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
-                    b.Navigation("User");
+                    b.Navigation("Client");
                 });
 
             modelBuilder.Entity("ITI_Project.Core.Models.Location.Governorate", b =>
                 {
-                    b.Navigation("Posts");
+                    b.Navigation("Clients");
 
-                    b.Navigation("Providers");
+                    b.Navigation("Posts");
 
                     b.Navigation("Regions");
                 });
 
             modelBuilder.Entity("ITI_Project.Core.Models.Location.Region", b =>
                 {
-                    b.Navigation("Posts");
+                    b.Navigation("Clients");
 
-                    b.Navigation("Providers");
+                    b.Navigation("Posts");
                 });
 
             modelBuilder.Entity("ITI_Project.Core.Models.Posts.Comment", b =>
@@ -993,12 +1051,17 @@ namespace ITI_Project.Repository.Data.Migrations
 
                     b.Navigation("Review");
 
-                    b.Navigation("ServiceRequestLocation");
+                    b.Navigation("ServiceRequestImages");
+
+                    b.Navigation("ServiceRequestLocation")
+                        .IsRequired();
                 });
 
             modelBuilder.Entity("ITI_Project.Core.Models.Services.Service", b =>
                 {
                     b.Navigation("ProviderServices");
+
+                    b.Navigation("ServiceRequest");
                 });
 
             modelBuilder.Entity("ITI_Project.Core.Models.Users.Client", b =>
@@ -1012,6 +1075,8 @@ namespace ITI_Project.Repository.Data.Migrations
                     b.Navigation("PostReactions");
 
                     b.Navigation("Provider");
+
+                    b.Navigation("Reviews");
 
                     b.Navigation("ServicePosts");
 

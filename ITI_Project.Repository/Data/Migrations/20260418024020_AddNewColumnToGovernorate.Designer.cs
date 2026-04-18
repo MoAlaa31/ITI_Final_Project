@@ -12,15 +12,15 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace ITI_Project.Repository.Data.Migrations
 {
     [DbContext(typeof(AppDbContext))]
-    [Migration("20260405213738_add service to serviceRequest")]
-    partial class addservicetoserviceRequest
+    [Migration("20260418024020_AddNewColumnToGovernorate")]
+    partial class AddNewColumnToGovernorate
     {
         /// <inheritdoc />
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
-                .HasAnnotation("ProductVersion", "10.0.2")
+                .HasAnnotation("ProductVersion", "8.0.15")
                 .HasAnnotation("Relational:MaxIdentifierLength", 128);
 
             SqlServerModelBuilderExtensions.UseIdentityColumns(modelBuilder);
@@ -66,6 +66,10 @@ namespace ITI_Project.Repository.Data.Migrations
                         .HasColumnType("nvarchar(max)");
 
                     b.Property<string>("Name_en")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("TestProperty")
                         .IsRequired()
                         .HasColumnType("nvarchar(max)");
 
@@ -269,6 +273,9 @@ namespace ITI_Project.Repository.Data.Migrations
 
                     SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
 
+                    b.Property<int>("ClientId")
+                        .HasColumnType("int");
+
                     b.Property<string>("Message")
                         .HasMaxLength(200)
                         .HasColumnType("nvarchar(200)");
@@ -283,6 +290,8 @@ namespace ITI_Project.Repository.Data.Migrations
                         .HasColumnType("int");
 
                     b.HasKey("Id");
+
+                    b.HasIndex("ClientId");
 
                     b.HasIndex("ProviderId");
 
@@ -488,7 +497,7 @@ namespace ITI_Project.Repository.Data.Migrations
                     b.Property<int>("RequestStatus")
                         .HasColumnType("int");
 
-                    b.Property<int>("ServiceId")
+                    b.Property<int?>("ServiceId")
                         .HasColumnType("int");
 
                     b.HasKey("Id");
@@ -500,6 +509,28 @@ namespace ITI_Project.Repository.Data.Migrations
                     b.HasIndex("ServiceId");
 
                     b.ToTable("ServiceRequests");
+                });
+
+            modelBuilder.Entity("ITI_Project.Core.Models.Requests.ServiceRequestImage", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<string>("ImageUrl")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<int>("ServiceRequestId")
+                        .HasColumnType("int");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("ServiceRequestId");
+
+                    b.ToTable("ServiceRequestImages");
                 });
 
             modelBuilder.Entity("ITI_Project.Core.Models.Services.ProviderService", b =>
@@ -614,6 +645,12 @@ namespace ITI_Project.Repository.Data.Migrations
 
                     b.Property<double?>("Rating")
                         .HasColumnType("float");
+
+                    b.Property<double>("RatingSum")
+                        .HasColumnType("float");
+
+                    b.Property<int>("ReviewsCount")
+                        .HasColumnType("int");
 
                     b.Property<DateOnly>("StartedAt")
                         .HasColumnType("date");
@@ -753,6 +790,12 @@ namespace ITI_Project.Repository.Data.Migrations
 
             modelBuilder.Entity("ITI_Project.Core.Models.Moderation.Review", b =>
                 {
+                    b.HasOne("ITI_Project.Core.Models.Users.Client", "Client")
+                        .WithMany("Reviews")
+                        .HasForeignKey("ClientId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
                     b.HasOne("ITI_Project.Core.Models.Users.Provider", "Provider")
                         .WithMany("Reviews")
                         .HasForeignKey("ProviderId")
@@ -764,6 +807,8 @@ namespace ITI_Project.Repository.Data.Migrations
                         .HasForeignKey("ITI_Project.Core.Models.Moderation.Review", "ServiceRequestId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
+
+                    b.Navigation("Client");
 
                     b.Navigation("Provider");
 
@@ -896,15 +941,24 @@ namespace ITI_Project.Repository.Data.Migrations
 
                     b.HasOne("ITI_Project.Core.Models.Services.Service", "Service")
                         .WithMany("ServiceRequest")
-                        .HasForeignKey("ServiceId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
+                        .HasForeignKey("ServiceId");
 
                     b.Navigation("Client");
 
                     b.Navigation("Provider");
 
                     b.Navigation("Service");
+                });
+
+            modelBuilder.Entity("ITI_Project.Core.Models.Requests.ServiceRequestImage", b =>
+                {
+                    b.HasOne("ITI_Project.Core.Models.Requests.ServiceRequest", "ServiceRequest")
+                        .WithMany("ServiceRequestImages")
+                        .HasForeignKey("ServiceRequestId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("ServiceRequest");
                 });
 
             modelBuilder.Entity("ITI_Project.Core.Models.Services.ProviderService", b =>
@@ -1001,7 +1055,10 @@ namespace ITI_Project.Repository.Data.Migrations
 
                     b.Navigation("Review");
 
-                    b.Navigation("ServiceRequestLocation");
+                    b.Navigation("ServiceRequestImages");
+
+                    b.Navigation("ServiceRequestLocation")
+                        .IsRequired();
                 });
 
             modelBuilder.Entity("ITI_Project.Core.Models.Services.Service", b =>
@@ -1022,6 +1079,8 @@ namespace ITI_Project.Repository.Data.Migrations
                     b.Navigation("PostReactions");
 
                     b.Navigation("Provider");
+
+                    b.Navigation("Reviews");
 
                     b.Navigation("ServicePosts");
 

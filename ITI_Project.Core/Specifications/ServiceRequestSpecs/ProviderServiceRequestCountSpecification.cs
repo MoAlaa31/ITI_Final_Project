@@ -1,7 +1,6 @@
 using ITI_Project.Core.Models.Requests;
-using ITI_Project.Core.Specifications.ServiceRequestSpecs;
 
-namespace ITI_Project.Core.Specifications.RequestSpecs
+namespace ITI_Project.Core.Specifications.ServiceRequestSpecs
 {
     public class ProviderServiceRequestCountSpecification : BaseSpecifications<ServiceRequest>
     {

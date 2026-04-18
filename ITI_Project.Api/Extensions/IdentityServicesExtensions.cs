@@ -57,19 +57,19 @@ namespace ITI_Project.Api.Extensions
 
                 options.Events = new JwtBearerEvents
                 {
-                    //OnMessageReceived = context =>
-                    //{
-                    //    var accessToken = context.Request.Cookies["access_token"];
+                    OnMessageReceived = context =>
+                    {
+                        var accessToken = context.Request.Query["access_token"];
+                        var path = context.HttpContext.Request.Path;
 
-                    //    // Allow JWT token via WebSockets
-                    //    if (!string.IsNullOrEmpty(accessToken))
-                    //    //&&    context.HttpContext.Request.Path.StartsWithSegments("/Hubs/NotificationHub"))           // SignalR for notifications
-                    //    {
-                    //        context.Token = accessToken;
-                    //    }
-
-                    //    return Task.CompletedTask;
-                    //}
+                        // If this is a SignalR hub request, use the token from query string
+                        if (!string.IsNullOrEmpty(accessToken) &&
+                            path.StartsWithSegments("/hubs/live-location"))
+                        {
+                            context.Token = accessToken;
+                        }
+                        return Task.CompletedTask;
+                    }
                     //OnAuthenticationFailed = context =>
                     //{
                     //    var logger = context.HttpContext.RequestServices

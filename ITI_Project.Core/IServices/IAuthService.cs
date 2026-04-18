@@ -1,5 +1,5 @@
-﻿using ITI_Project.Core.DTOs;
-using ITI_Project.Core.Models.Identity;
+﻿using ITI_Project.Core.Models.Identity;
+using ITI_Project.Core.ServiceDTOs;
 using Microsoft.AspNetCore.Identity;
 using System;
 using System.Collections.Generic;

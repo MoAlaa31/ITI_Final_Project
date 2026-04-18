@@ -26,5 +26,9 @@ namespace ITI_Project.Core.Models.Moderation
         public required int ServiceRequestId { get; set; }
         public ServiceRequest ServiceRequest { get; set; } = null!;
 
+        [ForeignKey(nameof(Client))]
+        public required int ClientId { get; set; }
+        public Client Client { get; set; } = null!;
+
     }
 }

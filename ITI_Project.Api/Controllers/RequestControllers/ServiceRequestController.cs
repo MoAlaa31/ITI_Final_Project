@@ -9,7 +9,6 @@ using ITI_Project.Core.Models.Location;
 using ITI_Project.Core.Models.Requests;
 using ITI_Project.Core.Models.Services;
 using ITI_Project.Core.Models.Users;
-using ITI_Project.Core.Specifications.RequestSpecs;
 using ITI_Project.Core.Specifications.ServiceRequestSpecs;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
@@ -54,7 +53,7 @@ namespace ITI_Project.Api.Controllers.RequestControllers
             {
                 foreach (var image in serviceRequestDTO.Images)
                 {
-                    var uploadResult = await fileStorageService.UploadFileAsync(image, "service-request-images", User);
+                    var uploadResult = await fileStorageService.UploadFileAsync(image.OpenReadStream(), "service-request-images", image.FileName, User);
                     if (!uploadResult.Success)
                     {
                         foreach (var path in uploadedPaths)
@@ -217,7 +216,7 @@ namespace ITI_Project.Api.Controllers.RequestControllers
 
         [Authorize(Roles = nameof(UserRoleType.Provider))]
         [HttpGet("my-assigned-requests")]
-        public async Task<ActionResult<IReadOnlyList<ServiceRequestProviderDTO>>> GetMyAssignedRequests([FromQuery] bool inProgressStatus = false)
+        public async Task<ActionResult<IReadOnlyList<ServiceRequestProviderDTO>>> GetMyAssignedRequests([FromQuery] bool inProgressStatus = true)
         {
             var providerIdClaim = User.FindFirstValue(Identifiers.ProviderId);
             if (!int.TryParse(providerIdClaim, out var providerId))
@@ -427,7 +426,7 @@ namespace ITI_Project.Api.Controllers.RequestControllers
             {
                 foreach (var image in serviceRequestDTO.Images)
                 {
-                    var uploadResult = await fileStorageService.UploadFileAsync(image, "service-request-images", User);
+                    var uploadResult = await fileStorageService.UploadFileAsync(image.OpenReadStream(), "service-request-images", image.FileName, User);
                     if (!uploadResult.Success)
                     {
                         foreach (var path in uploadedPaths)

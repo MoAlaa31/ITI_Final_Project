@@ -19,21 +19,22 @@ namespace ITI_Project.Services.Files
         }
 
         public async Task<(bool Success, string Message, string? FilePath)> UploadFileAsync(
-            IFormFile file,
+            Stream file,
             string folderName,
+            string originalFileName,
             ClaimsPrincipal? user,
             string? customFileName = null,
             IReadOnlyCollection<string>? allowedExtensions = null,
             long maxFileSizeBytes = 5 * 1024 * 1024,
             CancellationToken cancellationToken = default)
         {
-            if (file == null || file.Length == 0)
+            if (file == null)
                 return (false, "File is required.", null);
 
             if (string.IsNullOrWhiteSpace(folderName))
                 return (false, "Folder name is required.", null);
 
-            var extension = Path.GetExtension(file.FileName).ToLowerInvariant();
+            var extension = Path.GetExtension(originalFileName).ToLowerInvariant();
             var extensions = allowedExtensions ?? new[] { ".jpg", ".jpeg", ".png", ".webp" };
 
             if (string.IsNullOrWhiteSpace(extension) || !extensions.Contains(extension))
@@ -59,7 +60,7 @@ namespace ITI_Project.Services.Files
 
             try
             {
-                var relativePath = await SaveFileAsync(file, folderName, fileName, cancellationToken);
+                var relativePath = await SaveFileAsync(file, originalFileName, folderName, fileName, cancellationToken);
                 return (true, "File uploaded successfully.", relativePath);
             }
             catch (Exception)
@@ -69,12 +70,13 @@ namespace ITI_Project.Services.Files
         }
 
         public async Task<string> SaveFileAsync(
-            IFormFile file,
+            Stream file,
+            string originalFileName,
             string? subFolder = null,
             string? fileName = null,
             CancellationToken cancellationToken = default)
         {
-            if (file == null || file.Length == 0)
+            if (file == null)
                 throw new ArgumentException("File is required.", nameof(file));
 
             var webRootPath = environment.WebRootPath;
@@ -88,7 +90,7 @@ namespace ITI_Project.Services.Files
 
             Directory.CreateDirectory(targetFolder);
 
-            var extension = Path.GetExtension(file.FileName);
+            var extension = Path.GetExtension(originalFileName);
             var finalFileName = string.IsNullOrWhiteSpace(fileName)
                 ? $"{Guid.NewGuid():N}{extension}"
                 : Path.GetFileName(fileName);

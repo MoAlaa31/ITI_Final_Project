@@ -1,4 +1,3 @@
-using Microsoft.AspNetCore.Http;
 using System.Security.Claims;
 
 namespace ITI_Project.Core.IServices
@@ -6,7 +5,8 @@ namespace ITI_Project.Core.IServices
     public interface IFileStorageService
     {
         Task<string> SaveFileAsync(
-            IFormFile file,
+            Stream file,
+            string originalFileName,
             string? subFolder = null,
             string? fileName = null,
             CancellationToken cancellationToken = default);
@@ -14,8 +14,9 @@ namespace ITI_Project.Core.IServices
         void DeleteFile(string relativePath);
 
         Task<(bool Success, string Message, string? FilePath)> UploadFileAsync(
-            IFormFile file,
+            Stream file,
             string folderName,
+            string originalFileName,
             ClaimsPrincipal? user,
             string? customFileName = null,
             IReadOnlyCollection<string>? allowedExtensions = null,

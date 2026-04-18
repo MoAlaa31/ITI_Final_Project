@@ -5,10 +5,10 @@ namespace ITI_Project.Api.DTO.Moderation
     public class ReviewDto
     {
         public int Id { get; set; }
-        public int ProviderId { get; set; }
-        public int ServiceRequestId { get; set; }
         public double Rating { get; set; }
         public string? Message { get; set; }
+        public string ClientName { get; set; } = string.Empty;
+        public string? ClientPictureUrl { get; set; }
     }
 
     public class ReviewCreateDto

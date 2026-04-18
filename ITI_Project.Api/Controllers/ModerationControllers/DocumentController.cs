@@ -18,6 +18,8 @@ namespace ITI_Project.Api.Controllers.ModerationControllers
 {
     public class DocumentController : BaseApiController
     {
+        private const int MaxDocuments = 3;
+
         private readonly IUnitOfWork unitOfWork;
         private readonly IMapper mapper;
         private readonly IFileStorageService fileStorageService;
@@ -86,8 +88,9 @@ namespace ITI_Project.Api.Controllers.ModerationControllers
                 return Conflict(new ApiResponse(StatusCodes.Status409Conflict, "A document of this type already exists for this provider."));
 
             var uploadResult = await fileStorageService.UploadFileAsync(
-                uploadDTO.DocumentFile,
+                uploadDTO.DocumentFile.OpenReadStream(),
                 "provider-documents",
+                uploadDTO.DocumentFile.FileName,
                 User,
                 uploadDTO.FileName
             );
@@ -121,7 +124,7 @@ namespace ITI_Project.Api.Controllers.ModerationControllers
 
                 await unitOfWork.CompleteAsync();
             }
-            catch(Exception ex) 
+            catch 
             {
                 // If there's an error saving to the database, we should delete the uploaded file to avoid orphaned files
                 fileStorageService.DeleteFile(uploadResult.FilePath!);
@@ -157,7 +160,7 @@ namespace ITI_Project.Api.Controllers.ModerationControllers
                 unitOfWork.Repository<ProviderDocument>().Update(document);
                 await unitOfWork.CompleteAsync();
             }
-            catch(Exception ex)
+            catch
             {
                 return StatusCode(StatusCodes.Status500InternalServerError, new ApiResponse(StatusCodes.Status500InternalServerError, "An error occurred while validating the document. Please try again."));
             }
@@ -186,8 +189,9 @@ namespace ITI_Project.Api.Controllers.ModerationControllers
                 return Forbid();
 
             var uploadResult = await fileStorageService.UploadFileAsync(
-                updateDTO.DocumentFile,
+                updateDTO.DocumentFile.OpenReadStream(),
                 "provider-documents",
+                updateDTO.DocumentFile.FileName,
                 User,
                 updateDTO.FileName
             );

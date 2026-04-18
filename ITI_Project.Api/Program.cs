@@ -28,7 +28,11 @@ namespace ITI_Project.Api
 
             if (builder.Environment.IsDevelopment())
             {
-                DotNetEnv.Env.Load(Path.Combine(Directory.GetCurrentDirectory(), ".env"));
+                var envPath = Path.Combine(Directory.GetCurrentDirectory(), ".env");
+                if (File.Exists(envPath))
+                {
+                    DotNetEnv.Env.Load(envPath);
+                }
             }
 
             builder.Configuration.AddEnvironmentVariables();
@@ -111,7 +115,7 @@ namespace ITI_Project.Api
                 await applicationDbContext.Database.MigrateAsync();
                 await _identityContext.Database.MigrateAsync();
 
-                await AppDbContextSeed.SeedAsync(applicationDbContext, factoryLogger.CreateLogger(nameof(AppDbContextSeed))); //seed the data of the application (Categories, Products, etc.)
+                //await AppDbContextSeed.SeedAsync(applicationDbContext, factoryLogger.CreateLogger(nameof(AppDbContextSeed))); //seed the data of the application (Categories, Products, etc.)
                 await RoleSeed.RoleSeedAsync(_roleManager);         //seed the roles (Admin, Provider)
             }
             catch (Exception ex)

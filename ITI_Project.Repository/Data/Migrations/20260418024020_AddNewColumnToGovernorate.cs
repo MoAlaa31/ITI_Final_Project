@@ -5,19 +5,14 @@
 namespace ITI_Project.Repository.Data.Migrations
 {
     /// <inheritdoc />
-    public partial class addarabictoservices : Migration
+    public partial class AddNewColumnToGovernorate : Migration
     {
         /// <inheritdoc />
         protected override void Up(MigrationBuilder migrationBuilder)
         {
-            migrationBuilder.RenameColumn(
-                name: "Name",
-                table: "Services",
-                newName: "Name_en");
-
             migrationBuilder.AddColumn<string>(
-                name: "Name_ar",
-                table: "Services",
+                name: "TestProperty",
+                table: "governorates",
                 type: "nvarchar(max)",
                 nullable: false,
                 defaultValue: "");
@@ -27,13 +22,8 @@ namespace ITI_Project.Repository.Data.Migrations
         protected override void Down(MigrationBuilder migrationBuilder)
         {
             migrationBuilder.DropColumn(
-                name: "Name_ar",
-                table: "Services");
-
-            migrationBuilder.RenameColumn(
-                name: "Name_en",
-                table: "Services",
-                newName: "Name");
+                name: "TestProperty",
+                table: "governorates");
         }
     }
 }

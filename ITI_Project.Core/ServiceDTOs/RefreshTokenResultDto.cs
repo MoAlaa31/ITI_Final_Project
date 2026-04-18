@@ -2,7 +2,7 @@
 using System.Collections.Generic;
 using System.Text;
 
-namespace ITI_Project.Core.DTOs
+namespace ITI_Project.Core.ServiceDTOs
 {
     public class RefreshTokenResultDto
     {
