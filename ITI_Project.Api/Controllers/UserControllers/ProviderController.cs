@@ -270,7 +270,7 @@ namespace ITI_Project.Api.Controllers.UserControllers
 
         [Authorize(Roles = nameof(UserRoleType.Provider))]
         [HttpGet("get-my-provider-profile")]
-        public async Task<ActionResult<ProviderProfileDTO>> GetMyProviderProfile()
+        public async Task<ActionResult<ProviderProfilePrivateDTO>> GetMyProviderProfile()
         {
             var providerIdClaim = User.FindFirstValue(Identifiers.ProviderId);
             if (!int.TryParse(providerIdClaim, out var providerId))
@@ -301,7 +301,7 @@ namespace ITI_Project.Api.Controllers.UserControllers
                 .GetCountAsync(new BaseSpecifications<ServiceRequest>(sr =>
                     sr.ProviderId == providerId && sr.RequestStatus == RequestStatus.Completed));
 
-            var dto = mapper.Map<ProviderProfileDTO>(provider);
+            var dto = mapper.Map<ProviderProfilePrivateDTO>(provider);
             dto.Services = mapper.Map<IReadOnlyList<ServiceDTO>>(services, opt => opt.Items["lang"] = "ar");
             dto.PhoneNumbers = client.phoneNumbers?.Select(p => p.PhoneNumber).ToList();
             dto.JobsCount = completedJobsCount;
@@ -344,6 +344,28 @@ namespace ITI_Project.Api.Controllers.UserControllers
             }).ToList();
 
             return Ok(result);
+        }
+
+        [Authorize(Roles = nameof(UserRoleType.Provider))]
+        [HttpPost("add-credits")]
+        public async Task<ActionResult> AddCredits([FromBody] AddCreditsDTO dto)
+        {
+            if (dto.Amount <= 0)
+                return BadRequest(new ApiResponse(StatusCodes.Status400BadRequest, "Amount must be greater than zero."));
+
+            var providerIdClaim = User.FindFirstValue(Identifiers.ProviderId);
+            if (!int.TryParse(providerIdClaim, out var providerId))
+                return Unauthorized(new ApiResponse(StatusCodes.Status401Unauthorized, "ProviderId claim is missing or invalid"));
+
+            var provider = await unitOfWork.Repository<Provider>().GetByIdAsync(providerId);
+            if (provider == null)
+                return NotFound(new ApiResponse(StatusCodes.Status404NotFound, "Provider not found"));
+
+            provider.Credits += dto.Amount;
+            unitOfWork.Repository<Provider>().Update(provider);
+            await unitOfWork.CompleteAsync();
+
+            return Ok(new ApiResponse(StatusCodes.Status200OK, $"Credits added successfully. New balance: {provider.Credits}"));
         }
     }
 }

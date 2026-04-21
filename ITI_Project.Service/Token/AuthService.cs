@@ -37,8 +37,8 @@ namespace ITI_Project.Services.Token
         {
             var authClaims = new List<Claim>
             {
-                new Claim(ClaimTypes.GivenName , user.UserName),
-                new Claim(ClaimTypes.Email , user.Email),
+                new Claim(ClaimTypes.GivenName , user.UserName!),
+                new Claim(ClaimTypes.Email , user.Email!),
                 new Claim(ClaimTypes.NameIdentifier , user.Id)
             };
 
@@ -82,20 +82,20 @@ namespace ITI_Project.Services.Token
         {
             var user = await userManager.Users
                 .Include(u => u.RefreshTokens)
-                .SingleOrDefaultAsync(u => u.RefreshTokens.Any(rt => rt.Token == refreshToken));
+                .SingleOrDefaultAsync(u => u.RefreshTokens!.Any(rt => rt.Token == refreshToken));
             // (Any ==> will return true if user has any refresh token that matches the token passed)
 
             if (user == null)
                 return new RefreshTokenResultDto { IsAuthenticated = false, Message = "Invalid refresh token" };
 
-            var DBrefreshToken = user.RefreshTokens.Single(rt => rt.Token == refreshToken);
+            var DBrefreshToken = user.RefreshTokens!.Single(rt => rt.Token == refreshToken);
 
             if (!DBrefreshToken.IsActive)
                 return new RefreshTokenResultDto { IsAuthenticated = false, Message = "Inactive refresh token" };
 
             DBrefreshToken.RevokedOn = DateTime.UtcNow;
             var newRefreshToken = TokenHelper.GenerateRefreshToken();
-            user.RefreshTokens.Add(newRefreshToken);
+            user.RefreshTokens!.Add(newRefreshToken);
             await userManager.UpdateAsync(user);
 
             var accessToken = await CreateTokenAsync(user, userManager);
@@ -115,12 +115,12 @@ namespace ITI_Project.Services.Token
         {
             var user = await userManager.Users
                 .Include(u => u.RefreshTokens)
-                .SingleOrDefaultAsync(u => u.RefreshTokens.Any(rt => rt.Token == token));
+                .SingleOrDefaultAsync(u => u.RefreshTokens!.Any(rt => rt.Token == token));
 
             if (user == null)
                 return false;
 
-            var refreshToken = user.RefreshTokens.Single(rt => rt.Token == token);
+            var refreshToken = user.RefreshTokens!.Single(rt => rt.Token == token);
 
             if (!refreshToken.IsActive)
                 return false;

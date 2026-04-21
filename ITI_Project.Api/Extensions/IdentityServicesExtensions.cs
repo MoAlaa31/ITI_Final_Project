@@ -50,7 +50,7 @@ namespace ITI_Project.Api.Extensions
                     ValidAudience = configuration["JWT:ValidAudience"],
                     ValidateIssuer = true,
                     ValidIssuer = configuration["JWT:ValidIssuer"],
-                    IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(configuration["JWT:SecretKey"])),
+                    IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(configuration["JWT:SecretKey"]!)),
                     ValidateLifetime = true,
                     ClockSkew = TimeSpan.Zero
                 };
@@ -64,7 +64,7 @@ namespace ITI_Project.Api.Extensions
 
                         // If this is a SignalR hub request, use the token from query string
                         if (!string.IsNullOrEmpty(accessToken) &&
-                            path.StartsWithSegments("/hubs/live-location"))
+                            (path.StartsWithSegments("/hubs/live-location") || path.StartsWithSegments("/hubs/notification")))
                         {
                             context.Token = accessToken;
                         }

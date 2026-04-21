@@ -8,7 +8,7 @@ namespace ITI_Project.Api.DTO.Posts
         public int ClientId { get; set; }
         public int GovernorateId { get; set; }
         public int? RegionId { get; set; }
-        public string Title { get; set; }
+        public string Title { get; set; } = null!;
         public string? Description { get; set; }
         public DateTime CreatedAt { get; set; }
         public IReadOnlyList<string>? ImageUrls { get; set; }

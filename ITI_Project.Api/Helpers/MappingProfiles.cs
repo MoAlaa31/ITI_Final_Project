@@ -35,6 +35,8 @@ namespace ITI_Project.Api.Helpers
                 .ForMember(d => d.RegionId, o => o.MapFrom(s => s.Client.RegionId))
                 .ForMember(d => d.Services, o => o.Ignore());
 
+            CreateMap<Provider, ProviderProfilePrivateDTO>()
+                .IncludeBase<Provider, ProviderProfileDTO>();
             /****************************************** Mapping for Client ******************************************/
             CreateMap<Client, ClientDTO>()
                 .ForMember(d => d.PhoneNumbers,
@@ -67,6 +69,9 @@ namespace ITI_Project.Api.Helpers
             CreateMap<ServiceRequestLocation, ServiceRequestLocationDTO>()
                 .ReverseMap();
             CreateMap<ServiceRequestFromUserDTO, ServiceRequest>();
+
+            CreateMap<ServiceRequest, AvailableServiceRequestDTO>()
+                .IncludeBase<ServiceRequest, ServiceRequestProviderDTO>();
 
             /****************************************** Mapping for Request Offer ******************************************/
             CreateMap<RequestOffer, RequestOfferDTO>();

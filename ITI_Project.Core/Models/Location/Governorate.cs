@@ -10,10 +10,9 @@ namespace ITI_Project.Core.Models.Location
     public class Governorate: BaseEntity
     {
         public int Id { get; set; }
-        [Required(ErrorMessage = "Governorate name is required. Please provide a name.")]
-        public string Name_ar { get; set; }
-        [Required(ErrorMessage = "Governorate name is required. Please provide a name.")]
-        public string Name_en { get; set; }
+        public string Name_ar { get; set; } = null!;
+        public string Name_en { get; set; } = null!;
+
         // Relations
         public ICollection<Region>? Regions { get; set; }
         public ICollection<Client>? Clients { get; set; }

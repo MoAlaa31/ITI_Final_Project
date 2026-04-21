@@ -9,6 +9,8 @@ namespace ITI_Project.Api.DTO.Moderation
         public string? Message { get; set; }
         public string ClientName { get; set; } = string.Empty;
         public string? ClientPictureUrl { get; set; }
+        public int ServiceRequestId { get; set; }
+        public DateTime CreatedAt { get; set; }
     }
 
     public class ReviewCreateDto

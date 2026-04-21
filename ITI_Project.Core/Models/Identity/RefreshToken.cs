@@ -8,7 +8,7 @@ namespace ITI_Project.Core.Models.Identity
     [Owned]
     public class RefreshToken
     {
-        public string Token { get; set; }
+        public string Token { get; set; } = null!;
         public DateTime ExpiresOn { get; set; }
         public bool IsExpired => DateTime.UtcNow >= ExpiresOn;
         public DateTime CreatedOn { get; set; }

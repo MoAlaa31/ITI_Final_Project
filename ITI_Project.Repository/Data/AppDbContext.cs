@@ -53,6 +53,9 @@ namespace ITI_Project.Repository.Data
         public DbSet<Review> Reviews { get; set; }
         public DbSet<Report> Reports { get; set; }
 
+        // Notifications
+        public DbSet<Notification> Notifications{ get; set; }
+
         // Admin
         public DbSet<AdminActionLog> AdminActionLogs { get; set; }
 
@@ -162,6 +165,12 @@ namespace ITI_Project.Repository.Data
                 .WithMany(p => p.Reviews)
                 .HasForeignKey(r => r.ClientId)
                 .OnDelete(DeleteBehavior.Restrict);
+
+            /* --------------------- User Models -----------------  */
+            modelBuilder.Entity<Provider>(entity =>
+            {
+                entity.Property(e => e.Credits).HasColumnType("decimal(18,4)");
+            });
 
             base.OnModelCreating(modelBuilder);
         }

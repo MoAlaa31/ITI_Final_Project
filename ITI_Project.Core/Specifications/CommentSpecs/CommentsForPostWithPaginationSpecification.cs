@@ -11,6 +11,7 @@ namespace ITI_Project.Core.Specifications.CommentSpecs
             AddOrderByDescending(c => c.CreatedAt);
             Includes.Add(c => c.Reactions!);
             Includes.Add(c => c.Client);
+            Includes.Add(p => p.Client.Provider!);
             ApplyPagination((specParams.PageIndex - 1) * specParams.PageSize, specParams.PageSize);
         }
     }

@@ -15,11 +15,11 @@ namespace ITI_Project.Core.Models.Posts
         public DateTime CreatedAt { get; set; }
 
         //Relationships
-        [ForeignKey("Client")]
+        [ForeignKey(nameof(Client))]
         public required int ClientId { get; set; }
         public Client Client { get; set; } = null!;
 
-        [ForeignKey("Post")]
+        [ForeignKey(nameof(Post))]
         public required int PostId { get; set; }
         public Post Post { get; set; } = null!;
 

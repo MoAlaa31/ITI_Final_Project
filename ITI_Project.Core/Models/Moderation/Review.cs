@@ -16,6 +16,7 @@ namespace ITI_Project.Core.Models.Moderation
         [Range(0, 5, ErrorMessage = "Rating must be between 0 and 5.")]
         [Required(ErrorMessage = "Rating is required.")]
         public double Rating { get; set; }
+        public DateTime CreatedAt { get; set; }
 
         //Relationships
         [ForeignKey(nameof(Provider))]

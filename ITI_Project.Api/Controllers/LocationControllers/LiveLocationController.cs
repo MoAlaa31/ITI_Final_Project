@@ -3,6 +3,7 @@ using ITI_Project.Api.DTO.Location;
 using ITI_Project.Api.ErrorHandling;
 using ITI_Project.Api.Helpers;
 using ITI_Project.Api.Hubs;
+using ITI_Project.Api.Hubs.Interfaces;
 using ITI_Project.Core;
 using ITI_Project.Core.Constants;
 using ITI_Project.Core.Enums;

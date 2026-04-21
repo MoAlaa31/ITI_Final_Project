@@ -14,7 +14,7 @@ namespace ITI_Project.Api.Attributes
                 if (id > 0)
                 {
                     var unitOfWork = validationContext.GetService<IUnitOfWork>();
-                    var entityExisiting = unitOfWork.Repository<T>().GetAsync(id).Result;
+                    var entityExisiting = unitOfWork!.Repository<T>().GetAsync(id).Result;
 
                     if (entityExisiting != null)
                         return ValidationResult.Success;

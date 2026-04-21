@@ -15,7 +15,7 @@ namespace ITI_Project.Core.Models.Location
 
 
         [ForeignKey(nameof(Provider))]
-        public int ProviderId { get; set; }
-        public Provider Provider { get; set; }
+        public required int ProviderId { get; set; }
+        public Provider Provider { get; set; } = null!;
     }
 }

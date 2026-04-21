@@ -33,7 +33,7 @@ namespace ITI_Project.Api.Extensions
                 {
                     var errors = ActionContext.ModelState
                                               .Where(p => p.Value?.Errors.Count() > 0)
-                                              .SelectMany(p => p.Value.Errors)
+                                              .SelectMany(p => p.Value?.Errors!)
                                               .Select(e => e.ErrorMessage).ToArray();
                     var ValidationErrorResponse = new ApiValidationErrorResponse()
                     {

@@ -1,6 +1,6 @@
 ﻿using ITI_Project.Api.DTO.Location;
 
-namespace ITI_Project.Api.Hubs
+namespace ITI_Project.Api.Hubs.Interfaces
 {
     public interface ITrackingClient
     {

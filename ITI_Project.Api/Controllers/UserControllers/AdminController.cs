@@ -18,7 +18,7 @@ namespace ITI_Project.Api.Controllers.UserControllers
             this.unitOfWork = unitOfWork;
         }
 
-        [Authorize(Roles = nameof(UserRoleType.Admin))]
+        //[Authorize(Roles = nameof(UserRoleType.Admin))]
         [HttpGet("get-admin-dashboard")]
         public async Task<ActionResult<object>> GetDashboardStats([FromQuery] DashboardPeriod period = DashboardPeriod.Week)
         {
@@ -51,7 +51,7 @@ namespace ITI_Project.Api.Controllers.UserControllers
             var requests = await unitOfWork.Repository<ServiceRequest>()
                 .GetManyByConditionAsync(r => r.CreatedAt >= fromDate);
 
-            var perDay = requests
+            var perDay = requests?
                 .GroupBy(r => r.CreatedAt.Date)
                 .OrderBy(g => g.Key)
                 .Select(g => new { Date = g.Key, Count = g.Count() })

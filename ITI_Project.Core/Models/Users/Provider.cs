@@ -15,13 +15,16 @@ namespace ITI_Project.Core.Models.Users
     {
         public int Id { get; set; }
         [StringLength(100, ErrorMessage = "Bio cannot be longer than 100 characters.")]
+        [MaxLength(100)]
         public string? Bio { get; set; }
         public bool Isverified { get; set; }
         public double? Rating { get; set; }
         public double RatingSum { get; set; }
         public int ReviewsCount { get; set; }
+        public decimal Credits { get; set; } = 0;
         public int JobsCount { get; set; }
         [StringLength(25, ErrorMessage = "Nickname cannot be longer than 25 characters.")]
+        [MaxLength(25)]
         public string? Nickname { get; set; }
         public DateOnly StartedAt { get; set; }
         public VerificationStatus VerificationStatus { get; set; }

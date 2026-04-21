@@ -27,7 +27,7 @@ namespace ITI_Project.Api.Controllers.LocationControllers
 
         /***************************** End point to get governorate with its Regions *****************************/
         [HttpGet("GovernorateWithRegions")]
-        public async Task<ActionResult<IReadOnlyList<GovernorateDTO>>> GetAllGovernorateWithRegions([FromQuery] string? lang = "ar")
+        public async Task<ActionResult<IReadOnlyList<GovernorateDTO>>> GetAllGovernorateWithRegions([FromQuery] string lang = "ar")
         {
             if (lang.ToLower() != "ar" && lang.ToLower() != "en")
             {
@@ -38,7 +38,7 @@ namespace ITI_Project.Api.Controllers.LocationControllers
             {
                 Id = g.Id,
                 Name = lang.ToLower() == "ar" ? g.Name_ar : g.Name_en,
-                Regions = g.Regions.Select(r => new RegionDTO
+                Regions = g.Regions!.Select(r => new RegionDTO
                 {
                     Id = r.Id,
                     Name = lang.ToLower() == "ar" ? r.Name_ar : r.Name_en

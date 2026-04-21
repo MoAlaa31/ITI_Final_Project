@@ -1,6 +1,6 @@
 using System.ComponentModel.DataAnnotations;
 
-namespace ITI_Project.Api.DTO.Post
+namespace ITI_Project.Api.DTO.Posts
 {
     public class PostUpdateDTO
     {

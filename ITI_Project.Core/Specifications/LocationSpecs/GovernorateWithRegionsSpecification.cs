@@ -9,7 +9,7 @@ namespace ITI_Project.Core.Specifications.LocationSpecs
     {
         public GovernorateWithRegionsSpecification() : base()
         {
-            Includes.Add(g => g.Regions);
+            Includes.Add(g => g.Regions!);
         }
     }
 }

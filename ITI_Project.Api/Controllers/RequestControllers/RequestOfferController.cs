@@ -18,7 +18,8 @@ namespace ITI_Project.Api.Controllers.RequestControllers
     {
         private readonly IUnitOfWork unitOfWork;
         private readonly IMapper mapper;
-
+        private readonly decimal requiredCredits = 25;
+    
         public RequestOfferController(IUnitOfWork unitOfWork, IMapper mapper)
         {
             this.unitOfWork = unitOfWork;
@@ -38,6 +39,15 @@ namespace ITI_Project.Api.Controllers.RequestControllers
             var providerExists = await unitOfWork.Repository<Provider>().AnyAsync(p => p.Id == providerId);
             if (!providerExists)
                 return BadRequest(new ApiResponse(StatusCodes.Status400BadRequest, "Provider not found"));
+
+            var provider = await unitOfWork.Repository<Provider>().GetByIdAsync(providerId);
+            if (provider == null)
+                return BadRequest(new ApiResponse(StatusCodes.Status400BadRequest, "Provider not found."));
+
+            if (provider.Credits < requiredCredits)
+            {
+                return BadRequest(new ApiResponse(StatusCodes.Status400BadRequest, "Insufficient credits. Please purchase more credits to create an offer."));
+            }
 
             var serviceRequest = await unitOfWork.Repository<ServiceRequest>()
                 .GetByIdWithIncludesAsync(serviceRequestId, sr => sr.RequestOffers!);

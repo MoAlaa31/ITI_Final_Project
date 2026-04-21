@@ -1,5 +1,4 @@
 ﻿using AutoMapper;
-using ITI_Project.Api.DTO.Post;
 using ITI_Project.Api.DTO.Posts;
 using ITI_Project.Api.ErrorHandling;
 using ITI_Project.Api.Helpers;

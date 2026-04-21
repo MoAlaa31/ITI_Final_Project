@@ -4,6 +4,7 @@ using ITI_Project.Repository.Data;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 
 #nullable disable
@@ -11,9 +12,11 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace ITI_Project.Repository.Data.Migrations
 {
     [DbContext(typeof(AppDbContext))]
-    partial class AppDbContextModelSnapshot : ModelSnapshot
+    [Migration("20260418225858_AddCreditsToProvider")]
+    partial class AddCreditsToProvider
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -182,41 +185,6 @@ namespace ITI_Project.Repository.Data.Migrations
                     b.HasIndex("AdminId");
 
                     b.ToTable("AdminActionLogs");
-                });
-
-            modelBuilder.Entity("ITI_Project.Core.Models.Moderation.Notification", b =>
-                {
-                    b.Property<int>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("int");
-
-                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
-
-                    b.Property<int>("ClientId")
-                        .HasColumnType("int");
-
-                    b.Property<DateTime>("CreatedAt")
-                        .HasColumnType("datetime2");
-
-                    b.Property<bool>("IsRead")
-                        .HasColumnType("bit");
-
-                    b.Property<string>("Message")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<string>("Title")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<int>("Type")
-                        .HasColumnType("int");
-
-                    b.HasKey("Id");
-
-                    b.HasIndex("ClientId");
-
-                    b.ToTable("Notifications");
                 });
 
             modelBuilder.Entity("ITI_Project.Core.Models.Moderation.ProviderDocument", b =>
@@ -658,8 +626,7 @@ namespace ITI_Project.Repository.Data.Migrations
                     SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
 
                     b.Property<string>("Bio")
-                        .HasMaxLength(100)
-                        .HasColumnType("nvarchar(100)");
+                        .HasColumnType("nvarchar(max)");
 
                     b.Property<int>("ClientId")
                         .HasColumnType("int");
@@ -674,8 +641,7 @@ namespace ITI_Project.Repository.Data.Migrations
                         .HasColumnType("int");
 
                     b.Property<string>("Nickname")
-                        .HasMaxLength(25)
-                        .HasColumnType("nvarchar(25)");
+                        .HasColumnType("nvarchar(max)");
 
                     b.Property<double?>("Rating")
                         .HasColumnType("float");
@@ -775,17 +741,6 @@ namespace ITI_Project.Repository.Data.Migrations
                         .IsRequired();
 
                     b.Navigation("Admin");
-                });
-
-            modelBuilder.Entity("ITI_Project.Core.Models.Moderation.Notification", b =>
-                {
-                    b.HasOne("ITI_Project.Core.Models.Users.Client", "Client")
-                        .WithMany("Notifications")
-                        .HasForeignKey("ClientId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.Navigation("Client");
                 });
 
             modelBuilder.Entity("ITI_Project.Core.Models.Moderation.ProviderDocument", b =>
@@ -1120,8 +1075,6 @@ namespace ITI_Project.Repository.Data.Migrations
                     b.Navigation("CommentReactions");
 
                     b.Navigation("Comments");
-
-                    b.Navigation("Notifications");
 
                     b.Navigation("PostReactions");
 
