@@ -9,7 +9,7 @@ using System.Threading.Tasks;
 
 namespace ITI_Project.Core.Models.Moderation
 {
-    public class Notification
+    public class Notification : BaseEntity
     {
         public int Id { get; set; }
         public required string Title { get; set; } = null!;

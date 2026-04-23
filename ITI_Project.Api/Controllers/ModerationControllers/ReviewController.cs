@@ -69,12 +69,29 @@ namespace ITI_Project.Api.Controllers.ModerationControllers
             var provider = await unitOfWork.Repository<Provider>().GetByIdAsync(serviceRequest.ProviderId.Value);
             if (provider != null)
             {
-                // Notify the provider about the deleted request
-                await hub.Clients.Group($"user-{provider.ClientId}")
-                .ReceiveNotification(new
+                // Notify the provider about the review
+                var notification = new Notification
                 {
-                    title = "New Review",
-                    message = "Some client added a new Review to your profile"
+                    Title = "New Review",
+                    Message = "Some client added a new Review to your profile",
+                    Type = NotificationType.info,
+                    CreatedAt = DateHelper.GetNowInEgypt(),
+                    IsRead = false,
+                    ClientId = provider.ClientId
+                };
+
+                await unitOfWork.Repository<Notification>().AddAsync(notification);
+                await unitOfWork.CompleteAsync();
+
+                await hub.Clients.Group($"user-{provider.ClientId}")
+                .ReceiveNotification(new NotificationDTO
+                {
+                    Id = notification.Id,
+                    Title = notification.Title,
+                    Message = notification.Message,
+                    Type = notification.Type,
+                    CreatedAt = notification.CreatedAt,
+                    IsRead = notification.IsRead
                 });
             }
             

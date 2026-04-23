@@ -79,6 +79,10 @@ namespace ITI_Project.Repository
             dbContext.Set<T>().Update(entity);
         }
 
+        public void UpdateRange(IEnumerable<T> entities)
+        {
+            dbContext.Set<T>().UpdateRange(entities);
+        }
         public async Task AddRangeAsync(IEnumerable<T> entities)
         {
             await dbContext.Set<T>().AddRangeAsync(entities);

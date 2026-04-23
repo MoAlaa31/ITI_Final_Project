@@ -10,10 +10,12 @@ using ITI_Project.Core.Constants;
 using ITI_Project.Core.Enums;
 using ITI_Project.Core.IServices;
 using ITI_Project.Core.Models.Location;
+using ITI_Project.Core.Models.Moderation;
 using ITI_Project.Core.Models.Requests;
 using ITI_Project.Core.Models.Services;
 using ITI_Project.Core.Models.Users;
 using ITI_Project.Core.Specifications.ServiceRequestSpecs;
+using ITI_Project.Repository.Data.Migrations;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
@@ -118,29 +120,31 @@ namespace ITI_Project.Api.Controllers.RequestControllers
             return CreatedAtAction(nameof(GetServiceRequestById), new { id = serviceRequest.Id }, dto);
         }
 
-        [Authorize]
+        [Authorize(Roles = nameof(UserRoleType.Client))]
         [HttpGet("get-request-byid/{id:int}")]
-        public async Task<ActionResult<ServiceRequestDTO>> GetServiceRequestById(int id)
+        public async Task<ActionResult<ServiceRequestByIdDTO>> GetServiceRequestById(int id)
         {
+            var clientIdClaim = User.FindFirstValue(Identifiers.ClientId);
+            if (!int.TryParse(clientIdClaim, out var clientId))
+                return Unauthorized(new ApiResponse(StatusCodes.Status401Unauthorized, "ClientId claim is missing or invalid"));
+
             var serviceRequest = await unitOfWork.Repository<ServiceRequest>()
-                .GetByIdWithIncludesAsync(id, sr => sr.ServiceRequestLocation!, sr => sr.ServiceRequestImages!);
+                .GetByIdWithIncludesAsync(
+                    id,
+                    sr => sr.ServiceRequestLocation!,
+                    sr => sr.ServiceRequestImages!
+                );
+
             if (serviceRequest is null)
                 return NotFound(new ApiResponse(StatusCodes.Status404NotFound, "Service request not found"));
 
-            if (User.IsInRole(nameof(UserRoleType.Client)))
-            {
-                var clientIdClaim = User.FindFirstValue(Identifiers.ClientId);
-                if (int.TryParse(clientIdClaim, out var clientId) && serviceRequest.ClientId != clientId)
-                    return Forbid();
-            }
-            else if (User.IsInRole(nameof(UserRoleType.Provider)))
-            {
-                var providerIdClaim = User.FindFirstValue(Identifiers.ProviderId);
-                if (int.TryParse(providerIdClaim, out var providerId) && serviceRequest.ProviderId != providerId)
-                    return Forbid();
-            }
+            var dto = mapper.Map<ServiceRequestByIdDTO>(serviceRequest);
+            var review = await unitOfWork.Repository<Review>()
+                .GetByConditionAsync(r => r.ServiceRequestId == id);
 
-            var dto = mapper.Map<ServiceRequestDTO>(serviceRequest);
+            dto.IsReviewed = review != null;
+            dto.ReviewId = review?.Id;
+
             return Ok(dto);
         }
 
@@ -296,12 +300,28 @@ namespace ITI_Project.Api.Controllers.RequestControllers
             await unitOfWork.CompleteAsync();
 
             // Notify the provider about the new assigned request
-            await hub.Clients.Group($"user-{provider.ClientId}")
-            .ReceiveNotification(new
+            var notification = new Notification
             {
-                title = "New Request",
-                message = "Your offer has been Accepted",
-                timestamp = DateHelper.GetNowInEgypt()
+                Title = "New Request",
+                Message = "Your offer has been Accepted",
+                Type = NotificationType.success,
+                CreatedAt = DateHelper.GetNowInEgypt(),
+                IsRead = false,
+                ClientId = provider.ClientId
+            };
+
+            await unitOfWork.Repository<Notification>().AddAsync(notification);
+            await unitOfWork.CompleteAsync();
+
+            await hub.Clients.Group($"user-{provider.ClientId}")
+            .ReceiveNotification(new NotificationDTO
+            {
+                Id = notification.Id,
+                Title = notification.Title,
+                Message = notification.Message,
+                Type = notification.Type,
+                CreatedAt = notification.CreatedAt,
+                IsRead = notification.IsRead
             });
 
             var dto = mapper.Map<ServiceRequestDTO>(serviceRequest);
@@ -338,24 +358,43 @@ namespace ITI_Project.Api.Controllers.RequestControllers
                 return BadRequest(new ApiResponse(StatusCodes.Status400BadRequest, "Request is not assigned to you"));
 
             string message;
+            NotificationType notificationType;
             if (isAccepted)
             {
                 serviceRequest.RequestStatus = RequestStatus.InProgress;
                 message = "Your service request has been Accepted";
+                notificationType = NotificationType.success;
             }
             else
             {
                 serviceRequest.RequestStatus = RequestStatus.Cancelled;
                 message = "Your service request has been Cancelled";
+                notificationType = NotificationType.warning;
             }
 
             // Notify the client about his request
-            await hub.Clients.Group($"user-{serviceRequest.ClientId}")
-            .ReceiveNotification(new
+            var notification = new Notification
             {
-                title = "Your Direct Request",
-                message = message,
-                timestamp = DateHelper.GetNowInEgypt()
+                Title = "Your Direct Request",
+                Message = message,
+                Type = notificationType,
+                CreatedAt = DateHelper.GetNowInEgypt(),
+                IsRead = false,
+                ClientId = serviceRequest.ClientId
+            };
+
+            await unitOfWork.Repository<Notification>().AddAsync(notification);
+            await unitOfWork.CompleteAsync();
+
+            await hub.Clients.Group($"user-{serviceRequest.ClientId}")
+            .ReceiveNotification(new NotificationDTO
+            {
+                Id = notification.Id,
+                Title = notification.Title,
+                Message = notification.Message,
+                Type = notification.Type,
+                CreatedAt = notification.CreatedAt,
+                IsRead = notification.IsRead
             });
 
             unitOfWork.Repository<ServiceRequest>().Update(serviceRequest);
@@ -428,12 +467,28 @@ namespace ITI_Project.Api.Controllers.RequestControllers
                 if (provider != null)
                 {
                     // Notify the provider about the deleted request
-                    await hub.Clients.Group($"user-{provider.ClientId}")
-                    .ReceiveNotification(new
+                    var notification = new Notification
                     {
-                        title = "Request Canceled",
-                        message = "A service request assigned to you has been cancelled by the client.",
-                        timestamp = DateHelper.GetNowInEgypt()
+                        Title = "Request Canceled",
+                        Message = "A service request assigned to you has been cancelled by the client.",
+                        Type = NotificationType.warning,
+                        CreatedAt = DateHelper.GetNowInEgypt(),
+                        IsRead = false,
+                        ClientId = provider.ClientId
+                    };
+
+                    await unitOfWork.Repository<Notification>().AddAsync(notification);
+                    await unitOfWork.CompleteAsync();
+
+                    await hub.Clients.Group($"user-{provider.ClientId}")
+                    .ReceiveNotification(new NotificationDTO
+                    {
+                        Id = notification.Id,
+                        Title = notification.Title,
+                        Message = notification.Message,
+                        Type = notification.Type,
+                        CreatedAt = notification.CreatedAt,
+                        IsRead = notification.IsRead
                     });
                 }
             }
@@ -482,12 +537,28 @@ namespace ITI_Project.Api.Controllers.RequestControllers
                     if (provider != null)
                     {
                         // Notify the provider about the deleted request
-                        await hub.Clients.Group($"user-{provider.ClientId}")
-                        .ReceiveNotification(new
+                        var notification = new Notification
                         {
-                            title = "Request Canceled",
-                            message = "A service request assigned to you has been cancelled by the client.",
-                            timestamp = DateHelper.GetNowInEgypt()
+                            Title = "Request Canceled",
+                            Message = "A service request assigned to you has been cancelled by the client.",
+                            Type = NotificationType.warning,
+                            CreatedAt = DateHelper.GetNowInEgypt(),
+                            IsRead = false,
+                            ClientId = provider.ClientId
+                        };
+
+                        await unitOfWork.Repository<Notification>().AddAsync(notification);
+                        await unitOfWork.CompleteAsync();
+
+                        await hub.Clients.Group($"user-{provider.ClientId}")
+                        .ReceiveNotification(new NotificationDTO
+                        {
+                            Id = notification.Id,
+                            Title = notification.Title,
+                            Message = notification.Message,
+                            Type = notification.Type,
+                            CreatedAt = notification.CreatedAt,
+                            IsRead = notification.IsRead
                         });
                     }
                 }
@@ -577,11 +648,28 @@ namespace ITI_Project.Api.Controllers.RequestControllers
                 }
 
                 // Notify the provider about the new assigned request
-                await hub.Clients.Group($"user-{provider.ClientId}")
-                .ReceiveNotification(new
+                var notification = new Notification
                 {
-                    title = "New Request",
-                    message = "You have a new service request"
+                    Title = "New Request",
+                    Message = "You have a new service request",
+                    Type = NotificationType.info,
+                    CreatedAt = DateHelper.GetNowInEgypt(),
+                    IsRead = false,
+                    ClientId = provider.ClientId
+                };
+
+                await unitOfWork.Repository<Notification>().AddAsync(notification);
+                await unitOfWork.CompleteAsync();
+
+                await hub.Clients.Group($"user-{provider.ClientId}")
+                .ReceiveNotification(new NotificationDTO
+                {
+                    Id = notification.Id,
+                    Title = notification.Title,
+                    Message = notification.Message,
+                    Type = notification.Type,
+                    CreatedAt = notification.CreatedAt,
+                    IsRead = notification.IsRead
                 });
             }
             catch
@@ -595,28 +683,6 @@ namespace ITI_Project.Api.Controllers.RequestControllers
 
             var dto = mapper.Map<ServiceRequestDTO>(serviceRequest);
             return CreatedAtAction(nameof(GetServiceRequestById), new { id = serviceRequest.Id }, dto);
-        }
-
-
-
-        [Authorize(Roles = nameof(UserRoleType.Client))]
-        [HttpPost("send-notification")]
-        public async Task<IActionResult> SendNotification(NotificationDTO notification)
-        {
-            var clientId = User.FindFirstValue(Identifiers.ClientId);
-
-            if (string.IsNullOrEmpty(clientId))
-                return Unauthorized(new ApiResponse(StatusCodes.Status401Unauthorized, "ClientId claim is missing"));
-
-            // Send to the specific client's group
-            await hub.Clients.Group($"user-{clientId}").ReceiveNotification(new
-            {
-                title = "Manual Notification",
-                message = notification.message,
-                timestamp = DateHelper.GetNowInEgypt()
-            });
-
-            return Ok("Your message sent successfully");
         }
 
 

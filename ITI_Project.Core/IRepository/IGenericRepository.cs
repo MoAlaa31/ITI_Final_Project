@@ -11,6 +11,7 @@ namespace ITI_Project.Core.IRepository
         Task AddAsync(T entity);
         Task<T> AddWithSaveAsync(T entity);
         void Update(T entity);
+        void UpdateRange(IEnumerable<T> entities);
         void Delete(T entity);
         Task<bool> AnyAsync(Expression<Func<T, bool>> predicate);
         Task<IReadOnlyList<T>?> GetAllWithSpecAsync(ISpecifications<T> specs);

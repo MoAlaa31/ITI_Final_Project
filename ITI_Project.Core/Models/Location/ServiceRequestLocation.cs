@@ -7,11 +7,12 @@ using System.Text;
 
 namespace ITI_Project.Core.Models.Location
 {
-    public class ServiceRequestLocation: BaseEntity
+    public class ServiceRequestLocation : BaseEntity
     {
         public int Id { get; set; }
         public double Latitude { get; set; }
         public double Longitude { get; set; }
+        public string? Address { get; set; }
 
         // Relationships
         [ForeignKey(nameof(ServiceRequest))]

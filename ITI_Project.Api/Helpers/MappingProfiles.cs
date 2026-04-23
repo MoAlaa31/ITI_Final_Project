@@ -58,6 +58,9 @@ namespace ITI_Project.Api.Helpers
                         ? s.ServiceRequestImages.Select(i => i.ImageUrl).ToList()
                         : new List<string>()));
 
+            CreateMap<ServiceRequest, ServiceRequestByIdDTO>()
+                .IncludeBase<ServiceRequest, ServiceRequestDTO>();
+
             CreateMap<ServiceRequest, ServiceRequestProviderDTO>()
                 .ForMember(d => d.ImageUrls,
                     o => o.MapFrom(s => s.ServiceRequestImages != null
@@ -133,6 +136,9 @@ namespace ITI_Project.Api.Helpers
 
             CreateMap<Comment, CommentCreateResultDTO>();
             CreateMap<PostReaction, PostReactionDTO>();
+
+            /****************************************** Mapping for Comments ******************************************/
+            CreateMap<Notification, NotificationDTO>();
         }
     }
 }
