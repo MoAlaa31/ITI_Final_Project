@@ -15,8 +15,8 @@ namespace ITI_Project.Core.Models.Posts
         public Post Post { get; set; } = null!;
 
         [ForeignKey(nameof(Client))]
-        public required int ClientId { get; set; }
-        public Client Client { get; set; } = null!;
+        public int? ClientId { get; set; }
+        public Client? Client { get; set; }
 
         public required ReactionType ReactionType { get; set; }
     }

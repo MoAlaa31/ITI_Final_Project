@@ -31,13 +31,19 @@ namespace ITI_Project.Api.Controllers.ModerationControllers
             this.fileStorageService = fileStorageService;
         }
 
-        [Authorize(Roles = $"{nameof(UserRoleType.Admin)},{nameof(UserRoleType.Provider)}")]
+        [Authorize(Roles = $"{nameof(UserRoleType.Client)},{nameof(UserRoleType.Provider)},{nameof(UserRoleType.Provider)}")]
         [HttpGet("get-documents")]
         public async Task<ActionResult<ProviderDocumentDto>> GetAllProviderDocuments([FromQuery] int? providerId = null)
         {
             int actualProviderId;
 
-            if (!User.IsInRole(nameof(UserRoleType.Admin)))
+            if (User.IsInRole(nameof(UserRoleType.Admin)))
+            {
+                if (!providerId.HasValue)
+                    return BadRequest(new ApiResponse(StatusCodes.Status400BadRequest, "ProviderId is required for admin users"));
+                actualProviderId = providerId.Value;
+            }
+            else if (User.IsInRole(nameof(UserRoleType.Provider)))
             {
                 var providerIdClaim = User.FindFirstValue(Identifiers.ProviderId);
                 if (!int.TryParse(providerIdClaim, out actualProviderId))
@@ -45,9 +51,19 @@ namespace ITI_Project.Api.Controllers.ModerationControllers
             }
             else
             {
-                if (!providerId.HasValue)
-                    return BadRequest(new ApiResponse(StatusCodes.Status400BadRequest, "ProviderId is required for admin users"));
-                actualProviderId = providerId.Value;
+                var clientIdClaim = User.FindFirstValue(Identifiers.ClientId);
+                if (!int.TryParse(clientIdClaim, out var clientId))
+                    return Unauthorized("ClientId claim is missing or invalid");
+
+                var providerFromDb = await unitOfWork.Repository<Provider>().GetByConditionAsync(p => p.ClientId == clientId);
+                if (providerFromDb != null)
+                {
+                    actualProviderId = providerFromDb.Id;
+                }
+                else
+                {
+                    return NotFound(new ApiResponse(StatusCodes.Status404NotFound, "This User Isn't a Provider"));
+                }
             }
 
             var provider = await unitOfWork.Repository<Provider>().GetByIdAsync(actualProviderId);
@@ -56,8 +72,9 @@ namespace ITI_Project.Api.Controllers.ModerationControllers
 
             var documents = await unitOfWork.Repository<ProviderDocument>()
                 .GetManyByConditionAsync(spec => spec.ProviderId == actualProviderId);
-            if (documents is null || documents.Count == 0)
-                return NotFound (new ApiResponse(StatusCodes.Status404NotFound, "No documents found for this provider"));
+
+            if (documents == null || documents.Count == 0)
+                return Ok(new List<ProviderDocumentDto>());
 
             var dto = mapper.Map<IReadOnlyList<ProviderDocumentDto>>(documents);
 
@@ -208,6 +225,27 @@ namespace ITI_Project.Api.Controllers.ModerationControllers
             try
             {
                 unitOfWork.Repository<ProviderDocument>().Update(document);
+
+                var allDocuments = await unitOfWork.Repository<ProviderDocument>()
+                    .GetManyByConditionAsync(d => d.ProviderId == provider.Id) ?? new List<ProviderDocument>();
+
+                allDocuments = allDocuments
+                    .Where(d => d.Id != document.Id)
+                    .Append(document)
+                    .ToList();
+
+                var distinctTypesCount = allDocuments
+                    .Select(d => d.DocumentType)
+                    .Distinct()
+                    .Count();
+
+                var hasRejected = allDocuments.Any(d => d.IsApproved == false);
+
+                if (distinctTypesCount == 3 && !hasRejected)
+                {
+                    provider.VerificationStatus = VerificationStatus.UnderReview;
+                    unitOfWork.Repository<Provider>().Update(provider);
+                }
                 await unitOfWork.CompleteAsync();
             }
             catch

@@ -319,7 +319,7 @@ namespace ITI_Project.Api.Controllers.UserControllers
                     p => p.Client,
                     p => p.ProviderDocuments!) ?? new List<Provider>();
 
-            var today = DateOnly.FromDateTime(DateTime.UtcNow);
+            var today = DateHelper.GetTodayInEgypt();
 
             var result = providers.Select(p =>
             {

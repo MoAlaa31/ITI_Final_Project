@@ -88,6 +88,7 @@ namespace ITI_Project.Api.Controllers.RequestControllers
                 {
                     Latitude = serviceRequestDTO.Latitude,
                     Longitude = serviceRequestDTO.Longitude,
+                    Address = serviceRequestDTO.Address,
                     ServiceRequestId = serviceRequest.Id
                 };
 
@@ -120,13 +121,23 @@ namespace ITI_Project.Api.Controllers.RequestControllers
             return CreatedAtAction(nameof(GetServiceRequestById), new { id = serviceRequest.Id }, dto);
         }
 
-        [Authorize(Roles = nameof(UserRoleType.Client))]
+        [Authorize(Roles = $"{nameof(UserRoleType.Admin)}, {nameof(UserRoleType.Client)}")]
         [HttpGet("get-request-byid/{id:int}")]
         public async Task<ActionResult<ServiceRequestByIdDTO>> GetServiceRequestById(int id)
         {
-            var clientIdClaim = User.FindFirstValue(Identifiers.ClientId);
-            if (!int.TryParse(clientIdClaim, out var clientId))
-                return Unauthorized(new ApiResponse(StatusCodes.Status401Unauthorized, "ClientId claim is missing or invalid"));
+            int clientId = 0;
+            bool adminCheck;
+            if (User.IsInRole(nameof(UserRoleType.Admin)))
+            {
+                adminCheck = true;
+            }
+            else
+            {
+                var clientIdClaim = User.FindFirstValue(Identifiers.ClientId);
+                if (!int.TryParse(clientIdClaim, out clientId))
+                    return Unauthorized(new ApiResponse(StatusCodes.Status401Unauthorized, "ClientId claim is missing or invalid"));
+                adminCheck = false;
+            }
 
             var serviceRequest = await unitOfWork.Repository<ServiceRequest>()
                 .GetByIdWithIncludesAsync(
@@ -137,6 +148,9 @@ namespace ITI_Project.Api.Controllers.RequestControllers
 
             if (serviceRequest is null)
                 return NotFound(new ApiResponse(StatusCodes.Status404NotFound, "Service request not found"));
+
+            if (!adminCheck && serviceRequest?.ClientId != clientId)
+                return Forbid();
 
             var dto = mapper.Map<ServiceRequestByIdDTO>(serviceRequest);
             var review = await unitOfWork.Repository<Review>()

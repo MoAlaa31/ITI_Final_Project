@@ -16,8 +16,8 @@ namespace ITI_Project.Core.Models.Posts
 
         //Relationships
         [ForeignKey(nameof(Client))]
-        public required int ClientId { get; set; }
-        public Client Client { get; set; } = null!;
+        public int? ClientId { get; set; }
+        public Client? Client { get; set; }
 
         [ForeignKey(nameof(Post))]
         public required int PostId { get; set; }

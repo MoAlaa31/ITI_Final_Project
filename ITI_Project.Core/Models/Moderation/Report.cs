@@ -14,6 +14,7 @@ namespace ITI_Project.Core.Models.Moderation
         public int Id { get; set; }
         [StringLength(200, ErrorMessage = "Reason cannot be longer than 200 characters.")]
         public string? Reason { get; set; }
+        public string? AdminNote { get; set; }
         public ReportType ReportType { get; set; }
         public DateTime LastUpdate { get; set; }
         public ReportStatus Status { get; set; }
@@ -21,11 +22,11 @@ namespace ITI_Project.Core.Models.Moderation
         // Relationships
         [ForeignKey(nameof(Reporter))]
         public required int ReporterId { get; set; }
-        public required Client Reporter { get; set; }
+        public Client Reporter { get; set; } = null!;
 
         [ForeignKey(nameof(TargetUser))]
         public required int TargetUserId { get; set; }
-        public required Client TargetUser { get; set; }
+        public Client TargetUser { get; set; } = null!;
 
         [ForeignKey(nameof(Resolver))]
         public int? ResolverId { get; set; }
@@ -33,6 +34,6 @@ namespace ITI_Project.Core.Models.Moderation
 
         [ForeignKey(nameof(ServiceRequest))]
         public required int ServiceRequestId { get; set; }
-        public required ServiceRequest ServiceRequest { get; set; }
+        public ServiceRequest ServiceRequest { get; set; } = null!;
     }
 }

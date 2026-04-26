@@ -71,13 +71,13 @@ namespace ITI_Project.Api.Controllers.PostControllers
         public async Task<ActionResult<IReadOnlyList<CommentReactionDetailsDTO>>> GetCommentReactions(int commentId)
         {
             var reactions = await unitOfWork.Repository<CommentReaction>()
-                .GetManyByConditionAsync(r => r.CommentId == commentId, r => r.Client) ?? new List<CommentReaction>();
+                .GetManyByConditionAsync(r => r.CommentId == commentId, r => r.Client!) ?? new List<CommentReaction>();
 
             var data = reactions.Select(r => new CommentReactionDetailsDTO
             {
                 ClientId = r.ClientId,
-                ClientName = $"{r.Client.FirstName} {r.Client.LastName}".Trim(),
-                ClientPictureUrl = r.Client.PictureUrl,
+                ClientName = $"{r.Client?.FirstName} {r.Client?.LastName}".Trim(),
+                ClientPictureUrl = r.Client?.PictureUrl,
                 ReactionType = r.ReactionType
             }).ToList();
 

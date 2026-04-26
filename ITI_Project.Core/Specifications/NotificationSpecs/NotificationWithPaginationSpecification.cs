@@ -10,7 +10,7 @@ namespace ITI_Project.Core.Specifications.NotificationSpecs
 {
     public class NotificationWithPaginationSpecification : BaseSpecifications<Notification>
     {
-        public NotificationWithPaginationSpecification(int clientId, NotificationSpecParams specParams)
+        public NotificationWithPaginationSpecification(int clientId, PaginationSpecParams specParams)
             : base(n => n.ClientId == clientId)
         {
 

@@ -2,6 +2,8 @@
 using ITI_Project.Core.IRepository;
 using ITI_Project.Core.Models;
 using ITI_Project.Repository.Data;
+using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore.Storage;
 using System.Collections;
 
 namespace ITI_Project.Repository
@@ -9,11 +11,12 @@ namespace ITI_Project.Repository
     public class UnitOfWork: IUnitOfWork
     {
         private readonly AppDbContext dbContext;
-        private Hashtable repositories;
+        private readonly Dictionary<Type, object> repositories;
+        private IDbContextTransaction? _transaction;
         public UnitOfWork(AppDbContext dbContext)
         {
             this.dbContext = dbContext;
-            repositories = new Hashtable();
+            repositories = new Dictionary<Type, object>();
         }
 
         public async Task<int> CompleteAsync()
@@ -22,16 +25,33 @@ namespace ITI_Project.Repository
         public bool HasChanges()
             => dbContext.ChangeTracker.HasChanges();
 
+        public async Task BeginTransactionAsync()
+        {
+            _transaction = await dbContext.Database.BeginTransactionAsync();
+        }
+
+        public async Task CommitAsync()
+        {
+            if (_transaction != null)
+                await _transaction.CommitAsync();
+        }
+
+        public async Task RollbackAsync()
+        {
+            if (_transaction != null)
+                await _transaction.RollbackAsync();
+        }
+
         public IGenericRepository<TEntity> Repository<TEntity>() where TEntity : BaseEntity
         {
-            var key = typeof(TEntity).Name;
-            if (!repositories.ContainsKey(key))
+            var type = typeof(TEntity);
+
+            if (!repositories.ContainsKey(type))
             {
-                var repository = new GenericRepository<TEntity>(dbContext);
-                repositories.Add(key, repository);
+                repositories[type] = new GenericRepository<TEntity>(dbContext);
             }
 
-            return repositories[key] as IGenericRepository<TEntity>;
+            return (IGenericRepository<TEntity>)repositories[type];
         }
     }
 }

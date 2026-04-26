@@ -5,7 +5,7 @@ namespace ITI_Project.Core.Specifications.CommentSpecs
 {
     public class CommentsForPostWithPaginationSpecification : BaseSpecifications<Comment>
     {
-        public CommentsForPostWithPaginationSpecification(int postId, CommentSpecParams specParams)
+        public CommentsForPostWithPaginationSpecification(int postId, PaginationSpecParams specParams)
             : base(c => c.PostId == postId)
         {
             AddOrderByDescending(c => c.CreatedAt);

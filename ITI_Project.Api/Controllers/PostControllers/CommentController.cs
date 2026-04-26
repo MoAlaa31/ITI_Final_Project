@@ -7,6 +7,7 @@ using ITI_Project.Core.Constants;
 using ITI_Project.Core.Enums;
 using ITI_Project.Core.Models.Posts;
 using ITI_Project.Core.Models.Users;
+using ITI_Project.Core.Specifications;
 using ITI_Project.Core.Specifications.CommentSpecs;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
@@ -96,8 +97,11 @@ namespace ITI_Project.Api.Controllers.PostControllers
 
         [Authorize(Roles = nameof(UserRoleType.Client))]
         [HttpGet("get-post-comments/{postId:int}")]
-        public async Task<ActionResult<IReadOnlyList<CommentDTO>>> GetPostComments(int postId, [FromQuery] CommentSpecParams specParams)
+        public async Task<ActionResult<IReadOnlyList<CommentDTO>>> GetPostComments(int postId, [FromQuery] PaginationSpecParams specParams)
         {
+            // Set a maximum page size to prevent excessive data retrieval
+            specParams.SetMaxPageSize(25);
+
             var postExists = await unitOfWork.Repository<Post>().AnyAsync(p => p.Id == postId);
             if (!postExists)
                 return NotFound(new ApiResponse(StatusCodes.Status404NotFound, "Post not found"));
@@ -106,7 +110,7 @@ namespace ITI_Project.Api.Controllers.PostControllers
                 .GetAllWithSpecAsync(new CommentsForPostWithPaginationSpecification(postId, specParams)) ?? new List<Comment>();
 
             var count = await unitOfWork.Repository<Comment>()
-                .GetCountAsync(new CountCommentsForPostSpecification(postId));
+                .GetCountAsync(new BaseSpecifications<Comment>(c => c.PostId == postId));
 
             var data = mapper.Map<List<CommentDTO>>(comments);
 

@@ -10,6 +10,9 @@ namespace ITI_Project.Core
     {
         IGenericRepository<TEntity> Repository<TEntity>() where TEntity : BaseEntity;
 
+        Task BeginTransactionAsync();
+        Task CommitAsync();
+        Task RollbackAsync();
         bool HasChanges();
         Task<int> CompleteAsync();
     }

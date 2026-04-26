@@ -6,7 +6,6 @@ namespace ITI_Project.Core.Enums
 {
     public enum ReportStatus
     {
-        Pending,
         UnderReview,
         Resolved,
         Rejected

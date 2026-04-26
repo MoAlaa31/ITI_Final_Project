@@ -10,6 +10,7 @@ using ITI_Project.Core.Constants;
 using ITI_Project.Core.Enums;
 using ITI_Project.Core.Models.Moderation;
 using ITI_Project.Core.Models.Users;
+using ITI_Project.Core.Specifications;
 using ITI_Project.Core.Specifications.NotificationSpecs;
 using ITI_Project.Repository;
 using ITI_Project.Repository.Data.Migrations;
@@ -98,8 +99,11 @@ namespace ITI_Project.Api.Controllers.ModerationControllers
 
         [Authorize(Roles = nameof(UserRoleType.Client))]
         [HttpGet("my-notifications")]
-        public async Task<IActionResult> GetMyNotifications([FromQuery] NotificationSpecParams specParams)
+        public async Task<IActionResult> GetMyNotifications([FromQuery] PaginationSpecParams specParams)
         {
+            // set max size to 15 to avoid large data transfer
+            specParams.SetMaxPageSize(15);
+
             var clientIdClaim = User.FindFirstValue(Identifiers.ClientId);
             if (!int.TryParse(clientIdClaim, out var clientId))
                 return Unauthorized(new ApiResponse(StatusCodes.Status401Unauthorized, "ClientId claim is missing or invalid"));
