@@ -1,4 +1,5 @@
-﻿using ITI_Project.Api.DTO.Moderation;
+﻿using AutoMapper;
+using ITI_Project.Api.DTO.Moderation;
 using ITI_Project.Api.ErrorHandling;
 using ITI_Project.Api.Helpers;
 using ITI_Project.Core;
@@ -22,11 +23,13 @@ namespace ITI_Project.Api.Controllers.ModerationControllers
     {
         private readonly IUnitOfWork unitOfWork;
         private readonly UserManager<AppUser> userManager;
+        private readonly IMapper mapper;
 
-        public ReportController(IUnitOfWork unitOfWork, UserManager<AppUser> userManager)
+        public ReportController(IUnitOfWork unitOfWork, UserManager<AppUser> userManager, IMapper mapper)
         {
             this.unitOfWork = unitOfWork;
             this.userManager = userManager;
+            this.mapper = mapper;
         }
 
         [Authorize(Roles = nameof(UserRoleType.Client))]
@@ -146,9 +149,9 @@ namespace ITI_Project.Api.Controllers.ModerationControllers
             var spec = new ReportWithPaginationSpecification(specParams);
             var reports = await unitOfWork.Repository<Report>().GetAllWithSpecAsync(spec) ?? new List<Report>();
 
-            // var data = mapper.Map<List<ReportDTO>>(reports);
+            var data = mapper.Map<List<ReportFromDbDTO>>(reports);
 
-            return Ok(new Pagination<Report>(specParams.PageIndex, specParams.PageSize, count, reports));
+            return Ok(new Pagination<ReportFromDbDTO>(specParams.PageIndex, specParams.PageSize, count, data));
         }
     }
 }

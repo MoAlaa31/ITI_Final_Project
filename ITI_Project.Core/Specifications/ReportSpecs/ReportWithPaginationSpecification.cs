@@ -12,7 +12,8 @@ namespace ITI_Project.Core.Specifications.ReportSpecs
         public ReportWithPaginationSpecification(PaginationSpecParams specParams)
         {
             AddOrderByDescending(r => r.LastUpdate);
-            Includes.Add(r => r.ServiceRequest!);
+            Includes.Add(r => r.Reporter!);
+            Includes.Add(r => r.TargetUser!);
             ApplyPagination((specParams.PageIndex - 1) * specParams.PageSize, specParams.PageSize);
         }
     }

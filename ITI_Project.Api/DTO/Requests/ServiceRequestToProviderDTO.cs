@@ -14,6 +14,8 @@ namespace ITI_Project.Api.DTO.Requests
 
         [Required(ErrorMessage = "Longitude is required.")]
         public double Longitude { get; set; }
+        [Required(ErrorMessage = "Address is required.")]
+        public string? Address { get; set; }
 
         public List<IFormFile>? Images { get; set; }
     }

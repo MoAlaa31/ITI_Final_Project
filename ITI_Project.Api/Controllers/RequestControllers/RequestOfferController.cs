@@ -1,15 +1,21 @@
 ﻿using AutoMapper;
+using ITI_Project.Api.DTO.Moderation;
 using ITI_Project.Api.DTO.Requests;
 using ITI_Project.Api.ErrorHandling;
 using ITI_Project.Api.Helpers;
+using ITI_Project.Api.Hubs;
+using ITI_Project.Api.Hubs.Interfaces;
 using ITI_Project.Core;
 using ITI_Project.Core.Constants;
 using ITI_Project.Core.Enums;
+using ITI_Project.Core.Models.Moderation;
+using ITI_Project.Core.Models.Posts;
 using ITI_Project.Core.Models.Requests;
 using ITI_Project.Core.Models.Users;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.SignalR;
 using System.Security.Claims;
 
 namespace ITI_Project.Api.Controllers.RequestControllers
@@ -18,19 +24,19 @@ namespace ITI_Project.Api.Controllers.RequestControllers
     {
         private readonly IUnitOfWork unitOfWork;
         private readonly IMapper mapper;
+        private readonly IHubContext<NotificationHub, INotification> hub;
         private readonly decimal requiredCredits = 25;
     
-        public RequestOfferController(IUnitOfWork unitOfWork, IMapper mapper)
+        public RequestOfferController(IUnitOfWork unitOfWork, IMapper mapper, IHubContext<NotificationHub, INotification> hub)
         {
             this.unitOfWork = unitOfWork;
             this.mapper = mapper;
+            this.hub = hub;
         }
 
         [Authorize(Roles = nameof(UserRoleType.Provider))]
         [HttpPost("create-offer/{serviceRequestId:int}")]
-        public async Task<ActionResult<RequestOfferProviderDTO>> CreateRequestOffer(
-            int serviceRequestId,
-            [FromBody] RequestOfferFromUserDTO requestOfferFromUser)
+        public async Task<ActionResult<RequestOfferProviderDTO>> CreateRequestOffer(int serviceRequestId, [FromBody] RequestOfferFromUserDTO requestOfferFromUser)
         {
             var providerIdClaim = User.FindFirstValue(Identifiers.ProviderId);
             if (!int.TryParse(providerIdClaim, out int providerId))
@@ -69,6 +75,42 @@ namespace ITI_Project.Api.Controllers.RequestControllers
             try
             {
                 await unitOfWork.Repository<RequestOffer>().AddAsync(requestOffer);
+
+                // Send notification to the request owner
+                var fiveMinutesAgo = DateHelper.GetNowInEgypt().AddMinutes(-5);
+                var recentNotificationExists = await unitOfWork.Repository<Notification>()
+                    .AnyAsync(n =>
+                        n.ClientId == serviceRequest.ClientId &&
+                        n.Type == NotificationType.success &&
+                        n.Title == "تم اضافة عرض لطلبك" &&
+                        n.CreatedAt >= fiveMinutesAgo);
+
+                if (!recentNotificationExists)
+                {
+                    var notification = new Notification
+                    {
+                        Title = "تم اضافة عرض لطلبك",
+                        Message = "تم اضافة عرض لطلبك من احدهم",
+                        Type = NotificationType.success,
+                        CreatedAt = DateHelper.GetNowInEgypt(),
+                        IsRead = false,
+                        ClientId = serviceRequest.ClientId
+                    };
+
+                    await unitOfWork.Repository<Notification>().AddAsync(notification);
+
+                    await hub.Clients.Group($"user-{serviceRequest.ClientId}")
+                        .ReceiveNotification(new NotificationDTO
+                        {
+                            Id = notification.Id,
+                            Title = notification.Title,
+                            Message = notification.Message,
+                            Type = notification.Type,
+                            CreatedAt = notification.CreatedAt,
+                            IsRead = notification.IsRead
+                        });
+                }
+
                 await unitOfWork.CompleteAsync();
             }
             catch
@@ -121,9 +163,7 @@ namespace ITI_Project.Api.Controllers.RequestControllers
 
         [Authorize(Roles = nameof(UserRoleType.Provider))]
         [HttpPut("update-offer/{serviceRequestId:int}")]
-        public async Task<ActionResult<RequestOfferProviderDTO>> UpdateRequestOffer(
-            int serviceRequestId,
-            [FromBody] RequestOfferFromUserDTO requestOfferFromUser)
+        public async Task<ActionResult<RequestOfferProviderDTO>> UpdateRequestOffer(int serviceRequestId, [FromBody] RequestOfferFromUserDTO requestOfferFromUser)
         {
             var providerIdClaim = User.FindFirstValue(Identifiers.ProviderId);
             if (!int.TryParse(providerIdClaim, out int providerId))

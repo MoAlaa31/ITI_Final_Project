@@ -443,7 +443,7 @@ namespace ITI_Project.Api.Controllers.RequestControllers
             // Deduct credits
             provider.Credits -= requiredCredits;
 
-            await unitOfWork.Repository<Notification>().AddAsync(new Notification
+            var notification = new Notification
             {
                 Title = "العرض اكتمل بنجاح",
                 Message = "العرض اكتمل بنجاح و تم خصم 25 نقطة من رصيدك",
@@ -451,7 +451,20 @@ namespace ITI_Project.Api.Controllers.RequestControllers
                 CreatedAt = DateHelper.GetNowInEgypt(),
                 IsRead = false,
                 ClientId = provider.ClientId
-            });
+            };
+
+            await unitOfWork.Repository<Notification>().AddAsync(notification);
+
+            await hub.Clients.Group($"user-{provider.ClientId}")
+                .ReceiveNotification(new NotificationDTO
+                {
+                    Id = notification.Id,
+                    Title = notification.Title,
+                    Message = notification.Message,
+                    Type = notification.Type,
+                    CreatedAt = notification.CreatedAt,
+                    IsRead = notification.IsRead
+                });
 
             await unitOfWork.Repository<CreditTransaction>().AddAsync(new CreditTransaction
             {
@@ -663,6 +676,7 @@ namespace ITI_Project.Api.Controllers.RequestControllers
                 {
                     Latitude = serviceRequestDTO.Latitude,
                     Longitude = serviceRequestDTO.Longitude,
+                    Address = serviceRequestDTO.Address,
                     ServiceRequestId = serviceRequest.Id
                 };
 

@@ -19,13 +19,11 @@ namespace ITI_Project.Api.Controllers.CreditControllers
     public class PaymentController : BaseApiController
     {
         private readonly IUnitOfWork unitOfWork;
-        //private readonly ILogger<PaymentController> logger;
         private readonly StripeSettings stripeSettings;
 
         public PaymentController(IUnitOfWork unitOfWork, IOptions<StripeSettings> options, ILogger<PaymentController> logger)
         {
             this.unitOfWork = unitOfWork;
-            //this.logger = logger;
             stripeSettings = options.Value;
         }
 
@@ -37,9 +35,9 @@ namespace ITI_Project.Api.Controllers.CreditControllers
 
             var priceTable = new Dictionary<int, decimal>
             {
-                { 10, 10m },
-                { 25, 23m },
-                { 50, 40m }
+                { 50, 50m },
+                { 100, 100m },
+                { 200, 200m }
             };
 
             if (!priceTable.TryGetValue(request.Credits, out var price))
@@ -69,9 +67,7 @@ namespace ITI_Project.Api.Controllers.CreditControllers
         [HttpPost("stripe-webhook")]
         public async Task<IActionResult> StripeWebhook()
         {
-            //logger.LogInformation("Webhook received!");
             var json = await new StreamReader(Request.Body).ReadToEndAsync();
-            //logger.LogInformation(json);
             var webhookSecret = stripeSettings.WebhookSecret;
 
             StripeEvent stripeEvent;

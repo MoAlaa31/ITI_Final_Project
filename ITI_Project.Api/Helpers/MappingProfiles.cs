@@ -107,8 +107,8 @@ namespace ITI_Project.Api.Helpers
                             .OrderByDescending(r => r.Count)
                             .Take(3)
                             .ToList()))
-                .ForMember(d => d.IsProvider, o => o.MapFrom(s => s.Client.Provider != null))
-                .ForMember(d => d.ProviderId, o => o.MapFrom(s => s.Client.Provider != null ? s.Client.Provider.Id : (int?)null))
+                .ForMember(d => d.IsProvider, o => o.MapFrom(s => s.Client!.Provider != null))
+                .ForMember(d => d.ProviderId, o => o.MapFrom(s => s.Client!.Provider != null ? s.Client.Provider.Id : (int?)null))
                 .ForMember(d => d.ClientName, o => o.MapFrom(s => s.Client != null ? $"{s.Client.FirstName} {s.Client.LastName}" : string.Empty))
                 .ForMember(d => d.ClientPictureUrl, o => o.MapFrom(s => s.Client != null ? s.Client.PictureUrl : null));
 
@@ -131,8 +131,8 @@ namespace ITI_Project.Api.Helpers
                             .ToList()))
                 .ForMember(d => d.ClientName, o => o.MapFrom(s => s.Client != null ? $"{s.Client.FirstName} {s.Client.LastName}" : string.Empty))
                 .ForMember(d => d.ClientPictureUrl, o => o.MapFrom(s => s.Client != null ? s.Client.PictureUrl : null))
-                .ForMember(d => d.IsProvider, o => o.MapFrom(s => s.Client.Provider != null))
-                .ForMember(d => d.ProviderId, o => o.MapFrom(s => s.Client.Provider != null ? s.Client.Provider.Id : (int?)null));
+                .ForMember(d => d.IsProvider, o => o.MapFrom(s => s.Client!.Provider != null))
+                .ForMember(d => d.ProviderId, o => o.MapFrom(s => s.Client!.Provider != null ? s.Client.Provider.Id : (int?)null));
 
             CreateMap<Comment, CommentCreateResultDTO>();
             CreateMap<PostReaction, PostReactionDTO>();
@@ -149,6 +149,17 @@ namespace ITI_Project.Api.Helpers
                             : string.Empty))
                 .ForMember(d => d.ClientPictureUrl,
                     o => o.MapFrom(s => s.Client != null ? s.Client.PictureUrl : null));
+
+            /****************************************** Mapping for Report ******************************************/
+            CreateMap<Report, ReportFromDbDTO>()
+                .ForMember(d => d.ReporterName, o => o.MapFrom(s =>
+                    s.Reporter != null ? $"{s.Reporter.FirstName} {s.Reporter.LastName}" : string.Empty))
+                .ForMember(d => d.ReporterPictureUrl, o => o.MapFrom(s =>
+                    s.Reporter != null ? s.Reporter.PictureUrl : null))
+                .ForMember(d => d.TargetUserName, o => o.MapFrom(s =>
+                    s.TargetUser != null ? $"{s.TargetUser.FirstName} {s.TargetUser.LastName}" : string.Empty))
+                .ForMember(d => d.TargetUserPictureUrl, o => o.MapFrom(s =>
+                    s.TargetUser != null ? s.TargetUser.PictureUrl : null));
         }
     }
 }

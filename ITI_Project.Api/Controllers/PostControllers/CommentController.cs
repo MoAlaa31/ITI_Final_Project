@@ -1,10 +1,14 @@
 ﻿using AutoMapper;
+using ITI_Project.Api.DTO.Moderation;
 using ITI_Project.Api.DTO.Posts;
 using ITI_Project.Api.ErrorHandling;
 using ITI_Project.Api.Helpers;
+using ITI_Project.Api.Hubs;
+using ITI_Project.Api.Hubs.Interfaces;
 using ITI_Project.Core;
 using ITI_Project.Core.Constants;
 using ITI_Project.Core.Enums;
+using ITI_Project.Core.Models.Moderation;
 using ITI_Project.Core.Models.Posts;
 using ITI_Project.Core.Models.Users;
 using ITI_Project.Core.Specifications;
@@ -12,6 +16,7 @@ using ITI_Project.Core.Specifications.CommentSpecs;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.SignalR;
 using System.Security.Claims;
 
 namespace ITI_Project.Api.Controllers.PostControllers
@@ -20,11 +25,13 @@ namespace ITI_Project.Api.Controllers.PostControllers
     {
         private readonly IUnitOfWork unitOfWork;
         private readonly IMapper mapper;
+        private readonly IHubContext<NotificationHub, INotification> hub;
 
-        public CommentController(IUnitOfWork unitOfWork, IMapper mapper)
+        public CommentController(IUnitOfWork unitOfWork, IMapper mapper, IHubContext<NotificationHub, INotification> hub)
         {
             this.unitOfWork = unitOfWork;
             this.mapper = mapper;
+            this.hub = hub;
         }
 
         [Authorize(Roles = nameof(UserRoleType.Client))]
@@ -39,8 +46,8 @@ namespace ITI_Project.Api.Controllers.PostControllers
             if (!clientExists)
                 return NotFound(new ApiResponse(StatusCodes.Status404NotFound, "Client not found"));
 
-            var postExists = await unitOfWork.Repository<Post>().AnyAsync(p => p.Id == dto.PostId);
-            if (!postExists)
+            var post = await unitOfWork.Repository<Post>().GetByIdAsync(dto.PostId);
+            if (post == null)
                 return NotFound(new ApiResponse(StatusCodes.Status404NotFound, "Post not found"));
 
             var comment = new Comment
@@ -54,6 +61,45 @@ namespace ITI_Project.Api.Controllers.PostControllers
             try
             {
                 await unitOfWork.Repository<Comment>().AddAsync(comment);
+
+                // Send notification to the post owner if the commenter is not the post owner and owner is not null
+                if (post.ClientId != null && post.ClientId != clientId)
+                {
+                    var fiveMinutesAgo = DateHelper.GetNowInEgypt().AddMinutes(-5);
+                    var recentNotificationExists = await unitOfWork.Repository<Notification>()
+                        .AnyAsync(n =>
+                            n.ClientId == post.ClientId.Value &&
+                            n.Type == NotificationType.success &&
+                            n.Title == "تم اضافة تعليق" &&
+                            n.CreatedAt >= fiveMinutesAgo);
+
+                    if (!recentNotificationExists)
+                    {
+                        var notification = new Notification
+                        {
+                            Title = "تم اضافة تعليق",
+                            Message = "تم اضافة تعليق لك من احدهم",
+                            Type = NotificationType.success,
+                            CreatedAt = DateHelper.GetNowInEgypt(),
+                            IsRead = false,
+                            ClientId = post.ClientId.Value
+                        };
+
+                        await unitOfWork.Repository<Notification>().AddAsync(notification);
+
+                        await hub.Clients.Group($"user-{post.ClientId.Value}")
+                            .ReceiveNotification(new NotificationDTO
+                            {
+                                Id = notification.Id,
+                                Title = notification.Title,
+                                Message = notification.Message,
+                                Type = notification.Type,
+                                CreatedAt = notification.CreatedAt,
+                                IsRead = notification.IsRead
+                            });
+                    }
+                }
+
                 await unitOfWork.CompleteAsync();
 
                 var result = mapper.Map<CommentCreateResultDTO>(comment);
