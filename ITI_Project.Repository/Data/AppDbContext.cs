@@ -1,4 +1,5 @@
-﻿using ITI_Project.Core.Models.Location;
+﻿using ITI_Project.Core.Models.Credit;
+using ITI_Project.Core.Models.Location;
 using ITI_Project.Core.Models.Moderation;
 using ITI_Project.Core.Models.Posts;
 using ITI_Project.Core.Models.Requests;
@@ -19,6 +20,9 @@ namespace ITI_Project.Repository.Data
 
         }
 
+        // Credit
+        public DbSet<CreditTransaction> CreditTransactions { get; set; }
+        public DbSet<Payment> Payments{ get; set; }
         // Persons
         public DbSet<Client> Clients { get; set; }
         public DbSet<Provider> Providers { get; set; }
@@ -166,11 +170,11 @@ namespace ITI_Project.Repository.Data
                 .HasForeignKey(r => r.ClientId)
                 .OnDelete(DeleteBehavior.Restrict);
 
-            /* --------------------- User Models -----------------  */
-            modelBuilder.Entity<Provider>(entity =>
-            {
-                entity.Property(e => e.Credits).HasColumnType("decimal(18,4)");
-            });
+            /* --------------------- Reviews & Reports Models -----------------  */
+
+            modelBuilder.Entity<Payment>()
+                .Property(p => p.Amount)
+                .HasPrecision(10, 2);
 
             base.OnModelCreating(modelBuilder);
         }

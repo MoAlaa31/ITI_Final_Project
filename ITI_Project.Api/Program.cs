@@ -26,6 +26,7 @@ namespace ITI_Project.Api
 
             var builder = WebApplication.CreateBuilder(args);
 
+            // Load environment variables from .env file in development environment
             if (builder.Environment.IsDevelopment())
             {
                 var envPath = Path.Combine(Directory.GetCurrentDirectory(), ".env");
@@ -88,7 +89,7 @@ namespace ITI_Project.Api
             //});
             #endregion
             /****************************** Add Application Services ********************************/
-            builder.Services.AddApplicationServices();
+            builder.Services.AddApplicationServices(builder.Configuration);
 
             builder.Services.AddIdentityServices(builder.Configuration);
 
@@ -128,7 +129,16 @@ namespace ITI_Project.Api
             #region Configure kestrel Middlewares
             //Middlewares of Exception Handling 
             app.UseMiddleware<ExceptionMiddleware>();
+            //stripe webhook middleware to enable buffering
+            app.Use(async (context, next) =>
+            {
+                if (context.Request.Path.StartsWithSegments("/api/payment/stripe-webhook"))
+                {
+                    context.Request.EnableBuffering();
+                }
 
+                await next();
+            });
             // Not found Endpoint
             app.UseStatusCodePagesWithReExecute("/errors/{0}");
 

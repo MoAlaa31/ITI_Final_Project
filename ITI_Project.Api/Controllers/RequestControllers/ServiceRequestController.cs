@@ -9,6 +9,7 @@ using ITI_Project.Core;
 using ITI_Project.Core.Constants;
 using ITI_Project.Core.Enums;
 using ITI_Project.Core.IServices;
+using ITI_Project.Core.Models.Credit;
 using ITI_Project.Core.Models.Location;
 using ITI_Project.Core.Models.Moderation;
 using ITI_Project.Core.Models.Requests;
@@ -30,7 +31,7 @@ namespace ITI_Project.Api.Controllers.RequestControllers
         private readonly IMapper mapper;
         private readonly IFileStorageService fileStorageService;
         private readonly IHubContext<NotificationHub, INotification> hub;
-        private readonly decimal requiredCredits = 25;
+        private readonly int requiredCredits = 25;
         public ServiceRequestController(IUnitOfWork unitOfWork, IMapper mapper, IFileStorageService fileStorageService, IHubContext<NotificationHub, INotification> hub)
         {
             this.unitOfWork = unitOfWork;
@@ -316,8 +317,8 @@ namespace ITI_Project.Api.Controllers.RequestControllers
             // Notify the provider about the new assigned request
             var notification = new Notification
             {
-                Title = "New Request",
-                Message = "Your offer has been Accepted",
+                Title = "عرض جديد",
+                Message = "تم قبول عرضك",
                 Type = NotificationType.success,
                 CreatedAt = DateHelper.GetNowInEgypt(),
                 IsRead = false,
@@ -376,20 +377,20 @@ namespace ITI_Project.Api.Controllers.RequestControllers
             if (isAccepted)
             {
                 serviceRequest.RequestStatus = RequestStatus.InProgress;
-                message = "Your service request has been Accepted";
+                message = "تم قبول عرضك";
                 notificationType = NotificationType.success;
             }
             else
             {
                 serviceRequest.RequestStatus = RequestStatus.Cancelled;
-                message = "Your service request has been Cancelled";
+                message = "رفض عرضك";
                 notificationType = NotificationType.warning;
             }
 
             // Notify the client about his request
             var notification = new Notification
             {
-                Title = "Your Direct Request",
+                Title = "عرضك المقدم",
                 Message = message,
                 Type = notificationType,
                 CreatedAt = DateHelper.GetNowInEgypt(),
@@ -441,6 +442,26 @@ namespace ITI_Project.Api.Controllers.RequestControllers
 
             // Deduct credits
             provider.Credits -= requiredCredits;
+
+            await unitOfWork.Repository<Notification>().AddAsync(new Notification
+            {
+                Title = "العرض اكتمل بنجاح",
+                Message = "العرض اكتمل بنجاح و تم خصم 25 نقطة من رصيدك",
+                Type = NotificationType.success,
+                CreatedAt = DateHelper.GetNowInEgypt(),
+                IsRead = false,
+                ClientId = provider.ClientId
+            });
+
+            await unitOfWork.Repository<CreditTransaction>().AddAsync(new CreditTransaction
+            {
+                ProviderId = provider.Id,
+                Amount = -requiredCredits,
+                Type = TransactionType.JobCompleted,
+                ReferenceId = serviceRequest.Id.ToString(),
+                CreatedAt = DateTime.UtcNow
+            });
+
             unitOfWork.Repository<Provider>().Update(provider);
             await unitOfWork.CompleteAsync();
 
@@ -483,8 +504,8 @@ namespace ITI_Project.Api.Controllers.RequestControllers
                     // Notify the provider about the deleted request
                     var notification = new Notification
                     {
-                        Title = "Request Canceled",
-                        Message = "A service request assigned to you has been cancelled by the client.",
+                        Title = "رفض العرض",
+                        Message = "عرض لك تم الغائه من العميل",
                         Type = NotificationType.warning,
                         CreatedAt = DateHelper.GetNowInEgypt(),
                         IsRead = false,
@@ -553,8 +574,8 @@ namespace ITI_Project.Api.Controllers.RequestControllers
                         // Notify the provider about the deleted request
                         var notification = new Notification
                         {
-                            Title = "Request Canceled",
-                            Message = "A service request assigned to you has been cancelled by the client.",
+                            Title = "رفض العرض",
+                            Message = "عرض لك تم الغائه من العميل",
                             Type = NotificationType.warning,
                             CreatedAt = DateHelper.GetNowInEgypt(),
                             IsRead = false,
@@ -664,8 +685,8 @@ namespace ITI_Project.Api.Controllers.RequestControllers
                 // Notify the provider about the new assigned request
                 var notification = new Notification
                 {
-                    Title = "New Request",
-                    Message = "You have a new service request",
+                    Title = "عرض جديد",
+                    Message = "لديك عرض جديد",
                     Type = NotificationType.info,
                     CreatedAt = DateHelper.GetNowInEgypt(),
                     IsRead = false,

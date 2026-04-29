@@ -8,6 +8,7 @@ using ITI_Project.Core.IServices;
 using ITI_Project.Core.Models.Identity;
 using ITI_Project.Core.Models.Location;
 using ITI_Project.Core.Models.Moderation;
+using ITI_Project.Core.Models.Posts;
 using ITI_Project.Core.Models.Requests;
 using ITI_Project.Core.Models.Users;
 using ITI_Project.Services.Token;
@@ -326,6 +327,44 @@ namespace ITI_Project.Api.Controllers
                     }
                 }
 
+                //delete posts
+                var posts = await unitOfWork.Repository<Post>()
+                    .GetManyByConditionAsync(p => p.ClientId == client.Id) ?? new List<Post>();
+
+                foreach (var post in posts)
+                {
+                    post.ClientId = null;
+                }
+
+                //delete comments
+                var comments = await unitOfWork.Repository<Comment>()
+                    .GetManyByConditionAsync(c => c.ClientId == client.Id) ?? new List<Comment>();
+
+                foreach (var comment in comments)
+                {
+                    comment.ClientId = null;
+                }
+
+                //delete post reactions
+                var postReactions = await unitOfWork.Repository<PostReaction>()
+                    .GetManyByConditionAsync(r => r.ClientId == client.Id) ?? new List<PostReaction>();
+
+                foreach (var reaction in postReactions)
+                {
+                    unitOfWork.Repository<PostReaction>().Delete(reaction);
+                }
+
+                //delete comment reactions
+                var commentReactions = await unitOfWork.Repository<CommentReaction>()
+                    .GetManyByConditionAsync(r => r.ClientId == client.Id) ?? new List<CommentReaction>();
+
+                foreach (var reaction in commentReactions)
+                {
+                    unitOfWork.Repository<CommentReaction>().Delete(reaction);
+                }
+
+                var filesToDelete = new List<string>();
+
                 // Cancel provider requests (if provider exists)
                 if (provider != null)
                 {
@@ -355,7 +394,7 @@ namespace ITI_Project.Api.Controllers
                     foreach (var doc in documents)
                     {
                         if (!string.IsNullOrWhiteSpace(doc.DocumentUrl))
-                            fileStorageService.DeleteFile(doc.DocumentUrl);
+                            filesToDelete.Add(doc.DocumentUrl);
 
                         unitOfWork.Repository<ProviderDocument>().Delete(doc);
                     }
@@ -379,6 +418,11 @@ namespace ITI_Project.Api.Controllers
                 }
 
                 await unitOfWork.CommitAsync();
+
+                foreach (var file in filesToDelete)
+                {
+                    fileStorageService.DeleteFile(file);
+                }
 
                 // 4. Revoke tokens
                 var refreshToken = Request.Cookies["refreshToken"];

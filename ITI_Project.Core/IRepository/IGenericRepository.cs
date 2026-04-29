@@ -23,6 +23,7 @@ namespace ITI_Project.Core.IRepository
         Task<T?> GetByIdAsync(int id);
         Task<T?> GetAsync(int id);
         Task<Client?> GetByAppUserIdAsync(string id);
+        Task<Client?> GetByAppUserIdWithIncludesAsync(string appUserId, params Expression<Func<Client, object>>[] includes);
         Task<T?> GetWithNameAsync(string name);
         Task<IReadOnlyList<T>> GetAllAsync();
         Task<int> GetCountAsync(ISpecifications<T> spec);

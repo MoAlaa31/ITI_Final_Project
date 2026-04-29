@@ -1,4 +1,5 @@
-﻿using ITI_Project.Api.DTO.Moderation;
+﻿using AutoMapper;
+using ITI_Project.Api.DTO.Moderation;
 using ITI_Project.Api.ErrorHandling;
 using ITI_Project.Api.Helpers;
 using ITI_Project.Api.Hubs;
@@ -21,11 +22,13 @@ namespace ITI_Project.Api.Controllers.ModerationControllers
     {
         private readonly IUnitOfWork unitOfWork;
         private readonly IHubContext<NotificationHub, INotification> hub;
+        private readonly IMapper mapper;
 
-        public ReviewController(IUnitOfWork unitOfWork, IHubContext<NotificationHub, INotification> hub)
+        public ReviewController(IUnitOfWork unitOfWork, IHubContext<NotificationHub, INotification> hub, IMapper mapper)
         {
             this.unitOfWork = unitOfWork;
             this.hub = hub;
+            this.mapper = mapper;
         }
 
         [Authorize(Roles = nameof(UserRoleType.Client))]
@@ -72,8 +75,8 @@ namespace ITI_Project.Api.Controllers.ModerationControllers
                 // Notify the provider about the review
                 var notification = new Notification
                 {
-                    Title = "New Review",
-                    Message = "Some client added a new Review to your profile",
+                    Title = "تقييم جديد",
+                    Message = "تم اضافة تقييم جديد لك",
                     Type = NotificationType.info,
                     CreatedAt = DateHelper.GetNowInEgypt(),
                     IsRead = false,
@@ -114,16 +117,7 @@ namespace ITI_Project.Api.Controllers.ModerationControllers
             var reviews = await unitOfWork.Repository<Review>()
                 .GetManyByConditionAsync(r => r.ProviderId == providerId, r => r.Client) ?? new List<Review>();
 
-            var dto = reviews.Select(r => new ReviewDto
-            {
-                Id = r.Id,
-                Rating = r.Rating,
-                Message = r.Message,
-                ClientName = r.Client != null ? $"{r.Client.FirstName} {r.Client.LastName}".Trim() : string.Empty,
-                ClientPictureUrl = r.Client?.PictureUrl,
-                ServiceRequestId = r.ServiceRequestId,
-                CreatedAt = r.CreatedAt
-            }).ToList();
+            var dto = mapper.Map<IReadOnlyList<ReviewDto>>(reviews);
 
             return Ok(dto);
         }
@@ -143,15 +137,7 @@ namespace ITI_Project.Api.Controllers.ModerationControllers
             var reviews = await unitOfWork.Repository<Review>()
                 .GetManyByConditionAsync(r => r.ProviderId == providerId, r => r.Client) ?? new List<Review>();
 
-            var dto = reviews.Select(r => new ReviewDto
-            {
-                Id = r.Id,
-                Rating = r.Rating,
-                Message = r.Message,
-                ClientName = r.Client != null ? $"{r.Client.FirstName} {r.Client.LastName}".Trim() : string.Empty,
-                ClientPictureUrl = r.Client?.PictureUrl,
-                ServiceRequestId = r.ServiceRequestId
-            }).ToList();
+            var dto = mapper.Map<IReadOnlyList<ReviewDto>>(reviews);
 
             return Ok(dto);
         }

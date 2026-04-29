@@ -21,7 +21,7 @@ namespace ITI_Project.Core.Models.Users
         public double? Rating { get; set; }
         public double RatingSum { get; set; }
         public int ReviewsCount { get; set; }
-        public decimal Credits { get; set; } = 0;
+        public int Credits { get; set; } = 0;
         public int JobsCount { get; set; }
         [StringLength(25, ErrorMessage = "Nickname cannot be longer than 25 characters.")]
         [MaxLength(25)]

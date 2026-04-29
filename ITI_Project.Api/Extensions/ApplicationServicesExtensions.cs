@@ -12,7 +12,7 @@ namespace ITI_Project.Api.Extensions
 {
     public static class ApplicationServicesExtensions
     {
-        public static IServiceCollection AddApplicationServices(this IServiceCollection services)
+        public static IServiceCollection AddApplicationServices(this IServiceCollection services, IConfiguration configuration)
         {
             services.AddLogging(config =>
             {
@@ -26,6 +26,18 @@ namespace ITI_Project.Api.Extensions
 
             services.AddScoped(typeof(ExistingIdFilter<>));
             services.AddAutoMapper(cfg => cfg.AddProfile<MappingProfiles>());
+
+            // Bind settings
+            services.Configure<StripeSettings>(
+                configuration.GetSection("Stripe")
+            );
+
+            // Set Stripe API key
+            var stripeSettings = configuration
+                .GetSection("Stripe")
+                .Get<StripeSettings>();
+
+            Stripe.StripeConfiguration.ApiKey = stripeSettings!.SecretKey;
 
             services.Configure<ApiBehaviorOptions>(options =>
             {

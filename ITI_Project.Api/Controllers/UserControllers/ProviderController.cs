@@ -350,7 +350,7 @@ namespace ITI_Project.Api.Controllers.UserControllers
         [HttpPost("add-credits")]
         public async Task<ActionResult> AddCredits([FromBody] AddCreditsDTO dto)
         {
-            if (dto.Amount <= 0)
+            if (dto.Credits <= 0)
                 return BadRequest(new ApiResponse(StatusCodes.Status400BadRequest, "Amount must be greater than zero."));
 
             var providerIdClaim = User.FindFirstValue(Identifiers.ProviderId);
@@ -361,7 +361,7 @@ namespace ITI_Project.Api.Controllers.UserControllers
             if (provider == null)
                 return NotFound(new ApiResponse(StatusCodes.Status404NotFound, "Provider not found"));
 
-            provider.Credits += dto.Amount;
+            provider.Credits += dto.Credits;
             unitOfWork.Repository<Provider>().Update(provider);
             await unitOfWork.CompleteAsync();
 

@@ -157,5 +157,14 @@ namespace ITI_Project.Repository
         {
             return (IReadOnlyList<T>?)await ApplyQuery(specs).ToListAsync();
         }
+
+        public async Task<Client?> GetByAppUserIdWithIncludesAsync(string appUserId, params Expression<Func<Client, object>>[] includes)
+        {
+            IQueryable<Client> query = dbContext.Set<Client>();
+            foreach (var include in includes)
+                query = query.Include(include);
+
+            return await query.FirstOrDefaultAsync(c => c.AppUserId == appUserId);
+        }
     }
 }

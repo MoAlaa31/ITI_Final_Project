@@ -139,6 +139,16 @@ namespace ITI_Project.Api.Helpers
 
             /****************************************** Mapping for Comments ******************************************/
             CreateMap<Notification, NotificationDTO>();
+
+            /****************************************** Mapping for Reviews ******************************************/
+            CreateMap<Review, ReviewDto>()
+                .ForMember(d => d.ClientName,
+                    o => o.MapFrom(s =>
+                        s.Client != null
+                            ? (s.Client.FirstName + " " + s.Client.LastName).Trim()
+                            : string.Empty))
+                .ForMember(d => d.ClientPictureUrl,
+                    o => o.MapFrom(s => s.Client != null ? s.Client.PictureUrl : null));
         }
     }
 }
