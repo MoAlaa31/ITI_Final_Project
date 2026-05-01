@@ -44,5 +44,6 @@ namespace ITI_Project.Core.Models.Requests
         public Service? Service { get; set; }
 
         public ICollection<ServiceRequestImage>? ServiceRequestImages { get; set; }
+        public ICollection<Report>? Reports { get; set; }
     }
 }

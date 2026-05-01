@@ -1,4 +1,6 @@
-﻿namespace ITI_Project.Api.DTO.Moderation
+﻿using ITI_Project.Core.Enums;
+
+namespace ITI_Project.Api.DTO.Moderation
 {
     public class ReportFromDbDTO
     {
@@ -7,6 +9,7 @@
         public int ReporterId { get; set; }
         public string ReporterName { get; set; } = string.Empty;
         public string? ReporterPictureUrl { get; set; }
+        public ReportType ReportType { get; set; }
         public int TargetUserId { get; set; }
         public DateTime LastUpdate { get; set; }
         public int ServiceRequestId { get; set; }

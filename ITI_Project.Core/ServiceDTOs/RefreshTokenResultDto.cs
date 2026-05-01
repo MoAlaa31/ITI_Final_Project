@@ -8,12 +8,12 @@ namespace ITI_Project.Core.ServiceDTOs
     {
         public bool IsAuthenticated { get; set; }
 
-        public string AccessToken { get; set; }
+        public string AccessToken { get; set; } = null!;
 
-        public string RefreshToken { get; set; }
+        public string RefreshToken { get; set; } = null!;
 
         public DateTime RefreshTokenExpiration { get; set; }
 
-        public string Message { get; set; }
+        public string Message { get; set; } = null!;
     }
 }

@@ -1,10 +1,12 @@
 ﻿using AutoMapper;
+using ITI_Project.Api.DTO.Credit;
 using ITI_Project.Api.DTO.Location;
 using ITI_Project.Api.DTO.Moderation;
 using ITI_Project.Api.DTO.Posts;
 using ITI_Project.Api.DTO.Requests;
 using ITI_Project.Api.DTO.Services;
 using ITI_Project.Api.DTO.Users;
+using ITI_Project.Core.Models.Credit;
 using ITI_Project.Core.Models.Location;
 using ITI_Project.Core.Models.Moderation;
 using ITI_Project.Core.Models.Posts;
@@ -59,6 +61,11 @@ namespace ITI_Project.Api.Helpers
                         : new List<string>()));
 
             CreateMap<ServiceRequest, ServiceRequestByIdDTO>()
+                .IncludeBase<ServiceRequest, ServiceRequestDTO>();
+
+            CreateMap<ServiceRequest, ServiceRequestToClientDTO>()
+                .ForMember(d => d.IsReported,
+                    o => o.MapFrom(s => s.Reports != null && s.Reports.Any()))
                 .IncludeBase<ServiceRequest, ServiceRequestDTO>();
 
             CreateMap<ServiceRequest, ServiceRequestProviderDTO>()
@@ -160,6 +167,21 @@ namespace ITI_Project.Api.Helpers
                     s.TargetUser != null ? $"{s.TargetUser.FirstName} {s.TargetUser.LastName}" : string.Empty))
                 .ForMember(d => d.TargetUserPictureUrl, o => o.MapFrom(s =>
                     s.TargetUser != null ? s.TargetUser.PictureUrl : null));
+
+            CreateMap<Provider, BannedProvidersDTO>()
+                .ForMember(d => d.Name, o => o.MapFrom(s =>
+                    s.Client != null
+                        ? $"{s.Client.FirstName} {s.Client.LastName}".Trim()
+                        : string.Empty))
+                .ForMember(d => d.PictureUrl, o => o.MapFrom(s => s.Client != null ? s.Client.PictureUrl : null))
+                .ForMember(d => d.ProviderId, o => o.MapFrom(s => s.Id))
+                .ForMember(d => d.StartedAt, o => o.MapFrom(s => s.StartedAt));
+
+            /****************************************** Mapping for Payments ******************************************/
+            CreateMap<Payment, PaymentDTO>();
+
+            /****************************************** Mapping for Credit Transactions ******************************************/
+            CreateMap<CreditTransaction, CreditTransactionDTO>();
         }
     }
 }

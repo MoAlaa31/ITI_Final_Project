@@ -16,9 +16,6 @@ namespace ITI_Project.Api.DTO.Requests
         [Required(ErrorMessage = "Longitude is required.")]
         public double Longitude { get; set; }
 
-        [Required(ErrorMessage = "Address is Required")]
-        public string? Address { get; set; }
-
         [Required(ErrorMessage = "ServiceId is required.")]
         public int ServiceId { get; set; }
 

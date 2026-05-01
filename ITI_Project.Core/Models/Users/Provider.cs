@@ -26,7 +26,7 @@ namespace ITI_Project.Core.Models.Users
         [StringLength(25, ErrorMessage = "Nickname cannot be longer than 25 characters.")]
         [MaxLength(25)]
         public string? Nickname { get; set; }
-        public DateOnly StartedAt { get; set; }
+        public DateTime StartedAt { get; set; }
         public VerificationStatus VerificationStatus { get; set; }
 
         // Relationships

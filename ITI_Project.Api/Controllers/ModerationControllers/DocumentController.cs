@@ -120,7 +120,9 @@ namespace ITI_Project.Api.Controllers.ModerationControllers
                 ProviderId = provider.Id,
                 DocumentType = uploadDTO.DocumentType,
                 DocumentUrl = uploadResult.FilePath!,
-                IsApproved = null
+                IsApproved = null,
+                IsAiProcessing = false,
+                IsAiReviewed = false
             };
 
             try
@@ -221,6 +223,8 @@ namespace ITI_Project.Api.Controllers.ModerationControllers
 
             document.DocumentUrl = uploadResult.FilePath!;
             document.IsApproved = null;
+            document.IsAiProcessing = false;
+            document.IsAiReviewed = false;
 
             try
             {

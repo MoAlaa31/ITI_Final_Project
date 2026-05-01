@@ -67,7 +67,7 @@ namespace ITI_Project.Api.Controllers.UserControllers
             var provider = new Provider
             {
                 ClientId = clientId,
-                StartedAt = DateHelper.GetTodayInEgypt(),
+                StartedAt = DateHelper.GetNowInEgypt(),
                 VerificationStatus = VerificationStatus.Pending,
                 Isverified = false,
                 Rating = null,

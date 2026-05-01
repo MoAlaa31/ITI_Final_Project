@@ -12,6 +12,7 @@ namespace ITI_Project.Api.DTO.Users
         public string? Nickname { get; set; }
         public double? Rating { get; set; }
         public int ReviewsCount { get; set; }
+        public DateTime StartedAt { get; set; }
         public int JobsCount { get; set; }
         public int? GovernorateId { get; set; }
         public int? RegionId { get; set; }

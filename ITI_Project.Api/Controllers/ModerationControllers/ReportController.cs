@@ -1,5 +1,6 @@
 ﻿using AutoMapper;
 using ITI_Project.Api.DTO.Moderation;
+using ITI_Project.Api.DTO.Users;
 using ITI_Project.Api.ErrorHandling;
 using ITI_Project.Api.Helpers;
 using ITI_Project.Core;
@@ -118,6 +119,7 @@ namespace ITI_Project.Api.Controllers.ModerationControllers
                     if (provider != null)
                     {
                         provider.VerificationStatus = VerificationStatus.Suspended;
+                        provider.StartedAt = DateHelper.GetNowInEgypt();
 
                         unitOfWork.Repository<Provider>().Update(provider);
 
@@ -138,13 +140,13 @@ namespace ITI_Project.Api.Controllers.ModerationControllers
 
         [Authorize(Roles = nameof(UserRoleType.Admin))]
         [HttpGet("all-reports")]
-        public async Task<IActionResult> GetAllReports([FromQuery] PaginationSpecParams specParams)
+        public async Task<IActionResult> GetAllReports([FromQuery] ReportSpecParams specParams)
         {
             // Set a maximum page size to prevent excessive data retrieval
             specParams.SetMaxPageSize(15);
 
-            var count = await unitOfWork.Repository<Report>()
-                .GetCountAsync(new BaseSpecifications<Report>());
+            var countSpec = new ReportCountSpecification(specParams);
+            var count = await unitOfWork.Repository<Report>().GetCountAsync(countSpec);
 
             var spec = new ReportWithPaginationSpecification(specParams);
             var reports = await unitOfWork.Repository<Report>().GetAllWithSpecAsync(spec) ?? new List<Report>();
@@ -152,6 +154,58 @@ namespace ITI_Project.Api.Controllers.ModerationControllers
             var data = mapper.Map<List<ReportFromDbDTO>>(reports);
 
             return Ok(new Pagination<ReportFromDbDTO>(specParams.PageIndex, specParams.PageSize, count, data));
+        }
+
+        [Authorize(Roles = nameof(UserRoleType.Admin))]
+        [HttpPut("reinstate-provider/{providerId:int}")]
+        public async Task<IActionResult> ReinstateProvider(int providerId)
+        {
+            // 1. Get provider with client
+            var provider = await unitOfWork.Repository<Provider>()
+                .GetByIdWithIncludesAsync(providerId, p => p.Client);
+
+            if (provider == null)
+                return NotFound(new ApiResponse(StatusCodes.Status404NotFound, "Provider not found"));
+
+            if (provider.VerificationStatus != VerificationStatus.Suspended)
+                return BadRequest(new ApiResponse(StatusCodes.Status400BadRequest, "Provider is not suspended"));
+
+            // 2. Update provider status
+            provider.VerificationStatus = VerificationStatus.Approved;
+            unitOfWork.Repository<Provider>().Update(provider);
+
+            // 3. Restore Provider role if needed
+            var appUser = await userManager.FindByIdAsync(provider.Client.AppUserId);
+            if (appUser != null)
+            {
+                var roles = await userManager.GetRolesAsync(appUser);
+                if (!roles.Contains(nameof(UserRoleType.Provider)))
+                {
+                    await userManager.AddToRoleAsync(appUser, nameof(UserRoleType.Provider));
+                }
+            }
+
+            await unitOfWork.CompleteAsync();
+
+            return Ok(new ApiResponse(StatusCodes.Status200OK, "Provider reinstated successfully"));
+        }
+
+        [Authorize(Roles = nameof(UserRoleType.Admin))]
+        [HttpGet("banned-providers-expired")]
+        public async Task<IActionResult> GetBannedProvidersExpired()
+        {
+            //var fiveMinutesAgo = DateHelper.GetNowInEgypt().AddMinutes(-5);
+
+            var providers = await unitOfWork.Repository<Provider>()
+                .GetManyByConditionAsync(
+                    p => p.VerificationStatus == VerificationStatus.Suspended,
+                         //&& p.StartedAt <= fiveMinutesAgo,
+                    p => p.Client
+                ) ?? new List<Provider>();
+
+             var data = mapper.Map<List<BannedProvidersDTO>>(providers);
+
+            return Ok(data);
         }
     }
 }

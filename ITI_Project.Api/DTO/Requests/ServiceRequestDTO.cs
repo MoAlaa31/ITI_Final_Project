@@ -1,6 +1,5 @@
 using ITI_Project.Api.DTO.Location;
 using ITI_Project.Core.Enums;
-using ITI_Project.Core.Models.Location;
 
 namespace ITI_Project.Api.DTO.Requests
 {

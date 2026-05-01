@@ -17,6 +17,7 @@ using ITI_Project.Core.Models.Services;
 using ITI_Project.Core.Models.Users;
 using ITI_Project.Core.Specifications.ServiceRequestSpecs;
 using ITI_Project.Repository.Data.Migrations;
+using ITI_Project.Services.Location;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
@@ -31,13 +32,19 @@ namespace ITI_Project.Api.Controllers.RequestControllers
         private readonly IMapper mapper;
         private readonly IFileStorageService fileStorageService;
         private readonly IHubContext<NotificationHub, INotification> hub;
+        private readonly ILocationService locationService;
         private readonly int requiredCredits = 25;
-        public ServiceRequestController(IUnitOfWork unitOfWork, IMapper mapper, IFileStorageService fileStorageService, IHubContext<NotificationHub, INotification> hub)
+        public ServiceRequestController(
+            IUnitOfWork unitOfWork, IMapper mapper, 
+            IFileStorageService fileStorageService, 
+            IHubContext<NotificationHub, INotification> hub,
+            ILocationService locationService)
         {
             this.unitOfWork = unitOfWork;
             this.mapper = mapper;
             this.fileStorageService = fileStorageService;
             this.hub = hub;
+            this.locationService = locationService;
         }
 
         [Authorize(Roles = nameof(UserRoleType.Client))]
@@ -89,7 +96,9 @@ namespace ITI_Project.Api.Controllers.RequestControllers
                 {
                     Latitude = serviceRequestDTO.Latitude,
                     Longitude = serviceRequestDTO.Longitude,
-                    Address = serviceRequestDTO.Address,
+                    Address = await locationService.ReverseGeocodeAsync(
+                        serviceRequestDTO.Latitude,
+                        serviceRequestDTO.Longitude),
                     ServiceRequestId = serviceRequest.Id
                 };
 
@@ -119,47 +128,69 @@ namespace ITI_Project.Api.Controllers.RequestControllers
             }
 
             var dto = mapper.Map<ServiceRequestDTO>(serviceRequest);
-            return CreatedAtAction(nameof(GetServiceRequestById), new { id = serviceRequest.Id }, dto);
+            return CreatedAtAction(nameof(GetServiceRequestByIdForClient), new { id = serviceRequest.Id }, dto);
         }
 
-        [Authorize(Roles = $"{nameof(UserRoleType.Admin)}, {nameof(UserRoleType.Client)}")]
+        [Authorize(Roles = nameof(UserRoleType.Client))]
         [HttpGet("get-request-byid/{id:int}")]
-        public async Task<ActionResult<ServiceRequestByIdDTO>> GetServiceRequestById(int id)
+        public async Task<ActionResult<ServiceRequestByIdDTO>> GetServiceRequestByIdForClient(int id)
         {
-            int clientId = 0;
-            bool adminCheck;
-            if (User.IsInRole(nameof(UserRoleType.Admin)))
-            {
-                adminCheck = true;
-            }
-            else
-            {
-                var clientIdClaim = User.FindFirstValue(Identifiers.ClientId);
-                if (!int.TryParse(clientIdClaim, out clientId))
-                    return Unauthorized(new ApiResponse(StatusCodes.Status401Unauthorized, "ClientId claim is missing or invalid"));
-                adminCheck = false;
-            }
+            var clientIdClaim = User.FindFirstValue(Identifiers.ClientId);
+            if (!int.TryParse(clientIdClaim, out var clientId))
+                return Unauthorized(new ApiResponse(StatusCodes.Status401Unauthorized, "ClientId claim is missing or invalid"));
 
             var serviceRequest = await unitOfWork.Repository<ServiceRequest>()
                 .GetByIdWithIncludesAsync(
                     id,
                     sr => sr.ServiceRequestLocation!,
-                    sr => sr.ServiceRequestImages!
-                );
+                    sr => sr.ServiceRequestImages!);
 
             if (serviceRequest is null)
                 return NotFound(new ApiResponse(StatusCodes.Status404NotFound, "Service request not found"));
 
-            if (!adminCheck && serviceRequest?.ClientId != clientId)
+            if (serviceRequest.ClientId != clientId)
                 return Forbid();
 
             var dto = mapper.Map<ServiceRequestByIdDTO>(serviceRequest);
+
             var review = await unitOfWork.Repository<Review>()
                 .GetByConditionAsync(r => r.ServiceRequestId == id);
 
             dto.IsReviewed = review != null;
             dto.ReviewId = review?.Id;
 
+            return Ok(dto);
+        }
+
+        [Authorize(Roles = $"{nameof(UserRoleType.Admin)}, {nameof(UserRoleType.Provider)}")]
+        [HttpGet("get-request-byid-general/{id:int}")]
+        public async Task<ActionResult<ServiceRequestDTO>> GetServiceRequestByIdGeneral(int id)
+        {
+            int? providerId = null;
+
+            if (User.IsInRole(nameof(UserRoleType.Provider)))
+            {
+                var providerIdClaim = User.FindFirstValue(Identifiers.ProviderId);
+                if (!int.TryParse(providerIdClaim, out var parsedProviderId))
+                    return Unauthorized(new ApiResponse(StatusCodes.Status401Unauthorized, "ProviderId claim is missing or invalid"));
+
+                providerId = parsedProviderId;
+            }
+
+            var serviceRequest = await unitOfWork.Repository<ServiceRequest>()
+                .GetByIdWithIncludesAsync(
+                    id,
+                    sr => sr.ServiceRequestLocation!,
+                    sr => sr.ServiceRequestImages!);
+
+            if (serviceRequest is null)
+                return NotFound(new ApiResponse(StatusCodes.Status404NotFound, "Service request not found"));
+
+            // Provider can only view assigned requests
+            if (providerId.HasValue && serviceRequest.ProviderId != providerId.Value)
+                return Forbid();
+
+            var dto = mapper.Map<ServiceRequestDTO>(serviceRequest);
             return Ok(dto);
         }
 
@@ -172,7 +203,11 @@ namespace ITI_Project.Api.Controllers.RequestControllers
                 return Unauthorized(new ApiResponse(StatusCodes.Status401Unauthorized, "ClientId claim is missing or invalid"));
 
             var serviceRequests = await unitOfWork.Repository<ServiceRequest>()
-                .GetManyByConditionAsync(sr => sr.ClientId == clientId, sr => sr.ServiceRequestLocation!, sr => sr.ServiceRequestImages!);
+                .GetManyByConditionAsync(
+                    sr => sr.ClientId == clientId,
+                    sr => sr.ServiceRequestLocation!,
+                    sr => sr.ServiceRequestImages!,
+                    sr => sr.Reports!);
 
             if (serviceRequests is null || serviceRequests.Count == 0)
                 return Ok(new List<ServiceRequestDTO>());
@@ -181,7 +216,8 @@ namespace ITI_Project.Api.Controllers.RequestControllers
                 .OrderByDescending(sr => sr.CreatedAt)
                 .ToList();
 
-            var dto = mapper.Map<IReadOnlyList<ServiceRequestDTO>>(serviceRequests);
+            var dto = mapper.Map<List<ServiceRequestDTO>>(serviceRequests);
+
             return Ok(dto);
         }
 
@@ -676,7 +712,9 @@ namespace ITI_Project.Api.Controllers.RequestControllers
                 {
                     Latitude = serviceRequestDTO.Latitude,
                     Longitude = serviceRequestDTO.Longitude,
-                    Address = serviceRequestDTO.Address,
+                    Address = await locationService.ReverseGeocodeAsync(
+                        serviceRequestDTO.Latitude,
+                        serviceRequestDTO.Longitude),
                     ServiceRequestId = serviceRequest.Id
                 };
 
@@ -731,7 +769,7 @@ namespace ITI_Project.Api.Controllers.RequestControllers
             }
 
             var dto = mapper.Map<ServiceRequestDTO>(serviceRequest);
-            return CreatedAtAction(nameof(GetServiceRequestById), new { id = serviceRequest.Id }, dto);
+            return CreatedAtAction(nameof(GetServiceRequestByIdForClient), new { id = serviceRequest.Id }, dto);
         }
 
 

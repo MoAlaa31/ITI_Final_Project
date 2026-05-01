@@ -5,7 +5,10 @@ using ITI_Project.Core;
 using ITI_Project.Core.IRepository;
 using ITI_Project.Core.IServices;
 using ITI_Project.Repository;
+using ITI_Project.Services.AzureAi;
+using ITI_Project.Services.BackgroundServices;
 using ITI_Project.Services.Files;
+using ITI_Project.Services.Location;
 using Microsoft.AspNetCore.Mvc;
 
 namespace ITI_Project.Api.Extensions
@@ -27,15 +30,23 @@ namespace ITI_Project.Api.Extensions
             services.AddScoped(typeof(ExistingIdFilter<>));
             services.AddAutoMapper(cfg => cfg.AddProfile<MappingProfiles>());
 
+            // add the ImageQualityService to the DI container
+            services.AddScoped<IImageQualityService, ImageQualityService>();
+            // Add the DocumentAiWorker as a hosted service
+            services.AddHostedService<DocumentAiWorker>();
+
+            // Add the LocationService to the DI container
+            services.AddHttpClient<ILocationService, LocationService>();
+
             // Bind settings
             services.Configure<StripeSettings>(
                 configuration.GetSection("Stripe")
             );
-
             // Set Stripe API key
             var stripeSettings = configuration
                 .GetSection("Stripe")
                 .Get<StripeSettings>();
+
 
             Stripe.StripeConfiguration.ApiKey = stripeSettings!.SecretKey;
 

@@ -13,6 +13,8 @@ namespace ITI_Project.Core.Models.Moderation
         public required string DocumentUrl { get; set; }
         public DocumentType DocumentType { get; set; }
         public bool? IsApproved { get; set; }
+        public bool IsAiProcessing { get; set; }
+        public bool IsAiReviewed { get; set; }
 
         [ForeignKey("Provider")]
         public required int ProviderId { get; set; }

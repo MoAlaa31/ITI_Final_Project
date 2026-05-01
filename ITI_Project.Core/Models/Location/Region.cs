@@ -12,10 +12,10 @@ namespace ITI_Project.Core.Models.Location
     {
         public int Id { get; set; }
         [Required(ErrorMessage = "Region name is required. Please provide a name.")]
-        public string Name_ar { get; set; }
+        public string Name_ar { get; set; } = null!;
 
         [Required(ErrorMessage = "Region name is required. Please provide a name.")]
-        public string Name_en { get; set; }
+        public string Name_en { get; set; } = null!;
 
         [ForeignKey(nameof(Governorate))]
         public required int GovernorateId { get; set; }

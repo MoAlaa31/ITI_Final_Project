@@ -8,17 +8,14 @@ using System.Threading.Tasks;
 
 namespace ITI_Project.Core.Specifications.ReportSpecs
 {
-    public class ReportWithPaginationSpecification : BaseSpecifications<Report>
+    public class ReportCountSpecification : BaseSpecifications<Report>
     {
-        public ReportWithPaginationSpecification(ReportSpecParams specParams)
-            : base(r => 
+        public ReportCountSpecification(ReportSpecParams specParams)
+            : base(r =>
                 r.Status == ReportStatus.UnderReview &&
                 (specParams.ReportTypes == null || specParams.ReportTypes.Count == 0 || specParams.ReportTypes.Contains(r.ReportType)))
         {
-            AddOrderByDescending(r => r.LastUpdate);
-            Includes.Add(r => r.Reporter!);
-            Includes.Add(r => r.TargetUser!);
-            ApplyPagination((specParams.PageIndex - 1) * specParams.PageSize, specParams.PageSize);
+
         }
     }
 }
