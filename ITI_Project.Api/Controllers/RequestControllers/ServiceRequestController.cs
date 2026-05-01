@@ -508,7 +508,7 @@ namespace ITI_Project.Api.Controllers.RequestControllers
                 Amount = -requiredCredits,
                 Type = TransactionType.JobCompleted,
                 ReferenceId = serviceRequest.Id.ToString(),
-                CreatedAt = DateTime.UtcNow
+                CreatedAt = DateHelper.GetNowInEgypt()
             });
 
             unitOfWork.Repository<Provider>().Update(provider);

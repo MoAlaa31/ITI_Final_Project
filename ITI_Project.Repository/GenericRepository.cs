@@ -4,11 +4,9 @@ using ITI_Project.Core.Models.Users;
 using ITI_Project.Core.Specifications;
 using ITI_Project.Repository.Data;
 using Microsoft.EntityFrameworkCore;
-using Microsoft.IdentityModel.Tokens;
 using System;
 using System.Collections.Generic;
 using System.Linq.Expressions;
-using System.Text;
 
 namespace ITI_Project.Repository
 {
@@ -83,6 +81,7 @@ namespace ITI_Project.Repository
         {
             dbContext.Set<T>().UpdateRange(entities);
         }
+
         public async Task AddRangeAsync(IEnumerable<T> entities)
         {
             await dbContext.Set<T>().AddRangeAsync(entities);
@@ -103,6 +102,18 @@ namespace ITI_Project.Repository
             return await dbContext.Set<T>().FirstOrDefaultAsync(expression);
         }
 
+        public async Task<T?> GetByConditionAsync(
+            Expression<Func<T, bool>> predicate,
+            params Expression<Func<T, object>>[] includes)
+        {
+            IQueryable<T> query = dbContext.Set<T>();
+
+            foreach (var include in includes)
+                query = query.Include(include);
+
+            return await query.FirstOrDefaultAsync(predicate);
+        }
+
         public async Task SaveAsync()
         {
             await dbContext.SaveChangesAsync();
@@ -116,7 +127,6 @@ namespace ITI_Project.Repository
         public async Task<IReadOnlyList<T>?> GetManyByConditionAsync(Expression<Func<T, bool>> expression)
         {
             return await dbContext.Set<T>().Where(expression).ToListAsync();
-
         }
 
         public async Task<IReadOnlyList<T>?> GetManyByConditionAsync(

@@ -68,7 +68,6 @@ namespace ITI_Project.Api.Controllers.CreditControllers
             return Ok(new { clientSecret = paymentIntent.ClientSecret });
         }
 
-
         [HttpPost("stripe-webhook")]
         public async Task<IActionResult> StripeWebhook()
         {

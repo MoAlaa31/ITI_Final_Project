@@ -30,7 +30,12 @@ namespace ITI_Project.Core.IRepository
         Task SaveAsync();
         void DeleteRange(IEnumerable<T> entities);
         Task AddRangeAsync(IEnumerable<T> entities);
+
         Task<T?> GetByConditionAsync(Expression<Func<T, bool>> predicate);
+        Task<T?> GetByConditionAsync(
+            Expression<Func<T, bool>> predicate,
+            params Expression<Func<T, object>>[] includes);
+
         Task<IReadOnlyList<T>?> GetManyByConditionAsync(Expression<Func<T, bool>> predicate);
         Task<IReadOnlyList<T>?> GetManyByConditionAsync(
             Expression<Func<T, bool>> predicate,
