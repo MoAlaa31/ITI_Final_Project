@@ -2,6 +2,7 @@
 {
     public class ServiceRequestByIdDTO : ServiceRequestDTO
     {
+        public bool IsReported { get; set; }
         public bool IsReviewed { get; set; }
         public int? ReviewId { get; set; }
     }

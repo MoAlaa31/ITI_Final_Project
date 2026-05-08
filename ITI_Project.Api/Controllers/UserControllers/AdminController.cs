@@ -1,24 +1,27 @@
 ﻿using ITI_Project.Api.ErrorHandling;
 using ITI_Project.Core;
 using ITI_Project.Core.Enums;
-using ITI_Project.Core.Models.Users;
+using ITI_Project.Core.IServices;
 using ITI_Project.Core.Models.Requests;
+using ITI_Project.Core.Models.Users;
+using ITI_Project.Core.Specifications;
+using ITI_Project.Services.Files;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
-using ITI_Project.Core.Specifications;
 
 namespace ITI_Project.Api.Controllers.UserControllers
 {
     public class AdminController: BaseApiController
     {
         private readonly IUnitOfWork unitOfWork;
-
-        public AdminController(IUnitOfWork unitOfWork)
+        private readonly IImageMigrationQueue imageMigrationQueue;
+        public AdminController(IUnitOfWork unitOfWork, IImageMigrationQueue imageMigrationQueue)
         {
             this.unitOfWork = unitOfWork;
+            this.imageMigrationQueue = imageMigrationQueue;
         }
 
-        //[Authorize(Roles = nameof(UserRoleType.Admin))]
+        [Authorize(Roles = nameof(UserRoleType.Admin))]
         [HttpGet("get-admin-dashboard")]
         public async Task<ActionResult<object>> GetDashboardStats([FromQuery] DashboardPeriod period = DashboardPeriod.Week)
         {
@@ -65,6 +68,15 @@ namespace ITI_Project.Api.Controllers.UserControllers
                 InProgressRequests = inProgressRequests,
                 RequestsPerDay = perDay
             });
+        }
+
+        [Authorize(Roles = nameof(UserRoleType.Admin))]
+        [HttpPost("start-image-migration")]
+        public IActionResult StartImageMigration()
+        {
+            imageMigrationQueue.QueueMigration();
+
+            return Ok("Image migration started in background.");
         }
     }
 }

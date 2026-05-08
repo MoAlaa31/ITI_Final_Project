@@ -8,6 +8,7 @@ using ITI_Project.Api.Hubs.Interfaces;
 using ITI_Project.Core;
 using ITI_Project.Core.Constants;
 using ITI_Project.Core.Enums;
+using ITI_Project.Core.Helpers;
 using ITI_Project.Core.Models.Moderation;
 using ITI_Project.Core.Models.Posts;
 using ITI_Project.Core.Models.Requests;
@@ -202,7 +203,11 @@ namespace ITI_Project.Api.Controllers.RequestControllers
                 return Unauthorized(new ApiResponse(StatusCodes.Status401Unauthorized, "ProviderId claim is missing or invalid"));
 
             var offers = await unitOfWork.Repository<RequestOffer>()
-                .GetManyByConditionAsync(o => o.ProviderId == providerId) ?? new List<RequestOffer>();
+                .GetManyByConditionAsync(o =>
+                    o.ProviderId == providerId &&
+                    o.ServiceRequest != null &&
+                    o.ServiceRequest.RequestStatus != RequestStatus.Completed)
+                ?? new List<RequestOffer>();
 
             return Ok(mapper.Map<IReadOnlyList<RequestOfferProviderDTO>>(offers));
         }

@@ -8,6 +8,7 @@ using ITI_Project.Api.Hubs.Interfaces;
 using ITI_Project.Core;
 using ITI_Project.Core.Constants;
 using ITI_Project.Core.Enums;
+using ITI_Project.Core.Helpers;
 using ITI_Project.Core.IServices;
 using ITI_Project.Core.Models.Credit;
 using ITI_Project.Core.Models.Location;
@@ -143,7 +144,8 @@ namespace ITI_Project.Api.Controllers.RequestControllers
                 .GetByIdWithIncludesAsync(
                     id,
                     sr => sr.ServiceRequestLocation!,
-                    sr => sr.ServiceRequestImages!);
+                    sr => sr.ServiceRequestImages!,
+                    sr => sr.Reports!);
 
             if (serviceRequest is null)
                 return NotFound(new ApiResponse(StatusCodes.Status404NotFound, "Service request not found"));
@@ -156,6 +158,7 @@ namespace ITI_Project.Api.Controllers.RequestControllers
             var review = await unitOfWork.Repository<Review>()
                 .GetByConditionAsync(r => r.ServiceRequestId == id);
 
+            dto.IsReported = serviceRequest.Reports != null && serviceRequest.Reports.Any();
             dto.IsReviewed = review != null;
             dto.ReviewId = review?.Id;
 
@@ -164,7 +167,7 @@ namespace ITI_Project.Api.Controllers.RequestControllers
 
         [Authorize(Roles = $"{nameof(UserRoleType.Admin)}, {nameof(UserRoleType.Provider)}")]
         [HttpGet("get-request-byid-general/{id:int}")]
-        public async Task<ActionResult<ServiceRequestDTO>> GetServiceRequestByIdGeneral(int id)
+        public async Task<ActionResult<ServiceRequestProviderDTO>> GetServiceRequestByIdGeneral(int id)
         {
             int? providerId = null;
 
@@ -181,7 +184,8 @@ namespace ITI_Project.Api.Controllers.RequestControllers
                 .GetByIdWithIncludesAsync(
                     id,
                     sr => sr.ServiceRequestLocation!,
-                    sr => sr.ServiceRequestImages!);
+                    sr => sr.ServiceRequestImages!,
+                    sr => sr.Client!);
 
             if (serviceRequest is null)
                 return NotFound(new ApiResponse(StatusCodes.Status404NotFound, "Service request not found"));
@@ -190,7 +194,7 @@ namespace ITI_Project.Api.Controllers.RequestControllers
             if (providerId.HasValue && serviceRequest.ProviderId != providerId.Value)
                 return Forbid();
 
-            var dto = mapper.Map<ServiceRequestDTO>(serviceRequest);
+            var dto = mapper.Map<ServiceRequestProviderDTO>(serviceRequest);
             return Ok(dto);
         }
 

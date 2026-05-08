@@ -1,4 +1,4 @@
-﻿namespace ITI_Project.Api.Helpers
+﻿namespace ITI_Project.Api.Settings
 {
     public class StripeSettings
     {

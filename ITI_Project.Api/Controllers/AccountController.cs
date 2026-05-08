@@ -4,6 +4,7 @@ using ITI_Project.Api.ErrorHandling;
 using ITI_Project.Api.Helpers;
 using ITI_Project.Core;
 using ITI_Project.Core.Enums;
+using ITI_Project.Core.Helpers;
 using ITI_Project.Core.IServices;
 using ITI_Project.Core.Models.Identity;
 using ITI_Project.Core.Models.Location;
@@ -141,6 +142,7 @@ namespace ITI_Project.Api.Controllers
                     RatingSum = 0,
                     ReviewsCount = 0,
                     JobsCount = 0,
+                    Credits = 50            // Initial credits for new providers
                 };
 
                 try
