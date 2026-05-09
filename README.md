@@ -1,5 +1,5 @@
 ## Project Name
-Herafy
+# **Herafy**
 
 ## About
 **ITI Project** is a backend solution built with **ASP.NET Core (.NET 8)** that exposes a REST API for a service-request workflow (clients create service requests and providers submit offers), with real-time updates and notifications.
