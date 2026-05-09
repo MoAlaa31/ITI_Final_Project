@@ -1,7 +1,0 @@
-ITI_Project API - Endpoint Documentation
-Generated: (pending)
-
-NOTE:
-This file is intended to be generated automatically. The documentation generator command was cancelled in the terminal, so this placeholder was created.
-
-To generate the full documentation, run the PowerShell generator script (ask Copilot to re-run it).

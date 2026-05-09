@@ -113,6 +113,20 @@ namespace ITI_Project.Api.Controllers.RequestControllers
                 }
 
                 await unitOfWork.CompleteAsync();
+
+                // Push ONLY the newly created offer in real-time
+                var providerWithClient = await unitOfWork.Repository<Provider>()
+                    .GetByIdWithIncludesAsync(providerId, p => p.Client);
+
+                if (providerWithClient?.Client != null)
+                {
+                    var offerDto = mapper.Map<RequestOfferDTO>(requestOffer);
+                    offerDto.ProviderName = $"{providerWithClient.Client.FirstName} {providerWithClient.Client.LastName}".Trim();
+                    offerDto.ProviderPictureUrl = providerWithClient.Client.PictureUrl;
+
+                    await hub.Clients.Group($"user-{serviceRequest.ClientId}")
+                        .ReceiveRequestOffer(offerDto);
+                }
             }
             catch
             {
