@@ -17,6 +17,22 @@ The solution is organized using a layered architecture (API/Core/Repository/Serv
 - Media upload integration hooks (Cloudinary)
 - Swagger/OpenAPI documentation
 
+## Architecture
+
+The solution follows a layered architecture:
+
+Client Apps
+    ↓
+ASP.NET Core API
+    ↓
+Services Layer (Business Logic)
+    ↓
+Repository + Unit of Work
+    ↓
+Entity Framework Core
+    ↓
+SQL Server
+
 ## Tech Stack
 - **Language**: C# 12
 - **Framework**: ASP.NET Core Web API (.NET 8)
@@ -36,6 +52,34 @@ High-level solution layout:
 - `ITI_Project.Core/` — domain models, enums, constants, helpers, shared contracts
 - `ITI_Project.Repository/` — EF Core DbContexts, migrations, repository & data access implementations
 - `ITI_Project.Service/` — application/services layer (business use cases)
+
+## Engineering Features
+- Clean layered architecture
+- Repository + Unit of Work pattern
+- Result pattern for business failures
+- Global exception handling middleware
+- Real-time notifications with SignalR
+- Stripe payment integration with webhooks
+- Cloudinary media storage and migration
+- Background image migration batching
+- Role-based authorization
+- Specification pattern for querying
+
+## Media Management
+Images and provider documents are stored using Cloudinary.
+
+The project includes:
+- image upload abstraction
+- cloud storage integration
+- background migration from local storage to Cloudinary
+- batched migration processing
+
+## Real-Time Features
+
+SignalR is used for:
+- notifications
+- request updates
+- real-time provider live map location
 
 ## Getting Started
 
