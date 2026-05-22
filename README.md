@@ -19,19 +19,60 @@ The solution is organized using a layered architecture (API/Core/Repository/Serv
 
 ## Architecture
 
-The solution follows a layered architecture:
-
-Client Apps
-    ↓
-ASP.NET Core API
-    ↓
-Services Layer (Business Logic)
-    ↓
-Repository + Unit of Work
-    ↓
-Entity Framework Core
-    ↓
-SQL Server
+```text
+┌─────────────────────┐
+│      API Layer      │
+│---------------------│
+│ Controllers         │
+│ Middleware          │
+│ SignalR Hubs        │
+│ Authentication      │
+│ Dependency Injection│
+└─────────┬───────────┘
+          │
+          │ accesses
+          ▼
+┌────────────────────┐
+│    Service Layer   │
+│--------------------│
+│ Business Logic     │
+│ Application Rules  │
+│ Result Pattern     │
+│ DTO Mapping        │
+└─────────┬──────────┘
+          │
+          │ accesses
+          ▼
+┌────────────────────┐
+│ Repository Layer   │
+│--------------------│
+│ Repositories       │
+│ Unit Of Work       │
+│ Specifications     │
+│ EF Core Queries    │
+└─────────┬──────────┘
+          │
+          │ accesses
+          ▼
+┌────────────────────┐
+│     Core Layer     │
+│--------------------│
+│ Entities           │
+│ Interfaces         │
+│ Enums              │
+│ Shared Models      │
+│ Errors & Results   │
+└─────────┬──────────┘
+          │
+          ▼
+┌────────────────────┐
+│     SQL Server     │
+│ Entity Framework   │
+└────────────────────┘
+```
+API Layer ─────────► Core Layer
+Service Layer ─────► Core Layer
+Repository Layer ──► Core Layer
 
 ## Tech Stack
 - **Language**: C# 12
