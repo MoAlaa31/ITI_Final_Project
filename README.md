@@ -17,6 +17,18 @@ The solution is organized using a layered architecture (API/Core/Repository/Serv
 - Media upload integration hooks (Cloudinary)
 - Swagger/OpenAPI documentation
 
+## Deployment
+
+- **API Backend:** [https://iti-final-project.runasp.net](https://iti-final-project.runasp.net)
+- **Herafy App (Frontend):** [https://harafy-app.vercel.app/](https://harafy-app.vercel.app/)
+
+## Admin Test Account
+
+For testing and reviewing as an admin, you can use the following credentials:
+
+- **Email:** Admin@gmail.com
+- **Password:** Pa$$w0rd
+
 ## Architecture
 
 ```text
