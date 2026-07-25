@@ -3,6 +3,7 @@ using ITI_Project.Api.Attributes;
 using ITI_Project.Api.DTO.Moderation;
 using ITI_Project.Api.ErrorHandling;
 using ITI_Project.Core;
+using ITI_Project.Core.Common;
 using ITI_Project.Core.Constants;
 using ITI_Project.Core.Enums;
 using ITI_Project.Core.IServices;
@@ -105,12 +106,14 @@ namespace ITI_Project.Api.Controllers.ModerationControllers
                 return Conflict(new ApiResponse(StatusCodes.Status409Conflict, "A document of this type already exists for this provider."));
 
             var uploadResult = await fileStorageService.UploadFileAsync(
-                uploadDTO.DocumentFile.OpenReadStream(),
-                "provider-documents",
-                uploadDTO.DocumentFile.FileName,
-                User,
-                uploadDTO.FileName
-            );
+                new FileUploadRequest
+                {
+                    File = uploadDTO.DocumentFile.OpenReadStream(),
+                    OriginalFileName = uploadDTO.DocumentFile.FileName,
+                    FolderName = "provider-documents",
+                    GivenName = uploadDTO.FileName,
+                    NameId = provider.Id.ToString()
+                });
 
             if (!uploadResult.Success)
                 return BadRequest(new ApiResponse(StatusCodes.Status400BadRequest, uploadResult.Message));
@@ -210,12 +213,14 @@ namespace ITI_Project.Api.Controllers.ModerationControllers
                 return Forbid();
 
             var uploadResult = await fileStorageService.UploadFileAsync(
-                updateDTO.DocumentFile.OpenReadStream(),
-                "provider-documents",
-                updateDTO.DocumentFile.FileName,
-                User,
-                updateDTO.FileName
-            );
+                new FileUploadRequest
+                {
+                    File = updateDTO.DocumentFile.OpenReadStream(),
+                    OriginalFileName = updateDTO.DocumentFile.FileName,
+                    FolderName = "provider-documents",
+                    GivenName = updateDTO.FileName,
+                    NameId = provider.Id.ToString()
+                });
 
             if (!uploadResult.Success)
                 return BadRequest(new ApiResponse(StatusCodes.Status400BadRequest, uploadResult.Message));

@@ -3,11 +3,16 @@ using CloudinaryDotNet.Actions;
 using ITI_Project.Api.Settings;
 using ITI_Project.Core.IServices;
 using Microsoft.Extensions.Options;
+using System;
+using System.IO;
+using System.Linq;
 using System.Net;
+using System.Threading;
+using System.Threading.Tasks;
 
-namespace ITI_Project.Services
+namespace ITI_Project.Services.Files
 {
-    public class CloudinaryFileStorageService : IFileStorageService
+    public class CloudinaryFileStorageService : FileStorageServiceBase, IFileStorageService
     {
         private readonly Cloudinary cloudinary;
 
@@ -25,96 +30,45 @@ namespace ITI_Project.Services
         }
 
         public async Task<(bool Success, string Message, string? FilePath)> UploadFileAsync(
-            Stream file,
-            string folderName,
-            string originalFileName,
-            string? givenName,
-            string? nameId,
-            string? customFileName = null,
-            IReadOnlyCollection<string>? allowedExtensions = null,
-            long maxFileSizeBytes = 5 * 1024 * 1024,
+            FileUploadRequest request,
             CancellationToken cancellationToken = default)
         {
-            if (file == null || file.Length == 0)
-                return (false, "File is required.", null);
+            var validation = ValidateFile(
+                request.File,
+                request.OriginalFileName,
+                request.AllowedExtensions,
+                request.MaxFileSizeBytes);
 
-            if (string.IsNullOrWhiteSpace(folderName))
-                return (false, "Folder name is required.", null);
+            if (!validation.Success)
+                return (false, validation.Message!, null);
 
-            var extension = Path.GetExtension(originalFileName).ToLowerInvariant();
-
-            var extensions = allowedExtensions ??
-                new[] { ".jpg", ".jpeg", ".png", ".webp" };
-
-            if (string.IsNullOrWhiteSpace(extension) ||
-                !extensions.Contains(extension))
-            {
-                return (
-                    false,
-                    $"Invalid file format. Allowed formats: {string.Join(", ", extensions)}",
-                    null
-                );
-            }
-
-            if (file.Length > maxFileSizeBytes)
-            {
-                return (
-                    false,
-                    $"File size must be less than {maxFileSizeBytes / (1024 * 1024)}MB.",
-                    null
-                );
-            }
-
-            var baseName = customFileName;
-
-            if (string.IsNullOrWhiteSpace(baseName))
-            {
-                var safeGivenName = string.IsNullOrWhiteSpace(givenName)
-                    ? "user"
-                    : givenName;
-
-                var safeNameId = string.IsNullOrWhiteSpace(nameId)
-                    ? Guid.NewGuid().ToString("N")
-                    : nameId;
-
-                var uniqueSuffix = Guid.NewGuid().ToString("N");
-
-                baseName = $"{safeGivenName}-{safeNameId}-{uniqueSuffix}";
-            }
+            var extension = Path.GetExtension(request.OriginalFileName).ToLowerInvariant();
+            var baseName = BuildBaseName(request.GivenName, request.NameId, request.CustomFileName);
 
             try
             {
+                if (request.File.CanSeek) request.File.Position = 0;
+
                 var uploadParams = new ImageUploadParams
                 {
-                    File = new FileDescription(originalFileName, file),
-                    Folder = folderName,
+                    File = new FileDescription(request.OriginalFileName, request.File),
+                    Folder = request.FolderName,
                     PublicId = baseName,
                     UseFilename = false,
                     UniqueFilename = true,
                     Overwrite = false
                 };
 
-                var uploadResult = await cloudinary
-                    .UploadAsync(uploadParams, cancellationToken);
+                var uploadResult = await cloudinary.UploadAsync(uploadParams, cancellationToken);
 
-                if (uploadResult.StatusCode != HttpStatusCode.OK)
-                {
+                if (uploadResult == null || uploadResult.StatusCode != HttpStatusCode.OK)
                     return (false, "Failed to upload image.", null);
-                }
 
-                return (
-                    true,
-                    "File uploaded successfully.",
-                    uploadResult.SecureUrl.ToString()
-                );
+                return (true, "File uploaded successfully.", uploadResult.SecureUrl.ToString());
             }
             catch
             {
-                return (
-                    false,
-                    "An error occurred while uploading the file.",
-                    null
-                );
+                return (false, "An error occurred while uploading the file.", null);
             }
         }
 
@@ -125,6 +79,8 @@ namespace ITI_Project.Services
             string? fileName = null,
             CancellationToken cancellationToken = default)
         {
+            if (file.CanSeek) file.Position = 0;
+
             var uploadParams = new ImageUploadParams
             {
                 File = new FileDescription(originalFileName, file),
@@ -134,10 +90,9 @@ namespace ITI_Project.Services
                 UniqueFilename = true
             };
 
-            var result = await cloudinary
-                .UploadAsync(uploadParams, cancellationToken);
+            var result = await cloudinary.UploadAsync(uploadParams, cancellationToken);
 
-            if (result.StatusCode != HttpStatusCode.OK)
+            if (result == null || result.StatusCode != HttpStatusCode.OK)
                 throw new Exception("Failed to upload file.");
 
             return result.SecureUrl.ToString();
@@ -151,27 +106,39 @@ namespace ITI_Project.Services
             try
             {
                 var uri = new Uri(relativePath);
-
-                var segments = uri.AbsolutePath.Split('/');
-
-                var uploadIndex = Array.IndexOf(segments, "upload");
+                var path = uri.AbsolutePath; // e.g. /image/upload/v123/folder/file.jpg
+                var marker = "/upload/";
+                var uploadIndex = path.IndexOf(marker, StringComparison.OrdinalIgnoreCase);
 
                 if (uploadIndex == -1)
                     return;
 
-                var publicIdWithExtension =
-                    string.Join("/", segments[(uploadIndex + 2)..]);
+                var afterUpload = path.Substring(uploadIndex + marker.Length); // e.g. v123/folder/file.jpg or folder/file.jpg
 
-                var publicId =
-                    Path.ChangeExtension(publicIdWithExtension, null);
+                // Remove version token if present (v123/)
+                if (afterUpload.Length > 0 && afterUpload[0] == 'v')
+                {
+                    var slash = afterUpload.IndexOf('/');
+                    if (slash > 0)
+                    {
+                        var versionToken = afterUpload.Substring(1, slash - 1);
+                        if (versionToken.All(char.IsDigit))
+                            afterUpload = afterUpload.Substring(slash + 1);
+                    }
+                }
+
+                var publicIdWithExtension = afterUpload.TrimStart('/');
+                var publicId = Path.ChangeExtension(publicIdWithExtension, null);
+
+                if (string.IsNullOrWhiteSpace(publicId))
+                    return;
 
                 var deletionParams = new DeletionParams(publicId);
-
                 cloudinary.Destroy(deletionParams);
             }
             catch
             {
-                // Optional: log error
+                // optional logging
             }
         }
     }

@@ -8,6 +8,7 @@ using ITI_Project.Core.IServices;
 using ITI_Project.Core.Models.Location;
 using ITI_Project.Core.Models.Users;
 using ITI_Project.Services.User.DTOs;
+using ITI_Project.Services.User.UserServices.ClientService;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using System;
@@ -25,6 +26,7 @@ namespace ITI_Project.Tests.Controller
         private readonly IMapper mapper;
         private readonly IUnitOfWork unitOfWork;
         private readonly IFileStorageService fileStorageService;
+        private readonly IClientService clientService;
 
         private readonly ClientController _clientController;
         public ClientControllerTest()
@@ -33,8 +35,9 @@ namespace ITI_Project.Tests.Controller
             this.mapper = A.Fake<IMapper>();
             this.unitOfWork = A.Fake<IUnitOfWork>();
             this.fileStorageService = A.Fake<IFileStorageService>();
+            this.clientService = A.Fake<IClientService>();
             // SUT -> System Under Test
-            _clientController = new ClientController(mapper, unitOfWork, fileStorageService);
+            _clientController = new ClientController(mapper, unitOfWork, fileStorageService, clientService);
 
 
         }

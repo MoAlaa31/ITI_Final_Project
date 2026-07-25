@@ -13,6 +13,7 @@ using ITI_Project.Core.Models.Posts;
 using ITI_Project.Core.Models.Requests;
 using ITI_Project.Core.Models.Services;
 using ITI_Project.Core.Models.Users;
+using ITI_Project.Services.User.DTOs;
 
 namespace ITI_Project.Api.Helpers
 {

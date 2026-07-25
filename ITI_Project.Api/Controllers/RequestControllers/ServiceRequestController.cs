@@ -6,6 +6,7 @@ using ITI_Project.Api.Helpers;
 using ITI_Project.Api.Hubs;
 using ITI_Project.Api.Hubs.Interfaces;
 using ITI_Project.Core;
+using ITI_Project.Core.Common;
 using ITI_Project.Core.Constants;
 using ITI_Project.Core.Enums;
 using ITI_Project.Core.Helpers;
@@ -66,11 +67,23 @@ namespace ITI_Project.Api.Controllers.RequestControllers
 
             var uploadedPaths = new List<string>();
 
+            var givenName = User.FindFirstValue(ClaimTypes.GivenName);
+            var nameId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+
             if (serviceRequestDTO.Images is { Count: > 0 })
             {
                 foreach (var image in serviceRequestDTO.Images)
                 {
-                    var uploadResult = await fileStorageService.UploadFileAsync(image.OpenReadStream(), "service-request-images", image.FileName, User);
+                    var uploadResult = await fileStorageService.UploadFileAsync(
+                        new FileUploadRequest
+                        {
+                            File = image.OpenReadStream(),
+                            OriginalFileName = image.FileName,
+                            FolderName = "service-request-images",
+                            GivenName = givenName,
+                            NameId = nameId
+                        });
+
                     if (!uploadResult.Success)
                     {
                         foreach (var path in uploadedPaths)
@@ -681,11 +694,24 @@ namespace ITI_Project.Api.Controllers.RequestControllers
 
             var uploadedPaths = new List<string>();
 
+            // gather caller info for generated filenames
+            var givenName = User.FindFirstValue(ClaimTypes.GivenName);
+            var nameId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+
             if (serviceRequestDTO.Images is { Count: > 0 })
             {
                 foreach (var image in serviceRequestDTO.Images)
                 {
-                    var uploadResult = await fileStorageService.UploadFileAsync(image.OpenReadStream(), "service-request-images", image.FileName, User);
+                    var uploadResult = await fileStorageService.UploadFileAsync(
+                        new FileUploadRequest
+                        {
+                            File = image.OpenReadStream(),
+                            OriginalFileName = image.FileName,
+                            FolderName = "service-request-images",
+                            GivenName = givenName,
+                            NameId = nameId
+                        });
+
                     if (!uploadResult.Success)
                     {
                         foreach (var path in uploadedPaths)

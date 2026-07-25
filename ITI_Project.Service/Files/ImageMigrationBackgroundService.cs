@@ -1,4 +1,5 @@
 ﻿using ITI_Project.Core;
+using ITI_Project.Core.Common;
 using ITI_Project.Core.IServices;
 using ITI_Project.Core.Models.Moderation;
 using ITI_Project.Core.Models.Posts;
@@ -111,15 +112,15 @@ namespace ITI_Project.Services.Files
 
                     await using var stream = File.OpenRead(localPath);
 
-                    // NOTE: IFileStorageService.UploadFileAsync expects both givenName and nameId parameters.
-                    // Provide both (null if not available).
                     var uploadResult = await fileStorageService.UploadFileAsync(
-                        stream,
-                        folderName,
-                        Path.GetFileName(localPath),
-                        null,
-                        null
-                    );
+                        new FileUploadRequest
+                        {
+                            File = stream,
+                            OriginalFileName = Path.GetFileName(localPath),
+                            FolderName = folderName,
+                            GivenName = null,
+                            NameId = null
+                        });
 
                     if (!uploadResult.Success ||
                         string.IsNullOrWhiteSpace(uploadResult.FilePath))
@@ -135,6 +136,7 @@ namespace ITI_Project.Services.Files
                     if (batchCount >= 20)
                     {
                         await unitOfWork.CompleteAsync();
+
                         batchCount = 0;
                     }
                 }

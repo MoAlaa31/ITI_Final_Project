@@ -1,13 +1,14 @@
 using ITI_Project.Core.IServices;
 using Microsoft.AspNetCore.Hosting;
-using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.Configuration;
-using System.Reflection.Metadata;
-using System.Security.Claims;
+using System;
+using System.IO;
+using System.Threading;
+using System.Threading.Tasks;
 
 namespace ITI_Project.Services.Files
 {
-    public class LocalFileStorageService : IFileStorageService
+    public class LocalFileStorageService : FileStorageServiceBase, IFileStorageService
     {
         private readonly IWebHostEnvironment environment;
         private readonly IConfiguration configuration;
@@ -18,54 +19,34 @@ namespace ITI_Project.Services.Files
             this.configuration = configuration;
         }
 
-        public async Task<(bool Success, string Message, string? FilePath)> UploadFileAsync(
-                Stream file,
-                string folderName,
-                string originalFileName,
-                string? givenName,
-                string? nameId,
-                string? customFileName = null,
-                IReadOnlyCollection<string>? allowedExtensions = null,
-                long maxFileSizeBytes = 5 * 1024 * 1024,
-                CancellationToken cancellationToken = default)
+        public async Task<(bool Success, string Message, string? FilePath)>
+        UploadFileAsync(
+            FileUploadRequest request,
+            CancellationToken cancellationToken = default)
         {
-            if (file == null)
-                return (false, "File is required.", null);
+            var validation = ValidateFile(
+                request.File,
+                request.OriginalFileName,
+                request.AllowedExtensions,
+                request.MaxFileSizeBytes);
 
-            if (string.IsNullOrWhiteSpace(folderName))
-                return (false, "Folder name is required.", null);
+            if (!validation.Success)
+                return (false, validation.Message!, null);
 
-            var extension = Path.GetExtension(originalFileName).ToLowerInvariant();
-            var extensions = allowedExtensions ?? new[] { ".jpg", ".jpeg", ".png", ".webp" };
+            var extension = Path.GetExtension(request.OriginalFileName).ToLowerInvariant();
 
-            if (string.IsNullOrWhiteSpace(extension) || !extensions.Contains(extension))
-                return (false, $"Invalid file format. Allowed formats: {string.Join(", ", extensions)}", null);
-
-            if (file.Length > maxFileSizeBytes)
-                return (false, $"File size must be less than {maxFileSizeBytes / (1024 * 1024)}MB.", null);
-
-            var baseName = customFileName;
-
-            if (string.IsNullOrWhiteSpace(baseName))
-            {
-                var safeGivenName = string.IsNullOrWhiteSpace(givenName)
-                    ? "user"
-                    : givenName;
-
-                var safeNameId = string.IsNullOrWhiteSpace(nameId)
-                    ? Guid.NewGuid().ToString("N")
-                    : nameId;
-
-                var uniqueSuffix = Guid.NewGuid().ToString("N");
-
-                baseName = $"{safeGivenName}-{safeNameId}-{uniqueSuffix}";
-            }
-
-            var fileName = $"{baseName}{extension}";
+            var baseName = BuildBaseName(request.GivenName, request.NameId, request.CustomFileName);
+            var fileName = BuildFileName(baseName, extension);
 
             try
             {
-                var relativePath = await SaveFileAsync(file, originalFileName, folderName, fileName, cancellationToken);
+                var relativePath = await SaveFileAsync(
+                    request.File,
+                    request.OriginalFileName,
+                    request.FolderName,
+                    fileName,
+                    cancellationToken);
+
                 return (true, "File uploaded successfully.", relativePath);
             }
             catch (Exception)
@@ -103,13 +84,14 @@ namespace ITI_Project.Services.Files
             var filePath = Path.Combine(targetFolder, finalFileName);
 
             await using var stream = new FileStream(filePath, FileMode.Create);
+            if (file.CanSeek) file.Position = 0;
             await file.CopyToAsync(stream, cancellationToken);
 
             var relativePath = string.IsNullOrWhiteSpace(subFolder)
                 ? Path.Combine("uploads", finalFileName)
                 : Path.Combine("uploads", subFolder, finalFileName);
 
-            return relativePath.Replace("\\", "/");
+            return NormalizeRelativePath(relativePath);
         }
 
         public void DeleteFile(string relativePath)

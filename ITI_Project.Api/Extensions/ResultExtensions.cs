@@ -15,8 +15,8 @@ namespace ITI_Project.Api.Extensions
             var problem = new ProblemDetails
             {
                 Title = "Request failed",
-                Detail = result.Error.Description,
-                Status = result.Error.StatusCode
+                Detail = result.Error.Message,
+                Status = (int)result.Error.StatusCode
             };
 
             problem.Extensions["code"] =

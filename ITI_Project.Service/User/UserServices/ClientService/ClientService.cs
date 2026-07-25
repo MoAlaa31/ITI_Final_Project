@@ -81,12 +81,14 @@ namespace ITI_Project.Services.User.UserServices.ClientService
             {
                 // Use IFormFile.OpenReadStream() and pass givenName and nameId to match IFileStorageService signature
                 var uploadResult = await fileStorageService.UploadFileAsync(
-                    clientUpdateDTO.Picture.Content,
-                    "client-pictures",
-                    clientUpdateDTO.Picture.FileName,
-                    clientUpdateDTO.FirstName,          // givenName
-                    client.Id.ToString()               // nameId
-                );
+                    new FileUploadRequest
+                    {
+                        File = clientUpdateDTO.Picture.Content,
+                        OriginalFileName = clientUpdateDTO.Picture.FileName,
+                        FolderName = "client-pictures",
+                        GivenName = client.FirstName,
+                        NameId = client.Id.ToString()
+                    });
 
                 if (!uploadResult.Success)
                     return ServiceResult<Client>.Failure(

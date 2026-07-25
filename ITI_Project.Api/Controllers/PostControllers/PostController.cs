@@ -3,6 +3,7 @@ using ITI_Project.Api.DTO.Posts;
 using ITI_Project.Api.ErrorHandling;
 using ITI_Project.Api.Helpers;
 using ITI_Project.Core;
+using ITI_Project.Core.Common;
 using ITI_Project.Core.Constants;
 using ITI_Project.Core.Enums;
 using ITI_Project.Core.Helpers;
@@ -75,11 +76,23 @@ namespace ITI_Project.Api.Controllers.PostControllers
 
             var uploadedPaths = new List<string>();
 
+            var givenName = User.FindFirstValue(ClaimTypes.GivenName);
+            var nameId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+
             if (dto.Images is { Count: > 0 })
             {
                 foreach (var image in dto.Images)
                 {
-                    var uploadResult = await fileStorageService.UploadFileAsync(image.OpenReadStream(), "post-images", image.FileName, User);
+                    var uploadResult = await fileStorageService.UploadFileAsync(
+                        new FileUploadRequest
+                        {
+                            File = image.OpenReadStream(),
+                            OriginalFileName = image.FileName,
+                            FolderName = "post-images",
+                            GivenName = givenName,
+                            NameId = nameId
+                        });
+
                     if (!uploadResult.Success)
                     {
                         foreach (var path in uploadedPaths)
