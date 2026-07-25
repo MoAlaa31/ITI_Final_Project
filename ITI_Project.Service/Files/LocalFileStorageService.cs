@@ -19,14 +19,15 @@ namespace ITI_Project.Services.Files
         }
 
         public async Task<(bool Success, string Message, string? FilePath)> UploadFileAsync(
-            Stream file,
-            string folderName,
-            string originalFileName,
-            ClaimsPrincipal? user,
-            string? customFileName = null,
-            IReadOnlyCollection<string>? allowedExtensions = null,
-            long maxFileSizeBytes = 5 * 1024 * 1024,
-            CancellationToken cancellationToken = default)
+                Stream file,
+                string folderName,
+                string originalFileName,
+                string? givenName,
+                string? nameId,
+                string? customFileName = null,
+                IReadOnlyCollection<string>? allowedExtensions = null,
+                long maxFileSizeBytes = 5 * 1024 * 1024,
+                CancellationToken cancellationToken = default)
         {
             if (file == null)
                 return (false, "File is required.", null);
@@ -44,13 +45,17 @@ namespace ITI_Project.Services.Files
                 return (false, $"File size must be less than {maxFileSizeBytes / (1024 * 1024)}MB.", null);
 
             var baseName = customFileName;
+
             if (string.IsNullOrWhiteSpace(baseName))
             {
-                var givenName = user?.FindFirstValue(ClaimTypes.GivenName);
-                var nameId = user?.FindFirstValue(ClaimTypes.NameIdentifier);
+                var safeGivenName = string.IsNullOrWhiteSpace(givenName)
+                    ? "user"
+                    : givenName;
 
-                var safeGivenName = string.IsNullOrWhiteSpace(givenName) ? "user" : givenName;
-                var safeNameId = string.IsNullOrWhiteSpace(nameId) ? Guid.NewGuid().ToString("N") : nameId;
+                var safeNameId = string.IsNullOrWhiteSpace(nameId)
+                    ? Guid.NewGuid().ToString("N")
+                    : nameId;
+
                 var uniqueSuffix = Guid.NewGuid().ToString("N");
 
                 baseName = $"{safeGivenName}-{safeNameId}-{uniqueSuffix}";

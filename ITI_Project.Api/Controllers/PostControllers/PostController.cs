@@ -30,7 +30,7 @@ namespace ITI_Project.Api.Controllers.PostControllers
             this.fileStorageService = fileStorageService;
         }
 
-        [Authorize(Roles = nameof(UserRoleType.Client))]
+        [AllowAnonymous]
         [HttpGet("get-recent-posts")]
         public async Task<ActionResult<IReadOnlyList<PostDTO>>> GetAllPosts([FromQuery] PostSpecParams specParams)
         {

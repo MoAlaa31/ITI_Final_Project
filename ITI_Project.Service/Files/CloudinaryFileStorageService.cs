@@ -4,8 +4,6 @@ using ITI_Project.Api.Settings;
 using ITI_Project.Core.IServices;
 using Microsoft.Extensions.Options;
 using System.Net;
-using System.Security.Claims;
-using System.Security.Principal;
 
 namespace ITI_Project.Services
 {
@@ -30,7 +28,8 @@ namespace ITI_Project.Services
             Stream file,
             string folderName,
             string originalFileName,
-            ClaimsPrincipal? user,
+            string? givenName,
+            string? nameId,
             string? customFileName = null,
             IReadOnlyCollection<string>? allowedExtensions = null,
             long maxFileSizeBytes = 5 * 1024 * 1024,
@@ -70,9 +69,6 @@ namespace ITI_Project.Services
 
             if (string.IsNullOrWhiteSpace(baseName))
             {
-                var givenName = user?.FindFirstValue(ClaimTypes.GivenName);
-                var nameId = user?.FindFirstValue(ClaimTypes.NameIdentifier);
-
                 var safeGivenName = string.IsNullOrWhiteSpace(givenName)
                     ? "user"
                     : givenName;

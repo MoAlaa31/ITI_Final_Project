@@ -8,10 +8,10 @@ using ITI_Project.Core.Enums;
 using ITI_Project.Core.IServices;
 using ITI_Project.Core.Models.Moderation;
 using ITI_Project.Core.Models.Users;
+using ITI_Project.Core.Specifications;
 using Microsoft.AspNetCore.Authorization;
-using Microsoft.AspNetCore.Http;
-using Microsoft.AspNetCore.Http.HttpResults;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
 using System.Security.Claims;
 
 namespace ITI_Project.Api.Controllers.ModerationControllers
@@ -128,14 +128,16 @@ namespace ITI_Project.Api.Controllers.ModerationControllers
             try
             {
                 await unitOfWork.Repository<ProviderDocument>().AddAsync(document);
+                await unitOfWork.CompleteAsync();
 
-                var distinctDocumentTypes = existingDocuments
+                var distinctDocumentTypes = (await unitOfWork.Repository<ProviderDocument>()
+                        .GetManyByConditionAsync(d => d.ProviderId == provider.Id) ?? new List<ProviderDocument>())
                     .Select(d => d.DocumentType)
-                    .Append(document.DocumentType)
                     .Distinct()
                     .Count();
 
-                if (distinctDocumentTypes == 3)
+                if (distinctDocumentTypes == MaxDocuments &&
+                    provider.VerificationStatus != VerificationStatus.UnderReview)
                 {
                     provider.VerificationStatus = VerificationStatus.UnderReview;
                     unitOfWork.Repository<Provider>().Update(provider);

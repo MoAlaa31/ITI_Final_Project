@@ -24,7 +24,7 @@ namespace ITI_Project.Core.Models.Users
         public required string LastName { get; set; }
         public Gender Gender { get; set; }
         public DateOnly DateOfBirth { get; set; }
-        public DateOnly CreatedAt { get; set; } 
+        public DateOnly CreatedAt { get; set; }
         public string? PictureUrl { get; set; }
 
         // Relationships

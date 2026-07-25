@@ -1,9 +1,8 @@
-﻿using ITI_Project.Api.Attributes;
-using ITI_Project.Core.Enums;
+﻿using ITI_Project.Core.Enums;
 using ITI_Project.Core.Models.Location;
 using System.ComponentModel.DataAnnotations;
 
-namespace ITI_Project.Api.DTO.Users
+namespace ITI_Project.Services.User.DTOs
 {
     public class ClientDTO
     {

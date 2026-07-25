@@ -106,31 +106,18 @@ namespace ITI_Project.Services.Files
                         imageUrl.TrimStart('/')
                     );
 
-                    //logger.LogInformation(
-                    //    "Image URL: {ImageUrl}",
-                    //imageUrl);
-
-                    //logger.LogInformation(
-                    //    "WebRootPath: {WebRootPath}",
-                    //    environment.WebRootPath);
-
-                    //logger.LogInformation(
-                    //    "Constructed path: {LocalPath}",
-                    //    localPath);
-
-                    //logger.LogInformation(
-                    //    "File exists: {Exists}",
-                    //    File.Exists(localPath));
-
                     if (!File.Exists(localPath))
                         continue;
 
                     await using var stream = File.OpenRead(localPath);
 
+                    // NOTE: IFileStorageService.UploadFileAsync expects both givenName and nameId parameters.
+                    // Provide both (null if not available).
                     var uploadResult = await fileStorageService.UploadFileAsync(
                         stream,
                         folderName,
                         Path.GetFileName(localPath),
+                        null,
                         null
                     );
 
@@ -140,11 +127,6 @@ namespace ITI_Project.Services.Files
                         continue;
                     }
 
-                    //logger.LogInformation(
-                    //    "Upload success: {Success}, URL: {Url}",
-                    //    uploadResult.Success,
-                    //    uploadResult.FilePath);
-
                     setImageUrl(entity, uploadResult.FilePath);
 
                     migratedCount++;
@@ -153,11 +135,6 @@ namespace ITI_Project.Services.Files
                     if (batchCount >= 20)
                     {
                         await unitOfWork.CompleteAsync();
-
-                        //logger.LogInformation(
-                        //    "Migrated {Count} files",
-                        //    migratedCount);
-
                         batchCount = 0;
                     }
                 }

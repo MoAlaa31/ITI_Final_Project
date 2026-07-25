@@ -7,6 +7,8 @@ using ITI_Project.Core.Enums;
 using ITI_Project.Core.IServices;
 using ITI_Project.Core.Models.Location;
 using ITI_Project.Core.Models.Users;
+using ITI_Project.Services.User.DTOs;
+using ITI_Project.Services.User.UserServices.ClientService;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
@@ -19,12 +21,14 @@ namespace ITI_Project.Api.Controllers.UserControllers
         private readonly IMapper mapper;
         private readonly IUnitOfWork unitOfWork;
         private readonly IFileStorageService fileStorageService;
+        private readonly IClientService clientService;
 
-        public ClientController(IMapper mapper, IUnitOfWork unitOfWork, IFileStorageService fileStorageService)
+        public ClientController(IMapper mapper, IUnitOfWork unitOfWork, IFileStorageService fileStorageService, IClientService clientService)
         {
             this.mapper = mapper;
             this.unitOfWork = unitOfWork;
             this.fileStorageService = fileStorageService;
+            this.clientService = clientService;
         }
 
         [Authorize(Roles = nameof(UserRoleType.Client))]
@@ -35,11 +39,12 @@ namespace ITI_Project.Api.Controllers.UserControllers
             if (!int.TryParse(clientIdClaim, out var clientId))
                 return Unauthorized(new ApiResponse(StatusCodes.Status401Unauthorized, "ClientId claim is missing or invalid"));
 
-            var client = await unitOfWork.Repository<Client>().GetByIdWithIncludesAsync(clientId, c => c.phoneNumbers!);
-            if (client == null)
-                return NotFound(new ApiResponse(StatusCodes.Status404NotFound, "Client not found"));
+            var result = await clientService.GetClientProfileAsync(clientId);
 
-            return Ok(mapper.Map<ClientDTO>(client));
+            if (result.IsFailure)
+                return HandleFailure(result.Error);
+
+            return Ok(mapper.Map<ClientDTO>(result.Data));
         }
 
         [Authorize(Roles = nameof(UserRoleType.Client))]
@@ -50,71 +55,32 @@ namespace ITI_Project.Api.Controllers.UserControllers
             if (!int.TryParse(clientIdClaim, out var clientId))
                 return Unauthorized(new ApiResponse(StatusCodes.Status401Unauthorized, "ClientId claim is missing or invalid"));
 
-            var client = await unitOfWork.Repository<Client>()
-                .GetByIdWithIncludesAsync(clientId, c => c.phoneNumbers!);
-
-            if (client == null)
-                return NotFound(new ApiResponse(StatusCodes.Status404NotFound, "Client not found"));
-
-            mapper.Map(clientUpdateDTO, client);
-            // Ensure the selected region belongs to the selected governorate
-            var region = await unitOfWork.Repository<Region>().GetByIdAsync(clientUpdateDTO.RegionId);
-            if (region == null)
-                return BadRequest(new ApiResponse(StatusCodes.Status400BadRequest, "Invalid Region"));
-
-            if (region.GovernorateId != clientUpdateDTO.GovernorateId)
-                return BadRequest(new ApiResponse(StatusCodes.Status400BadRequest, "Region does not belong to the selected governorate"));
-
-            client.GovernorateId = clientUpdateDTO.GovernorateId;
-            client.RegionId = clientUpdateDTO.RegionId;
-
-            if (clientUpdateDTO.Picture != null)
+            var model = new UpdateClientProfileDTO
             {
-                var uploadResult = await fileStorageService.UploadFileAsync(
-                    clientUpdateDTO.Picture.OpenReadStream(),
-                    "client-pictures",
-                    clientUpdateDTO.Picture.FileName,
-                    User);
-
-                if (!uploadResult.Success)
-                    return BadRequest(new ApiResponse(StatusCodes.Status400BadRequest, uploadResult.Message));
-
-                if (!string.IsNullOrWhiteSpace(client.PictureUrl))
-                    fileStorageService.DeleteFile(client.PictureUrl);
-
-                client.PictureUrl = uploadResult.FilePath;
-            }
-
-            if (clientUpdateDTO.PhoneNumbers != null)
-            {
-                var existingNumbers = client.phoneNumbers ?? new List<UserPhoneNumber>();
-                if (existingNumbers.Count > 0)
-                    unitOfWork.Repository<UserPhoneNumber>().DeleteRange(existingNumbers);
-
-                var normalizedNumbers = clientUpdateDTO.PhoneNumbers
-                    .Where(number => !string.IsNullOrWhiteSpace(number))
-                    .Select(number => number.Trim())
-                    .Distinct(StringComparer.OrdinalIgnoreCase)
-                    .ToList();
-
-                var newNumbers = normalizedNumbers
-                    .Select(number => new UserPhoneNumber
+                FirstName = clientUpdateDTO.FirstName,
+                LastName = clientUpdateDTO.LastName,
+                GovernorateId = clientUpdateDTO.GovernorateId,
+                RegionId = clientUpdateDTO.RegionId,
+                PhoneNumbers = clientUpdateDTO.PhoneNumbers,
+                Gender = clientUpdateDTO.Gender,
+                DateOfBirth = clientUpdateDTO.DateOfBirth,
+                Picture = clientUpdateDTO.Picture is null
+                    ? null
+                    : new FileData
                     {
-                        ClientId = client.Id,
-                        PhoneNumber = number
-                    })
-                    .ToList();
+                        Content = clientUpdateDTO.Picture.OpenReadStream(),
+                        FileName = clientUpdateDTO.Picture.FileName
+                    },
+                UserGivenName = User.FindFirstValue(ClaimTypes.GivenName),
+                UserNameIdentifier = User.FindFirstValue(ClaimTypes.NameIdentifier)
+            };
 
-                if (newNumbers.Count > 0)
-                    await unitOfWork.Repository<UserPhoneNumber>().AddRangeAsync(newNumbers);
+            var result = await clientService.UpdateClientProfileAsync(clientId, model);
 
-                client.phoneNumbers = newNumbers;
-            }
+            if (result.IsFailure)
+                return HandleFailure(result.Error);
 
-            unitOfWork.Repository<Client>().Update(client);
-            await unitOfWork.CompleteAsync();
-
-            return Ok(mapper.Map<ClientDTO>(client));
+            return Ok(mapper.Map<ClientDTO>(result.Data));
         }
     }
 }
