@@ -1,5 +1,5 @@
-## Project Name
-Herafy
+## Herafy
+ITI Graduation Project
 
 ## About
 **ITI Project** is a backend solution built with **ASP.NET Core (.NET 8)** that exposes a REST API for a service-request workflow (clients create service requests and providers submit offers), with real-time updates and notifications.
@@ -16,6 +16,75 @@ The solution is organized using a layered architecture (API/Core/Repository/Serv
 - Payment integration hooks (Stripe)
 - Media upload integration hooks (Cloudinary)
 - Swagger/OpenAPI documentation
+
+## Deployment
+
+- **API Backend:** [https://iti-final-project.runasp.net](https://iti-final-project.runasp.net)
+- **Herafy App (Frontend):** [https://harafy-app.vercel.app/](https://harafy-app.vercel.app/)
+
+## Admin Test Account
+
+For testing and reviewing as an admin, you can use the following credentials:
+
+- **Email:** Admin@gmail.com
+- **Password:** Pa$$w0rd
+
+## Architecture
+
+```text
+┌─────────────────────┐
+│      API Layer      │
+│---------------------│
+│ Controllers         │
+│ Middleware          │
+│ SignalR Hubs        │
+│ Authentication      │
+│ Dependency Injection│
+└─────────┬───────────┘
+          │
+          │ accesses
+          ▼
+┌────────────────────┐
+│    Service Layer   │
+│--------------------│
+│ Business Logic     │
+│ Application Rules  │
+│ Result Pattern     │
+│ DTO Mapping        │
+└─────────┬──────────┘
+          │
+          │ accesses
+          ▼
+┌────────────────────┐
+│ Repository Layer   │
+│--------------------│
+│ Repositories       │
+│ Unit Of Work       │
+│ Specifications     │
+│ EF Core Queries    │
+└─────────┬──────────┘
+          │
+          │ accesses
+          ▼
+┌────────────────────┐
+│     Core Layer     │
+│--------------------│
+│ Entities           │
+│ Interfaces         │
+│ Enums              │
+│ Shared Models      │
+│ Errors & Results   │
+└─────────┬──────────┘
+          │
+          ▼
+┌────────────────────┐
+│     SQL Server     │
+│ Entity Framework   │
+└────────────────────┘
+```
+API Layer ─────────► Core Layer
+Service Layer ─────► Core Layer
+Repository Layer ──► Core Layer
 
 ## Tech Stack
 - **Language**: C# 12
@@ -36,6 +105,34 @@ High-level solution layout:
 - `ITI_Project.Core/` — domain models, enums, constants, helpers, shared contracts
 - `ITI_Project.Repository/` — EF Core DbContexts, migrations, repository & data access implementations
 - `ITI_Project.Service/` — application/services layer (business use cases)
+
+## Engineering Features
+- Clean layered architecture
+- Repository + Unit of Work pattern
+- Result pattern for business failures
+- Global exception handling middleware
+- Real-time notifications with SignalR
+- Stripe payment integration with webhooks
+- Cloudinary media storage and migration
+- Background image migration batching
+- Role-based authorization
+- Specification pattern for querying
+
+## Media Management
+Images and provider documents are stored using Cloudinary.
+
+The project includes:
+- image upload abstraction
+- cloud storage integration
+- background migration from local storage to Cloudinary
+- batched migration processing
+
+## Real-Time Features
+
+SignalR is used for:
+- notifications
+- request updates
+- real-time provider live map location
 
 ## Getting Started
 
