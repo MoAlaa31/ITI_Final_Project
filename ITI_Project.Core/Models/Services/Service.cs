@@ -5,7 +5,7 @@ using System.Text;
 
 namespace ITI_Project.Core.Models.Services
 {
-    public class Service: BaseEntity
+    public class Service : BaseEntity
     {
         public int Id { get; set; }
         public required string Name_ar { get; set; }

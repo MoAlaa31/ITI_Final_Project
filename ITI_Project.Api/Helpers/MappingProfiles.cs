@@ -13,7 +13,7 @@ using ITI_Project.Core.Models.Posts;
 using ITI_Project.Core.Models.Requests;
 using ITI_Project.Core.Models.Services;
 using ITI_Project.Core.Models.Users;
-using ITI_Project.Services.User.DTOs;
+using ITI_Project.Services.User.DTOs.ClientDTOs;
 
 namespace ITI_Project.Api.Helpers
 {
@@ -41,7 +41,7 @@ namespace ITI_Project.Api.Helpers
             CreateMap<Provider, ProviderProfilePrivateDTO>()
                 .IncludeBase<Provider, ProviderProfileDTO>();
             /****************************************** Mapping for Client ******************************************/
-            CreateMap<Client, ClientDTO>()
+            CreateMap<Client, ServiceClientDTO>()
                 .ForMember(d => d.PhoneNumbers,
                     o => o.MapFrom(s => s.phoneNumbers != null
                         ? s.phoneNumbers.Select(p => p.PhoneNumber).ToList()

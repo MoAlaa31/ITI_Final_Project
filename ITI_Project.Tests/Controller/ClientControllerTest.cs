@@ -7,7 +7,7 @@ using ITI_Project.Core.Constants;
 using ITI_Project.Core.IServices;
 using ITI_Project.Core.Models.Location;
 using ITI_Project.Core.Models.Users;
-using ITI_Project.Services.User.DTOs;
+using ITI_Project.Services.User.DTOs.ClientDTOs;
 using ITI_Project.Services.User.UserServices.ClientService;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
@@ -62,7 +62,7 @@ namespace ITI_Project.Tests.Controller
             var clientId = 1;
 
             var client = A.Fake<Client>();
-            var clientDto = new ClientDTO();
+            var clientDto = new ServiceClientDTO();
 
             // Set up authenticated user's ClientId claim
             var claimsPrincipal = CreateClientPrincipal(clientId);
@@ -81,7 +81,7 @@ namespace ITI_Project.Tests.Controller
                     A<Expression<Func<Client, object>>>.Ignored))
                 .Returns(client);
 
-            A.CallTo(() => mapper.Map<ClientDTO>(client))
+            A.CallTo(() => mapper.Map<ServiceClientDTO>(client))
                 .Returns(clientDto);
 
             // Act

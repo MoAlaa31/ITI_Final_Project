@@ -6,9 +6,9 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace ITI_Project.Services.User.DTOs
+namespace ITI_Project.Services.User.DTOs.ClientDTOs
 {
-    public class UpdateClientProfileDTO
+    public class ServiceUpdateClientProfileDTO
     {
         public string FirstName { get; set; } = string.Empty;
         public string LastName { get; set; } = string.Empty;

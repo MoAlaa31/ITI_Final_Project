@@ -5,7 +5,7 @@ using ITI_Project.Core.Errors;
 using ITI_Project.Core.IServices;
 using ITI_Project.Core.Models.Location;
 using ITI_Project.Core.Models.Users;
-using ITI_Project.Services.User.DTOs;
+using ITI_Project.Services.User.DTOs.ClientDTOs;
 using Microsoft.AspNetCore.Http;
 using System;
 using System.Collections.Generic;
@@ -40,7 +40,7 @@ namespace ITI_Project.Services.User.UserServices.ClientService
             return ServiceResult<Client>.Success(client);
         }
 
-        public async Task<ServiceResult<Client>> UpdateClientProfileAsync(int clientId, UpdateClientProfileDTO clientUpdateDTO)
+        public async Task<ServiceResult<Client>> UpdateClientProfileAsync(int clientId, ServiceUpdateClientProfileDTO clientUpdateDTO)
         {
             var client = await unitOfWork.Repository<Client>()
                 .GetByIdWithIncludesAsync(clientId, c => c.phoneNumbers!);

@@ -2,9 +2,9 @@
 using ITI_Project.Core.Models.Location;
 using System.ComponentModel.DataAnnotations;
 
-namespace ITI_Project.Services.User.DTOs
+namespace ITI_Project.Services.User.DTOs.ClientDTOs
 {
-    public class ClientDTO
+    public class ServiceClientDTO
     {
         public string FirstName { get; set; } = null!;
         public string LastName { get; set; } = null!;

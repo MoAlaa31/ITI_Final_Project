@@ -8,6 +8,7 @@ using ITI_Project.Core.IServices;
 using ITI_Project.Core.Models.Location;
 using ITI_Project.Core.Models.Users;
 using ITI_Project.Services.User.DTOs;
+using ITI_Project.Services.User.DTOs.ClientDTOs;
 using ITI_Project.Services.User.UserServices.ClientService;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
@@ -33,7 +34,7 @@ namespace ITI_Project.Api.Controllers.UserControllers
 
         [Authorize(Roles = nameof(UserRoleType.Client))]
         [HttpGet("get-client-profile")]
-        public async Task<ActionResult<ClientDTO>> GetClientProfile()
+        public async Task<ActionResult<ServiceClientDTO>> GetClientProfile()
         {
             var clientIdClaim = User.FindFirstValue(Identifiers.ClientId);
             if (!int.TryParse(clientIdClaim, out var clientId))
@@ -44,18 +45,18 @@ namespace ITI_Project.Api.Controllers.UserControllers
             if (result.IsFailure)
                 return HandleFailure(result.Error);
 
-            return Ok(mapper.Map<ClientDTO>(result.Data));
+            return Ok(mapper.Map<ServiceClientDTO>(result.Data));
         }
 
         [Authorize(Roles = nameof(UserRoleType.Client))]
         [HttpPut("update-client-profile")]
-        public async Task<ActionResult<ClientDTO>> UpdateClientProfile([FromForm] ClientUpdateDTO clientUpdateDTO)
+        public async Task<ActionResult<ServiceClientDTO>> UpdateClientProfile([FromForm] ClientUpdateDTO clientUpdateDTO)
         {
             var clientIdClaim = User.FindFirstValue(Identifiers.ClientId);
             if (!int.TryParse(clientIdClaim, out var clientId))
                 return Unauthorized(new ApiResponse(StatusCodes.Status401Unauthorized, "ClientId claim is missing or invalid"));
 
-            var model = new UpdateClientProfileDTO
+            var model = new ServiceUpdateClientProfileDTO
             {
                 FirstName = clientUpdateDTO.FirstName,
                 LastName = clientUpdateDTO.LastName,
@@ -80,7 +81,7 @@ namespace ITI_Project.Api.Controllers.UserControllers
             if (result.IsFailure)
                 return HandleFailure(result.Error);
 
-            return Ok(mapper.Map<ClientDTO>(result.Data));
+            return Ok(mapper.Map<ServiceClientDTO>(result.Data));
         }
     }
 }
