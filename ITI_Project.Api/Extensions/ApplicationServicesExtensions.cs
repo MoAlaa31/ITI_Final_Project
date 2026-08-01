@@ -12,6 +12,7 @@ using ITI_Project.Services.BackgroundServices;
 using ITI_Project.Services.Credit;
 using ITI_Project.Services.Files;
 using ITI_Project.Services.Location;
+using ITI_Project.Services.User.UserServices.ClientService;
 using Microsoft.AspNetCore.Mvc;
 
 namespace ITI_Project.Api.Extensions
@@ -25,7 +26,7 @@ namespace ITI_Project.Api.Extensions
                 config.AddConsole(); // Enables console logging
                 config.AddDebug();   // Enables debug output
             });
-
+             
             services.AddScoped<IUnitOfWork, UnitOfWork>();
             services.AddScoped(typeof(IGenericRepository<>), typeof(GenericRepository<>));
 
@@ -44,6 +45,9 @@ namespace ITI_Project.Api.Extensions
                 services.AddScoped<IFileStorageService, LocalFileStorageService>();
 
             services.AddScoped<IPaymentService, PaymentService>();
+
+            // Register the client service
+            services.AddScoped<IClientService, ClientService>();
 
             services.AddScoped(typeof(ExistingIdFilter<>));
             services.AddAutoMapper(cfg => cfg.AddProfile<MappingProfiles>());
@@ -81,9 +85,9 @@ namespace ITI_Project.Api.Extensions
                 options.InvalidModelStateResponseFactory = ActionContext =>
                 {
                     var errors = ActionContext.ModelState
-                                              .Where(p => p.Value?.Errors.Count() > 0)
-                                              .SelectMany(p => p.Value?.Errors!)
-                                              .Select(e => e.ErrorMessage).ToArray();
+                        .Where(p => p.Value?.Errors.Count() > 0)
+                        .SelectMany(p => p.Value?.Errors!)
+                        .Select(e => e.ErrorMessage).ToArray();
                     var ValidationErrorResponse = new ApiValidationErrorResponse()
                     {
                         Errors = errors

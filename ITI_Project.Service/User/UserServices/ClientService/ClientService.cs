@@ -70,16 +70,10 @@ namespace ITI_Project.Services.User.UserServices.ClientService
                         "Region does not belong to the selected governorate",
                         HttpStatusCode.BadRequest));
 
-            client.GovernorateId = clientUpdateDTO.GovernorateId;
-            client.RegionId = clientUpdateDTO.RegionId;
-            client.FirstName = clientUpdateDTO.FirstName;
-            client.LastName = clientUpdateDTO.LastName;
-            client.Gender = clientUpdateDTO.Gender.GetValueOrDefault(Gender.Male);
-            client.DateOfBirth = clientUpdateDTO.DateOfBirth.GetValueOrDefault();
+            UpdateBasicInformation(client, clientUpdateDTO);
 
             if (clientUpdateDTO.Picture != null)
             {
-                // Use IFormFile.OpenReadStream() and pass givenName and nameId to match IFileStorageService signature
                 var uploadResult = await fileStorageService.UploadFileAsync(
                     new FileUploadRequest
                     {
@@ -149,6 +143,18 @@ namespace ITI_Project.Services.User.UserServices.ClientService
             }
 
             client.phoneNumbers = newNumbers;
+        }
+
+        private static void UpdateBasicInformation(
+            Client client,
+            ServiceUpdateClientProfileDTO dto)
+        {
+            client.FirstName = dto.FirstName;
+            client.LastName = dto.LastName;
+            client.GovernorateId = dto.GovernorateId;
+            client.RegionId = dto.RegionId;
+            client.Gender = dto.Gender.GetValueOrDefault(Gender.Male);
+            client.DateOfBirth = dto.DateOfBirth.GetValueOrDefault();
         }
     }
 }

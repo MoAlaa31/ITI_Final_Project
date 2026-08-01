@@ -20,15 +20,11 @@ namespace ITI_Project.Api.Controllers.UserControllers
     public class ClientController : BaseApiController
     {
         private readonly IMapper mapper;
-        private readonly IUnitOfWork unitOfWork;
-        private readonly IFileStorageService fileStorageService;
         private readonly IClientService clientService;
 
-        public ClientController(IMapper mapper, IUnitOfWork unitOfWork, IFileStorageService fileStorageService, IClientService clientService)
+        public ClientController(IMapper mapper, IClientService clientService)
         {
             this.mapper = mapper;
-            this.unitOfWork = unitOfWork;
-            this.fileStorageService = fileStorageService;
             this.clientService = clientService;
         }
 

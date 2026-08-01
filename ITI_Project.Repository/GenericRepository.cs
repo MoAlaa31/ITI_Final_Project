@@ -10,37 +10,37 @@ using System.Linq.Expressions;
 
 namespace ITI_Project.Repository
 {
-    public class GenericRepository<T> : IGenericRepository<T> where T : BaseEntity
-    {
-        private readonly AppDbContext dbContext;
-
-        public GenericRepository(AppDbContext dbContext)
+        public class GenericRepository<T> : IGenericRepository<T> where T : BaseEntity
         {
-            this.dbContext = dbContext;
-        }
+            private readonly AppDbContext dbContext;
 
-        public async Task AddAsync(T entity)
-        {
-            await dbContext.Set<T>().AddAsync(entity);
-        }
+            public GenericRepository(AppDbContext dbContext)
+            {
+                this.dbContext = dbContext;
+            }
 
-        public async Task<T> AddWithSaveAsync(T entity)
-        {
-            await dbContext.Set<T>().AddAsync(entity);
-            await dbContext.SaveChangesAsync(); // Save changes immediately to get the ID
+            public async Task AddAsync(T entity)
+            {
+                await dbContext.Set<T>().AddAsync(entity);
+            }
 
-            return entity;
-        }
+            public async Task<T> AddWithSaveAsync(T entity)
+            {
+                await dbContext.Set<T>().AddAsync(entity);
+                await dbContext.SaveChangesAsync(); // Save changes immediately to get the ID
 
-        public async Task<bool> AnyAsync(Expression<Func<T, bool>> predicate)
-        {
-            return await dbContext.Set<T>().AnyAsync(predicate);
-        }
+                return entity;
+            }
 
-        public async Task<T?> GetAsync(int id)
-        {
-            return await dbContext.Set<T>().FindAsync(id);
-        }
+            public async Task<bool> AnyAsync(Expression<Func<T, bool>> predicate)
+            {
+                return await dbContext.Set<T>().AnyAsync(predicate);
+            }
+
+            public async Task<T?> GetAsync(int id)
+            {
+                return await dbContext.Set<T>().FindAsync(id);
+            }
 
         public void Delete(T entity)
         {

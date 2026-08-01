@@ -60,7 +60,6 @@ E:\Backend Projects\ITI_Project\ITI_Project.Tests\bin\Debug\net8.0\Microsoft.Tes
 E:\Backend Projects\ITI_Project\ITI_Project.Tests\bin\Debug\net8.0\Microsoft.TestPlatform.Utilities.dll
 E:\Backend Projects\ITI_Project\ITI_Project.Tests\bin\Debug\net8.0\Microsoft.VisualStudio.TestPlatform.Common.dll
 E:\Backend Projects\ITI_Project\ITI_Project.Tests\bin\Debug\net8.0\Newtonsoft.Json.dll
-E:\Backend Projects\ITI_Project\ITI_Project.Tests\bin\Debug\net8.0\NuGet.Frameworks.dll
 E:\Backend Projects\ITI_Project\ITI_Project.Tests\bin\Debug\net8.0\OpenCvSharp.dll
 E:\Backend Projects\ITI_Project\ITI_Project.Tests\bin\Debug\net8.0\Serilog.dll
 E:\Backend Projects\ITI_Project\ITI_Project.Tests\bin\Debug\net8.0\Serilog.AspNetCore.dll
@@ -180,3 +179,5 @@ E:\Backend Projects\ITI_Project\ITI_Project.Tests\obj\Debug\net8.0\refint\ITI_Pr
 E:\Backend Projects\ITI_Project\ITI_Project.Tests\obj\Debug\net8.0\ITI_Project.Tests.pdb
 E:\Backend Projects\ITI_Project\ITI_Project.Tests\obj\Debug\net8.0\ITI_Project.Tests.genruntimeconfig.cache
 E:\Backend Projects\ITI_Project\ITI_Project.Tests\obj\Debug\net8.0\ref\ITI_Project.Tests.dll
+E:\Backend Projects\ITI_Project\ITI_Project.Tests\bin\Debug\net8.0\.msCoverageSourceRootsMapping_ITI_Project.Tests
+E:\Backend Projects\ITI_Project\ITI_Project.Tests\bin\Debug\net8.0\FluentAssertions.dll
